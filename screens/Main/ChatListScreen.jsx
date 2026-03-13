@@ -69,12 +69,12 @@ export default function ChatListScreen({ navigation }) {
         }, [])
     );
 
-    const { activeChatTabRef } = useContext(Context);
+    /*const { activeChatTabRef } = useContext(Context);
 
     useFocusEffect(useCallback(() => {
         activeChatTabRef.current = true;
         return () => { activeChatTabRef.current = false; };
-    }, []));
+    }, []));*/
 
     useEffect(() => {
         const handleConversationUpdated = (data) => {

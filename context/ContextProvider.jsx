@@ -53,6 +53,8 @@ export default function ContextProvider({children}){
             socket.on('connect', () => {
                 console.log('🟢 [Socket] Conectat:', socket.id);
                 setSocketConnected(true); 
+                fetchUnreadChatCount();
+                fetchUnreadCount();
             });
 
             socket.on('disconnect', (reason) => {
@@ -100,7 +102,9 @@ export default function ContextProvider({children}){
             socket.on('new_message', (message) => {
                 emitter.emit('socket_new_message', message);
             
-                if (!activeChatTabRef.current && activeChatConversationRef.current !== message.conversation_id) {
+                const isInThisConversation = activeChatConversationRef.current === message.conversation_id;
+
+                if (!isInThisConversation) {
                     setUnreadChatCount(prev => prev + 1);
                     
                     showInAppNotification(
@@ -143,7 +147,7 @@ export default function ContextProvider({children}){
         if (socketRef.current) {
             socketRef.current.disconnect();
             socketRef.current = null;
-            setSocketConnected(false); // ← reset la logout
+            setSocketConnected(false);
             console.log('🔴 [Socket] Deconectat manual la logout.');
         }
     };

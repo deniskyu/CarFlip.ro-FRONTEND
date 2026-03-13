@@ -2507,6 +2507,8 @@ PODS:
     - React-perflogger (= 0.80.2)
     - React-utils (= 0.80.2)
     - SocketRocket
+  - RNCPushNotificationIOS (1.12.0):
+    - React-Core
   - RNFBApp (23.8.6):
     - boost
     - DoubleConversion
@@ -3010,6 +3012,7 @@ DEPENDENCIES:
   - ReactAppDependencyProvider (from `build/generated/ios`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - "RNCPushNotificationIOS (from `../node_modules/@react-native-community/push-notification-ios`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNFS (from `../node_modules/react-native-fs`)
@@ -3192,6 +3195,8 @@ EXTERNAL SOURCES:
     :path: build/generated/ios
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  RNCPushNotificationIOS:
+    :path: "../node_modules/@react-native-community/push-notification-ios"
   RNFBApp:
     :path: "../node_modules/@react-native-firebase/app"
   RNFBMessaging:
@@ -3301,6 +3306,7 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 6c9197c1f6643633012ab646d2bfedd1b0d25989
   ReactCodegen: f8ae44cfcb65af88f409f4b094b879591232f12c
   ReactCommon: a237545f08f598b8b37dc3a9163c1c4b85817b0b
+  RNCPushNotificationIOS: b9dcb4f28c85f77483c3f86d2fcb1e0f0ab396fa
   RNFBApp: f8214d164557da22cba8cb12743d1a4cd2b44bb5
   RNFBMessaging: 80a5c0ca6c99dd6b26adc178be3d598845d96067
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688

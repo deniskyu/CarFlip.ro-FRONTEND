@@ -47,7 +47,7 @@ const REPORT_REASONS = [
 export default function ChatScreen({ route, navigation }) {
     const { conversationId, participantName, participantIcon, participantId } = route.params;
 
-    const { socket, socketConnected, fetchUnreadChatCount, activeChatConversationRef } = useContext(Context);
+    const { socket, socketConnected, fetchUnreadChatCount, activeChatConversationRef, setUnreadChatCount } = useContext(Context);
 
     const [resolvedParticipantName, setResolvedParticipantName] = useState(participantName || '');
     const [resolvedParticipantIcon, setResolvedParticipantIcon] = useState(participantIcon || '');
@@ -159,7 +159,7 @@ export default function ChatScreen({ route, navigation }) {
                 socket.current.emit('mark_read', { conversationId });
             }
 
-            fetchUnreadChatCount();
+            setTimeout(() => fetchUnreadChatCount(), 500);
 
             return () => {
                 activeChatConversationRef.current = null;

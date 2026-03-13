@@ -21,6 +21,7 @@ import { showMessage } from 'react-native-flash-message';
 import AlertFilterModal from './components/AlertFilterModal.jsx'; 
 import { navigate } from '../../helpers/NavigationService.js'; 
 import { emitter } from '../../helpers/eventBus.js'; 
+import PushNotificationIOS from '@react-native-community/push-notification-ios';
 
 const COLORS = {
     primary: '#800000',
@@ -55,19 +56,25 @@ export default function NotificationScreen() {
     const navigation = useNavigation();
     const { url } = useContext(Context);
 
-    const [activeTab, setActiveTab] = useState('alerts');
+    const [activeTab, setActiveTab] = useState('notifications');
 
-    const { setUnreadCount } = useContext(Context);
+    const { setUnreadCount, unreadChatCount } = useContext(Context);
 
     useFocusEffect(
         useCallback(() => {
             if (activeTab === 'notifications') {
                 fetchNotifications(1);
-                setUnreadCount(0);
-                axiosAuthGuard.put('/api/notifications/all/read').catch(() => {});
+                return () => {
+                    setUnreadCount(0);
+                    axiosAuthGuard.put('/api/notifications/all/read').catch(() => {});
+                    if (Platform.OS === 'ios') {
+                        PushNotificationIOS.setApplicationIconBadgeNumber(unreadChatCount);
+                    }
+                };
             }
-        }, [activeTab])
+        }, [activeTab, unreadChatCount])
     );
+
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -294,6 +301,15 @@ export default function NotificationScreen() {
             <StatusBar barStyle="dark-content" backgroundColor="white" />
             
             <View style={styles.headerTabs}>
+
+                <Pressable 
+                    style={[styles.tabButton, activeTab === 'notifications' && styles.activeTabButton]} 
+                    onPress={() => setActiveTab('notifications')}
+                >
+                    <Text style={[styles.tabText, activeTab === 'notifications' && styles.activeTabText]}>Notificări</Text>
+                </Pressable>
+
+
                 <Pressable 
                     style={[styles.tabButton, activeTab === 'alerts' && styles.activeTabButton]} 
                     onPress={() => setActiveTab('alerts')}
@@ -301,12 +317,6 @@ export default function NotificationScreen() {
                     <Text style={[styles.tabText, activeTab === 'alerts' && styles.activeTabText]}>Căutări salvate</Text>
                 </Pressable>
                 
-                <Pressable 
-                    style={[styles.tabButton, activeTab === 'notifications' && styles.activeTabButton]} 
-                    onPress={() => setActiveTab('notifications')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'notifications' && styles.activeTabText]}>Notificări</Text>
-                </Pressable>
             </View>
 
             {activeTab === 'alerts' ? (
