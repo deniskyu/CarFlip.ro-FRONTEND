@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
     View, Text, StyleSheet, Modal, Pressable, ScrollView, 
     TextInput, ActivityIndicator, FlatList, Image, SafeAreaView, Platform, KeyboardAvoidingView,
@@ -72,6 +72,8 @@ export default function FilterModal({ visible, onClose, navigation }) {
 
     const [lastSearchedUser, setLastSearchedUser] = useState(null);
 
+    const debounceTimer = useRef(null);
+
     useEffect(() => {
         if (visible) {
             fetchBrands();
@@ -111,25 +113,30 @@ export default function FilterModal({ visible, onClose, navigation }) {
         finally { setLoadingData(false); }
     };
 
-    const handleProfileSearch = async (text) => {
-        
+
+    const handleProfileSearch = (text) => {
         setProfileQuery(text);
+        
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        
         if (text.length < 2) {
             setProfileResults([]);
             return;
         }
 
-        setLoadingProfiles(true);
-        try {
-            const response = await axiosAuthGuard.get(`/api/users/search?query=${text}`);
-            if (response.data.success) {
-                setProfileResults(response.data.data);
+        debounceTimer.current = setTimeout(async () => {
+            setLoadingProfiles(true);
+            try {
+                const response = await axiosAuthGuard.get(`/api/users/search?query=${text}`);
+                if (response.data.success) {
+                    setProfileResults(response.data.data);
+                }
+            } catch (error) {
+                console.log("Profile search error:", error);
+            } finally {
+                setLoadingProfiles(false);
             }
-        } catch (error) {
-            console.log("Profile search error:", error);
-        } finally {
-            setLoadingProfiles(false);
-        }
+        }, 300);
     };
 
     const handleProfilePress = async (userId) => {

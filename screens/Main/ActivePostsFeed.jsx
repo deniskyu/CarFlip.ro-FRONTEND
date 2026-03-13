@@ -51,6 +51,7 @@ export default function ActivePostsFeed() {
             const newIndex = viewableItems[0].index;
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
+            emitter.emit('visible_index_changed', newIndex); 
     
             const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2);
             nextPosts.forEach(post => {
@@ -127,7 +128,7 @@ export default function ActivePostsFeed() {
     const renderItem = useCallback(({ item, index }) => (
         <PostItem 
             item={item} 
-            isVisible={index === currentVisibleIndex}
+            index={index}
             onBackToFeed={handleBack} 
             pfpIconVisible={false} 
         />

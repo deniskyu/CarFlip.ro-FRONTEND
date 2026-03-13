@@ -263,7 +263,7 @@ export default function SearchProfileResult() {
 
                 <View style={styles.statsRow}>
                     <Text style={styles.statsText}>
-                        <Text style={{fontWeight: 'bold', color: 'white'}}>{userPosts.length}</Text> Anunțuri
+                        <Text style={{fontWeight: 'bold', color: 'white'}}>{userPosts.length === 20 ? "Peste 20 " : `${userPosts.length}`}</Text> Anunțuri
                     </Text>
                 </View>
             </View>

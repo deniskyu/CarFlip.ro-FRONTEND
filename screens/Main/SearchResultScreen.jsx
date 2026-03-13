@@ -66,6 +66,7 @@ export default function SearchResultScreen() {
             const newIndex = viewableItems[0].index;
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
+            emitter.emit('visible_index_changed', newIndex); 
     
             viewableItems.forEach(item => {
                 if (item.item && !item.item.isNoResults && !item.item.isEnd && item.item._id) {
@@ -197,10 +198,10 @@ export default function SearchResultScreen() {
     const renderItem = useCallback(({ item, index }) => (
         <PostItem 
             item={item} 
-            isVisible={index === currentVisibleIndex}
-            onBackAction={handleBackToFeed}
+            index={index}
+            onBackToFeed={handleBackToFeed}
         />
-    ), [currentVisibleIndex]);
+    ), []);
 
     return (
         <View style={styles.container}>

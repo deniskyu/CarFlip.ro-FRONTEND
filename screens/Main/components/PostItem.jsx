@@ -238,7 +238,7 @@ const ToastNotification = ({ message, visible }) => {
     );
 };
 
-const PostItem = React.memo(({ item, isVisible = true, onBackToFeed, initialOpenComments = false, targetCommentId = null, pfpIconVisible = true }) => {
+const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = false, targetCommentId = null, pfpIconVisible = true }) => {
     const navigation = useNavigation();
     const isFocused = useIsFocused();
 
@@ -264,6 +264,14 @@ const PostItem = React.memo(({ item, isVisible = true, onBackToFeed, initialOpen
     const [commentsVisible, setCommentsVisible] = useState(false);
     const [reportVisible, setReportVisible] = useState(false);
     const [toastVisible, setToastVisible] = useState(false);
+
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        const handler = (visibleIndex) => setIsVisible(visibleIndex === index);
+        emitter.on('visible_index_changed', handler);
+        return () => emitter.off('visible_index_changed', handler);
+    }, [index]);
 
     const showToast = useCallback(() => {
         setToastVisible(true);
@@ -506,7 +514,7 @@ const PostItem = React.memo(({ item, isVisible = true, onBackToFeed, initialOpen
         </View>
     );
 }, (prevProps, nextProps) => {
-    return prevProps.item._id === nextProps.item._id && prevProps.isVisible === nextProps.isVisible && prevProps.item.hasLiked === nextProps.item.hasLiked && prevProps.item.likes_count === nextProps.item.likes_count;
+    return prevProps.item._id === nextProps.item._id && prevProps.item.hasLiked === nextProps.item.hasLiked && prevProps.item.likes_count === nextProps.item.likes_count;
 });
 
 const styles = StyleSheet.create({
@@ -519,7 +527,7 @@ const styles = StyleSheet.create({
     separatorSubtitle: { color: '#aaa', fontSize: 16, textAlign: 'center', marginBottom: 20, lineHeight: 24 },
     separatorSmall: { color: '#666', fontSize: 14, fontStyle: 'italic' },
     mediaContainer: { width: width, height: ITEM_HEIGHT, backgroundColor: 'white', overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
-    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.25%', backgroundColor: 'rgba(0, 0, 0, 0.12)' },
+    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.50%', backgroundColor: 'rgba(0, 0, 0, 0.12)' },
     bigHeartContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 20, elevation: 20, backgroundColor: 'transparent' },
     bigHeartImage: { width: 100, height: 100, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3.84 },
     summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },

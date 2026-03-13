@@ -81,6 +81,7 @@ export default function MainScreen({ navigation }) {
                     seenQueue.current.add(item.item._id);
                 }
             });
+            emitter.emit('visible_index_changed', newIndex);
 
             const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2); // doar 1 post
             nextPosts.forEach(post => {
@@ -308,11 +309,11 @@ export default function MainScreen({ navigation }) {
     const renderItem = useCallback(({ item, index }) => (
         <PostItem 
             item={item} 
-            isVisible={index === currentVisibleIndex} 
+            index={index}
             initialOpenComments={item.isPriority && !!targetCommentId}
             targetCommentId={item.isPriority ? targetCommentId : null}
         />
-    ), [currentVisibleIndex, targetCommentId]);
+    ), [targetCommentId]);
 
     if (loading && (!sales || sales.length === 0)) {
         return (

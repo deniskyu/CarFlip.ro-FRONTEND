@@ -81,6 +81,7 @@ export default function UserProfileFeed() {
             const newIndex = viewableItems[0].index;
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
+            emitter.emit('visible_index_changed', newIndex); 
     
             viewableItems.forEach(item => {
                 if (item.item && item.item._id) {
@@ -167,11 +168,11 @@ export default function UserProfileFeed() {
     const renderItem = useCallback(({ item, index }) => (
         <PostItem 
             item={item} 
-            isVisible={index === currentVisibleIndex}
+            index={index}
             onBackAction={handleBack}
             pfpIconVisible={false}
         />
-    ), [currentVisibleIndex]);
+    ), []);
 
     const ListFooter = () => {
         if (!showFooterLoading) return null;

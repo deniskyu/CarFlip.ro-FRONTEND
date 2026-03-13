@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     mediaOuterContainer: { width: width, height: ITEM_HEIGHT, backgroundColor: '#000', overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
     mediaInnerContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     editingBorder: { borderWidth: 2, borderColor: '#800000' },
-    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.25%', backgroundColor: 'rgba(0, 0, 0, 0.12)' },
+    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.50%', backgroundColor: 'rgba(0, 0, 0, 0.12)' },
     summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },
     summaryTitle: { fontSize: 24, fontWeight: '900', color: '#800000', marginBottom: 2 },
     summaryPrice: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 16 },
