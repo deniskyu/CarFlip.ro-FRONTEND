@@ -32,7 +32,7 @@ const COLORS = {
 };
 
 export default function ChatListScreen({ navigation }) {
-    const { fetchUnreadChatCount } = useContext(Context);
+    const { fetchUnreadChatCount, activeChatConversationRef } = useContext(Context);
 
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -78,6 +78,7 @@ export default function ChatListScreen({ navigation }) {
 
     useEffect(() => {
         const handleConversationUpdated = (data) => {
+            if (activeChatConversationRef.current === data.conversationId) return;
             setConversations(prev => {
                 const idx = prev.findIndex(c => c._id === data.conversationId);
                 if (idx === -1) {

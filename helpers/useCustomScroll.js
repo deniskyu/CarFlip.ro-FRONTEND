@@ -28,14 +28,16 @@ export const useCustomScroll = ({ itemHeight, dataLength, initialIndex = 0 }) =>
 
 
         if (Platform.OS === 'ios') {
-            targetIndex = Math.max(0, Math.min(targetIndex, dataLength - 1));
+            /*targetIndex = Math.max(0, Math.min(targetIndex, dataLength - 1));
             if (flatListRef.current) {
                 flatListRef.current.scrollToIndex({
                     index: targetIndex,
                     animated: false,
                 });
                 activeIndexRef.current = targetIndex;
-            }
+            }*/
+            targetIndex = Math.max(0, Math.min(targetIndex, dataLength - 1));
+            activeIndexRef.current = targetIndex;
         }
 
         setIsVerticalScrollEnabled(false);

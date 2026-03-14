@@ -154,11 +154,11 @@ export default function MainScreen({ navigation }) {
                         setSales(finalList.length > 0 ? finalList : []);
                     } else {
                         setSales(prev => {
-                            const hasSeparator = prev.some(item => item.isSeparator);
-                            if (hasSeparator) {
-                                return [...prev, ...historyPosts];
+                            const newList = [...prev, ...filteredNew];
+                            if (newList.length > 20) {
+                                return newList.slice(newList.length - 20);
                             }
-                            return [...prev, separator, ...historyPosts];
+                            return newList;
                         });
                     }
                     
