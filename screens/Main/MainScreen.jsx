@@ -96,7 +96,7 @@ export default function MainScreen({ navigation }) {
                     seenQueue.current.add(item.item._id);
                 }
             });
-            emitter.emit('visible_index_changed', newIndex);
+            emitter.emit('visible_index_changed_main', newIndex);
         }
     }).current;
         
@@ -230,7 +230,7 @@ export default function MainScreen({ navigation }) {
 
                 setSales(prev => prev.slice(keepFrom));
                 activeIndexRef.current = newIdx;
-                emitter.emit('visible_index_changed', newIdx);
+                emitter.emit('visible_index_changed_main', newIdx);
 
                 setTimeout(() => {
                     if (flatListRef.current) {
@@ -342,6 +342,7 @@ export default function MainScreen({ navigation }) {
         <PostItem 
             item={item} 
             index={index}
+            screenId="main"
             initialOpenComments={item.isPriority && !!targetCommentId}
             targetCommentId={item.isPriority ? targetCommentId : null}
         />

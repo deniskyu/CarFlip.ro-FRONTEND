@@ -261,7 +261,7 @@ export default function FilterModal({ visible, onClose, navigation }) {
         if (selectedBrand?.id) filters.brand_id = selectedBrand.id;
         if (selectedModel?.id) filters.model_id = selectedModel.id;
         
-        const fuel = selectedFuel?.id || selectedFuel;
+        const fuel = selectedFuel?.name || selectedFuel;
         if (fuel) filters.fuel_type = fuel;
         
         if (minPrice) filters.min_price = minPrice.replace(/\./g, '');
@@ -275,11 +275,10 @@ export default function FilterModal({ visible, onClose, navigation }) {
 
         const county = selectedCounty?.judet || selectedCounty;
         if (county) filters.county = county;
-
-        const body = selectedBody?.id || selectedBody;
+        const body = selectedBody?.name || selectedBody;
         if (body) filters.body_type = body;
 
-        const transmission = selectedTransmission?.id || selectedTransmission;
+        const transmission = selectedTransmission?.name || selectedTransmission;
         if (transmission) filters.transmission = transmission;
 
         const steering = selectedSteering?.id || selectedSteering;

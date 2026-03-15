@@ -238,7 +238,7 @@ const ToastNotification = ({ message, visible }) => {
     );
 };
 
-const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = false, targetCommentId = null, pfpIconVisible = true }) => {
+const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = false, targetCommentId = null, pfpIconVisible = true, screenId = 'main' }) => {
     const navigation = useNavigation();
     const isFocused = useIsFocused();
 
@@ -266,10 +266,11 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
+        const eventName = `visible_index_changed_${screenId}`;
         const handler = (visibleIndex) => setIsVisible(visibleIndex === index);
-        emitter.on('visible_index_changed', handler);
-        return () => emitter.off('visible_index_changed', handler);
-    }, [index]);
+        emitter.on(eventName, handler);
+        return () => emitter.off(eventName, handler);
+    }, [index, screenId]);
 
     useEffect(() => {
         setCurrentIndex(0);
@@ -549,8 +550,8 @@ const styles = StyleSheet.create({
     dismantleTagText: { color: '#cc0000', fontWeight: 'bold' },
     vinTagActive: { backgroundColor: '#e8f5e9', borderColor: '#c8e6c9' },
     vinTagTextActive: { color: '#2e7d32', fontWeight: 'bold' },
-    descriptionLabel: { fontSize: 16, fontWeight: 'bold', color: '#800000', marginBottom: 5, marginTop: -8 },
-    descriptionContainer: { height: 150, backgroundColor: '#f9f9f9', borderRadius: 8, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#eee' },
+    descriptionLabel: { fontSize: 16, fontWeight: 'bold', color: '#800000', marginBottom: 5, marginTop: -6 },
+    descriptionContainer: { height: 164, backgroundColor: '#f9f9f9', borderRadius: 8, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#eee' },
     summaryDescription: { fontSize: 15, color: '#444', lineHeight: 22 },
     summaryLocation: { paddingTop: 15, borderTopWidth: 1, borderTopColor: '#eee' },
     locationText1: { fontSize: 18, color: '#081539', fontWeight: '800', marginBottom: 5 },

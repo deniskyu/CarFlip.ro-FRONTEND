@@ -30,6 +30,8 @@ export default function SearchResultScreen() {
     const route = useRoute();
     const { filters } = route.params || {};
 
+    const excludeSeenActive = filters?.exclude_seen === 'true' || filters?.exclude_seen === true;
+
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
     
@@ -40,6 +42,7 @@ export default function SearchResultScreen() {
     const [isTrimming, setIsTrimming] = useState(false);
 
     const seenQueue = useRef(new Set());
+    const allLoadedIds = useRef(new Set());
     const isLoadingMoreRef = useRef(false);
     const isResettingRef = useRef(false);
     const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 60 }).current;
@@ -70,7 +73,7 @@ export default function SearchResultScreen() {
             const newIndex = viewableItems[0].index;
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
-            emitter.emit('visible_index_changed', newIndex); 
+            emitter.emit('visible_index_changed_search', newIndex); 
     
             viewableItems.forEach(item => {
                 if (item.item && !item.item.isNoResults && !item.item.isEnd && item.item._id) {
@@ -81,18 +84,21 @@ export default function SearchResultScreen() {
     }).current;
 
     useEffect(() => {
-        const interval = setInterval(() => syncSeenPosts(), 5000);
-        
+        let interval;
+        if (!excludeSeenActive) {
+            interval = setInterval(() => syncSeenPosts(), 5000);
+        }
+
         const subscription = AppState.addEventListener('change', nextAppState => {
-            if (nextAppState.match(/inactive|background/)) {
+            if (nextAppState.match(/inactive|background/) && !excludeSeenActive) {
                 syncSeenPosts();
             }
         });
 
         return () => { 
-            clearInterval(interval); 
+            if (interval) clearInterval(interval); 
             subscription.remove(); 
-            syncSeenPosts(); 
+            syncSeenPosts();
         };
     }, []);
 
@@ -103,12 +109,15 @@ export default function SearchResultScreen() {
         isLoadingMoreRef.current = true;
         setLoadingMore(true);
         
-        pageRef.current += 1;
+        if (!excludeSeenActive) {
+            pageRef.current += 1;
+        }
         fetchResults(pageRef.current, false);
     };
     
     useEffect(() => {
         pageRef.current = 1;
+        allLoadedIds.current.clear();
         setResults([]);
         setHasMore(true);
         fetchResults(1, true);
@@ -134,12 +143,29 @@ export default function SearchResultScreen() {
         try {
             if (isRefresh) setLoading(true);
             
-            const response = await axiosAuthGuard.get('/api/sales/search', { 
-                params: { ...filters, page: pageNum, limit: PAGE_LIMIT }
-            });
+            let response;
+
+            if (excludeSeenActive) {
+                const { exclude_seen, ...filtersWithoutSeen } = filters;
+                response = await axiosAuthGuard.post('/api/sales/search-unseen', {
+                    ...filtersWithoutSeen,
+                    exclude_ids: Array.from(allLoadedIds.current),
+                    limit: PAGE_LIMIT
+                });
+            } else {
+                response = await axiosAuthGuard.get('/api/sales/search', { 
+                    params: { ...filters, page: pageNum, limit: PAGE_LIMIT }
+                });
+            }
 
             if (response.data.success) {
                 const newItems = response.data.data || [];
+
+                if (excludeSeenActive) {
+                    newItems.forEach(item => {
+                        if (item._id) allLoadedIds.current.add(item._id);
+                    });
+                }
                 
                 if (isRefresh) {
                     if (newItems.length === 0) {
@@ -190,25 +216,19 @@ export default function SearchResultScreen() {
                 isResettingRef.current = true;
                 setIsTrimming(true);
 
-                await syncSeenPosts();
+                if (!excludeSeenActive) {
+                    await syncSeenPosts();
+                }
                 FastImage.clearMemoryCache();
 
                 const visibleIdx = activeIndexRef.current;
                 const keepFrom = Math.max(0, visibleIdx - 2);
                 const newIdx = visibleIdx - keepFrom;
 
-                let realItemsRemoved = 0;
-                for (let i = 0; i < keepFrom; i++) {
-                    const item = salesRef.current[i];
-                    if (item && !item.isNoResults && !item.isEnd) {
-                        realItemsRemoved++;
-                    }
-                }
-                pageRef.current = Math.max(1, Math.ceil((realItemsRemoved + newIdx + 1) / PAGE_LIMIT));
-
-                setResults(prev => prev.slice(keepFrom));
+                setHasMore(true);
+                setResults(prev => prev.slice(keepFrom).filter(item => !item.isEnd && !item.isNoResults));
                 activeIndexRef.current = newIdx;
-                emitter.emit('visible_index_changed', newIdx);
+                emitter.emit('visible_index_changed_search', newIdx);
 
                 setTimeout(() => {
                     if (flatListRef.current) {
@@ -216,6 +236,15 @@ export default function SearchResultScreen() {
                     }
                     setIsTrimming(false);
                     isResettingRef.current = false;
+
+                    if (!isLoadingMoreRef.current) {
+                        isLoadingMoreRef.current = true;
+                        setLoadingMore(true);
+                        if (!excludeSeenActive) {
+                            pageRef.current += 1;
+                        }
+                        fetchResults(pageRef.current, false);
+                    }
                 }, 150);
             }
         }
@@ -229,6 +258,7 @@ export default function SearchResultScreen() {
         <PostItem 
             item={item} 
             index={index}
+            screenId="search"
             onBackToFeed={handleBackToFeed}
         />
     ), []);
