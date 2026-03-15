@@ -26,7 +26,7 @@ import { emitter } from '../../../helpers/eventBus.js';
 
 const { width, height } = Dimensions.get('window');
 
-import {ITEM_HEIGHT} from '../../../helpers/layout.js';
+import { ITEM_HEIGHT } from '../../../helpers/layout.js';
 
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
@@ -243,10 +243,8 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     const isFocused = useIsFocused();
 
     if (item.isSeparator) return <FeedSeparator />;
-    
     if (item.isEnd) return <EndOfResults onBackToFeed={onBackToFeed} />;
     if (item.isNoResults) return <NoResultsSlide onBack={onBackToFeed} />;
-
     if (!item.user_id || !item.user_id._id) return null;
 
     const slidesData = useMemo(() => 
@@ -272,6 +270,16 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
         emitter.on('visible_index_changed', handler);
         return () => emitter.off('visible_index_changed', handler);
     }, [index]);
+
+    useEffect(() => {
+        setCurrentIndex(0);
+        setCommentsVisible(false);
+        setReportVisible(false);
+        setIsZooming(false);
+        if (flatListRef.current) {
+            flatListRef.current.scrollToOffset({ offset: 0, animated: false });
+        }
+    }, [item._id]);
 
     const showToast = useCallback(() => {
         setToastVisible(true);
@@ -448,7 +456,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
 
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewabilityConfig}
-                initialNumToRender={3} 
+                initialNumToRender={2} 
                 windowSize={3} 
                 maxToRenderPerBatch={3}
                 removeClippedSubviews={true} 
@@ -557,7 +565,7 @@ const styles = StyleSheet.create({
     actionText: { color: 'white', fontSize: 11, fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
     profileBorder: { borderWidth: 2, borderColor: 'white', borderRadius: 25, padding: 1 },
     profileImage: { width: 45, height: 45, borderRadius: 22.5 },
-    bottomOverlay: { position: 'absolute', bottom: 20, left: 14, width: '80%', zIndex: 5, },
+    bottomOverlay: { position: 'absolute', bottom: 20, left: 14, width: '80%', zIndex: 5 },
     userInfoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
     userNameText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', textShadowColor: 'rgba(0, 0, 0, 0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3, marginRight: 6 },
     locationText2: { color: 'white', fontSize: 15, fontWeight: '500', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },

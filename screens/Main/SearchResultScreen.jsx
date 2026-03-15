@@ -3,25 +3,27 @@ import {
     View, 
     Text, 
     StyleSheet, 
-    FlatList, 
+    FlatList,
     Pressable, 
     ActivityIndicator, 
     Dimensions,
     StatusBar,
     Platform,
     AppState,
-    Image,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import PostItem from './components/PostItem.jsx';
 import { emitter } from '../../helpers/eventBus.js'; 
+import FastImage from '@d11/react-native-fast-image';
 
 import { useCustomScroll } from "../../helpers/useCustomScroll.js"; 
 
 const { width, height } = Dimensions.get('window');
 import { ITEM_HEIGHT } from "../../helpers/layout.js";
 
+const MAX_ITEMS = 50;
+const PAGE_LIMIT = 5;
 
 export default function SearchResultScreen() {
     const navigation = useNavigation();
@@ -35,9 +37,11 @@ export default function SearchResultScreen() {
     const [loadingMore, setLoadingMore] = useState(false);
     
     const [currentVisibleIndex, setCurrentVisibleIndex] = useState(0);
+    const [isTrimming, setIsTrimming] = useState(false);
 
     const seenQueue = useRef(new Set());
     const isLoadingMoreRef = useRef(false);
+    const isResettingRef = useRef(false);
     const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 60 }).current;
 
     const salesRef = useRef(results);
@@ -73,13 +77,6 @@ export default function SearchResultScreen() {
                     seenQueue.current.add(item.item._id);
                 }
             });
-    
-            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2); 
-            nextPosts.forEach(post => {
-                if (post?.media?.[0]?.type === 'image') {
-                    Image.prefetch(post.media[0].url).catch(() => {});
-                }
-            });
         }
     }).current;
 
@@ -102,7 +99,7 @@ export default function SearchResultScreen() {
     const pageRef = useRef(1);
 
     const handleLoadMore = () => {
-        if (!hasMore || loadingMore || isLoadingMoreRef.current) return;
+        if (!hasMore || loadingMore || isLoadingMoreRef.current || isResettingRef.current) return;
         isLoadingMoreRef.current = true;
         setLoadingMore(true);
         
@@ -138,7 +135,7 @@ export default function SearchResultScreen() {
             if (isRefresh) setLoading(true);
             
             const response = await axiosAuthGuard.get('/api/sales/search', { 
-                params: { ...filters, page: pageNum, limit: 5 }
+                params: { ...filters, page: pageNum, limit: PAGE_LIMIT }
             });
 
             if (response.data.success) {
@@ -149,7 +146,7 @@ export default function SearchResultScreen() {
                         setResults([{ _id: 'no_results_marker', isNoResults: true }]);
                         setHasMore(false);
                     } else {
-                        if (newItems.length < 5) {
+                        if (newItems.length < PAGE_LIMIT) {
                             setResults([...newItems, { _id: 'end_marker', isEnd: true }]);
                             setHasMore(false);
                         } else {
@@ -170,7 +167,7 @@ export default function SearchResultScreen() {
                             const existingIds = new Set(prev.map(p => p._id));
                             const uniqueNewItems = newItems.filter(item => !existingIds.has(item._id));
 
-                            if (newItems.length < 5) {
+                            if (newItems.length < PAGE_LIMIT) {
                                 setHasMore(false);
                                 return [...prev, ...uniqueNewItems, { _id: 'end_marker', isEnd: true }];
                             }
@@ -188,6 +185,39 @@ export default function SearchResultScreen() {
             setLoading(false);
             setLoadingMore(false);
             isLoadingMoreRef.current = false;
+
+            if (!isResettingRef.current && salesRef.current.length > MAX_ITEMS) {
+                isResettingRef.current = true;
+                setIsTrimming(true);
+
+                await syncSeenPosts();
+                FastImage.clearMemoryCache();
+
+                const visibleIdx = activeIndexRef.current;
+                const keepFrom = Math.max(0, visibleIdx - 2);
+                const newIdx = visibleIdx - keepFrom;
+
+                let realItemsRemoved = 0;
+                for (let i = 0; i < keepFrom; i++) {
+                    const item = salesRef.current[i];
+                    if (item && !item.isNoResults && !item.isEnd) {
+                        realItemsRemoved++;
+                    }
+                }
+                pageRef.current = Math.max(1, Math.ceil((realItemsRemoved + newIdx + 1) / PAGE_LIMIT));
+
+                setResults(prev => prev.slice(keepFrom));
+                activeIndexRef.current = newIdx;
+                emitter.emit('visible_index_changed', newIdx);
+
+                setTimeout(() => {
+                    if (flatListRef.current) {
+                        flatListRef.current.scrollToOffset({ offset: newIdx * ITEM_HEIGHT, animated: false });
+                    }
+                    setIsTrimming(false);
+                    isResettingRef.current = false;
+                }, 150);
+            }
         }
     };
 
@@ -244,7 +274,7 @@ export default function SearchResultScreen() {
                     initialNumToRender={2}
                     windowSize={3}
                     maxToRenderPerBatch={2}
-                    removeClippedSubviews={true} 
+                    removeClippedSubviews={true}
                     
                     viewabilityConfig={viewabilityConfig}
                     onViewableItemsChanged={onViewableItemsChanged}
@@ -252,6 +282,12 @@ export default function SearchResultScreen() {
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={3}
                 />
+            )}
+
+            {isTrimming && (
+                <View style={styles.trimmingOverlay}>
+                    <ActivityIndicator size="large" color="#800000" />
+                </View>
             )}
         </View>
     );
@@ -303,5 +339,12 @@ const styles = StyleSheet.create({
         color: '#666',
         marginTop: 15,
         fontSize: 14,
-    }
+    },
+    trimmingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'black',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 999,
+    },
 });

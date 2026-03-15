@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Dimensions, View, ActivityIndicator, ImageBackground, Platform } from 'react-native';
+import { StyleSheet, Dimensions, View, ActivityIndicator, Platform } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { 
     useSharedValue, 
@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useIsFocused } from '@react-navigation/native';
 import Video from 'react-native-video';
+import FastImage from '@d11/react-native-fast-image';
 
 const { width, height } = Dimensions.get('window');
 
@@ -145,21 +146,20 @@ export default function ZoomableMedia({
         <GestureDetector gesture={gestures}>
              <View style={[styles.container, { height: containerHeight, width: width }]}>
                 
-                <ImageBackground
-                    source={{ uri: uri }}
+                <FastImage
+                    source={{ uri: uri, priority: FastImage.priority.low }}
                     style={StyleSheet.absoluteFillObject}
-                    resizeMode="cover"
-                    blurRadius={Platform.OS === 'ios' ? 25 : 15}
-                >
-                    <View style={styles.blurOverlay} />
-                </ImageBackground>
-
-                <Animated.Image
-                    source={{ uri: uri }}
-                    style={[styles.mediaWrapper, { height: containerHeight, width: width }, animatedStyle]}
-                    resizeMode="contain"
-                    fadeDuration={100}
+                    resizeMode={FastImage.resizeMode.cover}
                 />
+                <View style={styles.darkOverlay} />
+
+                <Animated.View style={[styles.mediaWrapper, { height: containerHeight, width: width }, animatedStyle]}>
+                    <FastImage
+                        source={{ uri: uri, priority: FastImage.priority.normal }}
+                        style={styles.innerImage}
+                        resizeMode={FastImage.resizeMode.contain}
+                    />
+                </Animated.View>
             </View>
         </GestureDetector>
     );
@@ -177,9 +177,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'transparent', 
     },
-    blurOverlay: {
+    innerImage: {
+        width: '100%',
+        height: '100%',
+    },
+    darkOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
     },
     videoElement: {
         width: '100%',

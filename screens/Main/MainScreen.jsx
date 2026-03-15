@@ -3,14 +3,13 @@ import {
     View, 
     Text, 
     StyleSheet, 
-    FlatList, 
+    FlatList,
     Dimensions, 
     ActivityIndicator, 
     StatusBar,
     Pressable,
     AppState,
     Platform,
-    Image,
     useWindowDimensions,
     PixelRatio
 } from "react-native";
@@ -20,6 +19,7 @@ import SearchBar from "./components/SearchBar.jsx";
 import FilterModal from "./components/FilterModal.jsx";
 import PostItem from "./components/PostItem.jsx";
 import { emitter } from "../../helpers/eventBus.js";
+import FastImage from '@d11/react-native-fast-image';
 
 import { useCustomScroll } from "../../helpers/useCustomScroll.js"; 
 import { showMessage } from "react-native-flash-message";
@@ -27,6 +27,8 @@ import { showMessage } from "react-native-flash-message";
 const { width, height } = Dimensions.get('window');
 
 import { ITEM_HEIGHT } from "../../helpers/layout.js";
+
+const MAX_ITEMS = 50;
 
 export default function MainScreen({ navigation }) {
     const route = useRoute(); 
@@ -40,6 +42,9 @@ export default function MainScreen({ navigation }) {
 
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const isLoadingMoreRef = useRef(false);
+    const isResettingRef = useRef(false);
+
+    const [isTrimming, setIsTrimming] = useState(false);
 
     const [targetCommentId, setTargetCommentId] = useState(null);
     
@@ -48,9 +53,19 @@ export default function MainScreen({ navigation }) {
 
     const seenQueue = useRef(new Set()); 
     const historyLoopRef = useRef(0);
+    const nextCursorRef = useRef(null);
+    const feedModeRef = useRef('new');
 
     const salesRef = useRef(sales);
     salesRef.current = sales;
+
+    useEffect(() => {
+        nextCursorRef.current = nextCursor;
+    }, [nextCursor]);
+
+    useEffect(() => {
+        feedModeRef.current = feedMode;
+    }, [feedMode]);
     
     const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 60 }).current;
 
@@ -82,13 +97,6 @@ export default function MainScreen({ navigation }) {
                 }
             });
             emitter.emit('visible_index_changed', newIndex);
-
-            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2); // doar 1 post
-            nextPosts.forEach(post => {
-                if (post?.media?.[0]?.type === 'image') { // doar prima poză
-                    Image.prefetch(post.media[0].url).catch(() => {});
-                }
-            });
         }
     }).current;
         
@@ -154,11 +162,11 @@ export default function MainScreen({ navigation }) {
                         setSales(finalList.length > 0 ? finalList : []);
                     } else {
                         setSales(prev => {
-                            const newList = [...prev, ...filteredNew];
-                            if (newList.length > 20) {
-                                return newList.slice(newList.length - 20);
+                            const hasSeparator = prev.some(item => item.isSeparator);
+                            if (hasSeparator) {
+                                return [...prev, ...historyPosts];
                             }
-                            return newList;
+                            return [...prev, separator, ...historyPosts];
                         });
                     }
                     
@@ -208,6 +216,30 @@ export default function MainScreen({ navigation }) {
             setRefreshing(false);
             isLoadingMoreRef.current = false;
             setIsLoadingMore(false);
+
+            if (!isResettingRef.current && salesRef.current.length > MAX_ITEMS) {
+                isResettingRef.current = true;
+                setIsTrimming(true);
+
+                await syncSeenPosts();
+                FastImage.clearMemoryCache();
+
+                const visibleIdx = activeIndexRef.current;
+                const keepFrom = Math.max(0, visibleIdx - 2);
+                const newIdx = visibleIdx - keepFrom;
+
+                setSales(prev => prev.slice(keepFrom));
+                activeIndexRef.current = newIdx;
+                emitter.emit('visible_index_changed', newIdx);
+
+                setTimeout(() => {
+                    if (flatListRef.current) {
+                        flatListRef.current.scrollToOffset({ offset: newIdx * ITEM_HEIGHT, animated: false });
+                    }
+                    setIsTrimming(false);
+                    isResettingRef.current = false;
+                }, 150);
+            }
         }
     };
 
@@ -290,7 +322,7 @@ export default function MainScreen({ navigation }) {
     };
 
     const handleLoadMore = async () => {
-        if (isLoadingMoreRef.current || refreshing) return;
+        if (isLoadingMoreRef.current || refreshing || isResettingRef.current) return;
         isLoadingMoreRef.current = true;
         setIsLoadingMore(true);
         if (nextCursor) {
@@ -368,7 +400,7 @@ export default function MainScreen({ navigation }) {
                 initialNumToRender={2}
                 windowSize={3}
                 maxToRenderPerBatch={2}
-                removeClippedSubviews={true} 
+                removeClippedSubviews={true}
                 
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewabilityConfig}
@@ -383,6 +415,12 @@ export default function MainScreen({ navigation }) {
                     isLoadingMore ? <ActivityIndicator size="small" color="#800000" style={{margin: 20}} /> : null
                 }
             />
+
+            {isTrimming && (
+                <View style={styles.trimmingOverlay}>
+                    <ActivityIndicator size="large" color="#800000" />
+                </View>
+            )}
 
             <FilterModal 
                 visible={filterModalVisible} 
@@ -421,5 +459,12 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: 'bold',
         fontSize: 16,
-    }
+    },
+    trimmingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'black',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 999,
+    },
 });
