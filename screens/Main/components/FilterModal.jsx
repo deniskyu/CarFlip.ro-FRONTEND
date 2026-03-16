@@ -75,6 +75,12 @@ export default function FilterModal({ visible, onClose, navigation }) {
     const debounceTimer = useRef(null);
 
     useEffect(() => {
+        return () => {
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        };
+    }, []);
+
+    useEffect(() => {
         if (visible) {
             fetchBrands();
         }

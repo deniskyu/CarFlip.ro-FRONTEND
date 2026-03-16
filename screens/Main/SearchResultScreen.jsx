@@ -75,12 +75,14 @@ export default function SearchResultScreen() {
             activeIndexRef.current = newIndex;
             emitter.emit('visible_index_changed_search', newIndex); 
 
-            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2);
+            const toPreload = [];
+            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 3);
             nextPosts.forEach(post => {
                 if (post?.media?.[0]?.type === 'image') {
-                    FastImage.preload([{ uri: post.media[0].url }]);
+                    toPreload.push({ uri: post.media[0].url });
                 }
             });
+            if (toPreload.length > 0) FastImage.preload(toPreload);
                    
     
             viewableItems.forEach(item => {
@@ -180,6 +182,11 @@ export default function SearchResultScreen() {
                         setResults([{ _id: 'no_results_marker', isNoResults: true }]);
                         setHasMore(false);
                     } else {
+                        const toPreload = newItems
+                        .filter(p => p.media?.[0]?.type === 'image')
+                        .slice(0, 3)
+                        .map(p => ({ uri: p.media[0].url }));
+                        if (toPreload.length > 0) FastImage.preload(toPreload);
                         if (newItems.length < PAGE_LIMIT) {
                             setResults([...newItems, { _id: 'end_marker', isEnd: true }]);
                             setHasMore(false);

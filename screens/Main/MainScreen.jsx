@@ -91,12 +91,14 @@ export default function MainScreen({ navigation }) {
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
 
-            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2);
+            const toPreload = [];
+            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 3);
             nextPosts.forEach(post => {
                 if (post?.media?.[0]?.type === 'image') {
-                    FastImage.preload([{ uri: post.media[0].url }]);
+                    toPreload.push({ uri: post.media[0].url });
                 }
             });
+            if (toPreload.length > 0) FastImage.preload(toPreload);
                         
             viewableItems.forEach(item => {
                 if (item.item && !item.item.isSeparator && !item.item.isHistory && item.item._id) {
@@ -165,6 +167,12 @@ export default function MainScreen({ navigation }) {
                         const finalList = priorityPost 
                             ? [priorityPost, separator, ...historyPosts] 
                             : [separator, ...historyPosts];              
+
+                        const toPreload = finalList
+                        .filter(p => p.media?.[0]?.type === 'image')
+                        .slice(0, 3)
+                        .map(p => ({ uri: p.media[0].url }));
+                        if (toPreload.length > 0) FastImage.preload(toPreload);
                             
                         setSales(finalList.length > 0 ? finalList : []);
                     } else {
@@ -192,6 +200,12 @@ export default function MainScreen({ navigation }) {
                 if (isRefresh) {
                     historyLoopRef.current = 0;
                     const finalList = priorityPost ? [priorityPost, ...newPosts] : newPosts;
+                    const toPreload = finalList
+                    .filter(p => p.media?.[0]?.type === 'image')
+                    .slice(0, 3)
+                    .map(p => ({ uri: p.media[0].url }));
+                    if (toPreload.length > 0) FastImage.preload(toPreload);
+                    
                     setSales(finalList);
                 } else {
                     const loopIndexSnapshot = historyLoopRef.current;

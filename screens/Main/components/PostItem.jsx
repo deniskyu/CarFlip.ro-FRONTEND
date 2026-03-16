@@ -376,10 +376,15 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     const onViewableItemsChanged = useRef(({ viewableItems }) => {
         if (viewableItems && viewableItems.length > 0) {
             setCurrentIndex(viewableItems[0].index);
-            const nextIdx = viewableItems[0].index + 1;
-            if (nextIdx < slidesData.length && !slidesData[nextIdx].isSummary) {
-                FastImage.preload([{ uri: slidesData[nextIdx].url }]);
+            const curr = viewableItems[0].index;
+            const toPreload = [];
+            for (let i = 1; i <= 2; i++) {
+                const idx = curr + i;
+                if (idx < slidesData.length && slidesData[idx].url && !slidesData[idx].isSummary) {
+                    toPreload.push({ uri: slidesData[idx].url });
+                }
             }
+            if (toPreload.length > 0) FastImage.preload(toPreload);
         }
     }).current;
     

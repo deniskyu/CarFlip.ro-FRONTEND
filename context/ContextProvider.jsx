@@ -33,7 +33,6 @@ export default function ContextProvider({children}){
     const activeChatConversationRef = useRef(null);
 
     const connectSocket = async () => {
-        console.log('🔌 [Socket] Încerc conectare la:', assets.url);
         try {
             const creds = await getCreds();
             if (!creds?.accessToken) return;

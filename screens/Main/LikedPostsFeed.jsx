@@ -54,14 +54,16 @@ export default function LikedPostsFeed() {
             const newIndex = viewableItems[0].index;
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
-            emitter.emit('visible_index_changed', newIndex); 
+            emitter.emit('visible_index_changed_liked', newIndex)
     
-            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2);
+            const toPreload = [];
+            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 3);
             nextPosts.forEach(post => {
                 if (post?.media?.[0]?.type === 'image') {
-                    FastImage.preload([{ uri: post.media[0].url }]);
+                    toPreload.push({ uri: post.media[0].url });
                 }
             });
+            if (toPreload.length > 0) FastImage.preload(toPreload);
         }
     }).current;
 
@@ -153,9 +155,10 @@ export default function LikedPostsFeed() {
                 index={index}
                 onBackAction={handleBack}
                 pfpIconVisible={!isOwnPost}
+                screenId="liked"
             />
         );
-    }, [currentVisibleIndex, currentUserId]);
+    }, [currentUserId]);
 
     const ListFooter = () => {
         if (!showFooterLoading) return null;
