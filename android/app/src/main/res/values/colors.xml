@@ -4,4 +4,5 @@
     
     <color name="ic_launcher_background">#FFFFFF</color>
     <color name="brand_maroon">#800000</color>
+    <color name="splashBackground">#800000</color>
 </resources>
