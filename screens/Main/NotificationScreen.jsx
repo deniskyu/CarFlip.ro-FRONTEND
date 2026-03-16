@@ -22,6 +22,8 @@ import AlertFilterModal from './components/AlertFilterModal.jsx';
 import { navigate } from '../../helpers/NavigationService.js'; 
 import { emitter } from '../../helpers/eventBus.js'; 
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import { Linking } from 'react-native';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 const COLORS = {
     primary: '#800000',
@@ -59,6 +61,37 @@ export default function NotificationScreen() {
     const [activeTab, setActiveTab] = useState('notifications');
 
     const { setUnreadCount, unreadChatCount } = useContext(Context);
+
+    const checkNotificationPermission = async () => {
+        const permission = Platform.OS === 'ios' 
+            ? PERMISSIONS.IOS.NOTIFICATIONS 
+            : PERMISSIONS.ANDROID.POST_NOTIFICATIONS;
+    
+        const status = await check(permission);
+    
+        if (status === RESULTS.DENIED) {
+            // Nu a fost cerut niciodată — afișăm popup-ul sistemului
+            await request(permission);
+        } else if (status === RESULTS.BLOCKED) {
+            // Userul a refuzat anterior — nu putem arăta popup-ul din nou
+            // Îl direcționăm la Settings
+            Alert.alert(
+                "Notificări dezactivate",
+                "Pentru a primi notificări despre mesaje, comentarii și alerte, activează notificările din setările telefonului.",
+                [
+                    { text: "Anulează", style: "cancel" },
+                    { text: "Deschide Setări", onPress: () => Linking.openSettings() }
+                ]
+            );
+        }
+        // RESULTS.GRANTED → totul e OK, nu facem nimic
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            checkNotificationPermission();
+        }, [])
+    );
 
     useFocusEffect(
         useCallback(() => {
