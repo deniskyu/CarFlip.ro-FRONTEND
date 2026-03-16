@@ -90,7 +90,14 @@ export default function MainScreen({ navigation }) {
             const newIndex = viewableItems[0].index;
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
-            
+
+            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2);
+            nextPosts.forEach(post => {
+                if (post?.media?.[0]?.type === 'image') {
+                    FastImage.preload([{ uri: post.media[0].url }]);
+                }
+            });
+                        
             viewableItems.forEach(item => {
                 if (item.item && !item.item.isSeparator && !item.item.isHistory && item.item._id) {
                     seenQueue.current.add(item.item._id);

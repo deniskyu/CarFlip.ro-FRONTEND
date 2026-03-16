@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'react-native';
 import FlashMessage from "react-native-flash-message";
-//import { StripeProvider } from '@stripe/stripe-react-native';
 
 import IndexNavigation from './navigation/IndexNavigation.jsx';
 import ContextProvider from './context/ContextProvider.jsx';
@@ -24,12 +23,10 @@ export default function App(){
   }, []);
 
   return(
-  //<StripeProvider publishableKey={`${assets.stripe_publishable_key}`} urlScheme="carflip">
-        <ContextProvider key={appKey}>
-            <IndexNavigation />
-            <FlashMessage position="top" /> 
-            <InAppNotification ref={notificationRef} />
-        </ContextProvider>
- //   </StripeProvider>
+    <ContextProvider key={appKey}>
+        <IndexNavigation />
+        <FlashMessage position="top" /> 
+        <InAppNotification ref={notificationRef} />
+    </ContextProvider>
   );
 };

@@ -18,6 +18,7 @@ import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 
 import { useCustomScroll } from "../../helpers/useCustomScroll.js";
 import { ITEM_HEIGHT } from "../../helpers/layout.js";
+import FastImage from '@d11/react-native-fast-image';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,11 +53,11 @@ export default function ActivePostsFeed() {
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
             emitter.emit('visible_index_changed', newIndex); 
-    
+
             const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2);
             nextPosts.forEach(post => {
                 if (post?.media?.[0]?.type === 'image') {
-                    Image.prefetch(post.media[0].url).catch(() => {});
+                    FastImage.preload([{ uri: post.media[0].url }]);
                 }
             });
         }

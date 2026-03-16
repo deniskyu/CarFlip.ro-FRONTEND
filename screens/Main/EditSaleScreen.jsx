@@ -152,8 +152,8 @@ export default function EditSaleScreen({ route, navigation }) {
                         continue;
                     }                
                     if (file.type && file.type.includes('video')) {
-                        if (videoCount >= 2) {
-                            Alert.alert("Info", "Poți avea maxim 2 videoclipuri.");
+                        if (videoCount > 1) {
+                            Alert.alert("Info", "Poți avea maxim 1 videoclip.");
                             continue;
                         }
                         if (file.duration && file.duration > 25) {

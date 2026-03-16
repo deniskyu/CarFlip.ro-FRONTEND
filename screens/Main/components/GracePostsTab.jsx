@@ -14,7 +14,6 @@ import {
     KeyboardAvoidingView,
     Platform
 } from 'react-native';
-//import { useStripe } from '@stripe/stripe-react-native';
 import { assets } from '../../../assets.js';
 import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
 import { showMessage } from 'react-native-flash-message';
@@ -34,7 +33,6 @@ const COLORS = {
 };
 
 export default function GracePostsTab({ headerComponent }) {
-    //const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -118,40 +116,6 @@ export default function GracePostsTab({ headerComponent }) {
         );
     };
 
-    /*const openReactivateModal = () => {
-        setOptionsVisible(false);
-        setDiscountCodeInput('');
-        setValidatedCode('');
-        setDiscountPercentage(0);
-        setDiscountStatus(null);
-        setReactivateModalVisible(true);
-    };
-
-    const validateDiscountCode = async () => {
-        if (!discountCodeInput.trim()) return;
-        setValidatingCode(true);
-        setDiscountStatus(null);
-        try {
-            const response = await axiosAuthGuard.post(`/api/discount/validate/${discountCodeInput.trim()}`);
-            if (response.data.success) {
-                setDiscountPercentage(response.data.percentage_off);
-                setValidatedCode(discountCodeInput.trim());
-                setDiscountStatus({ text: response.data.message, isError: false });
-            } else {
-                setDiscountPercentage(0);
-                setValidatedCode('');
-                setDiscountStatus({ text: response.data.message, isError: true });
-            }
-        } catch (error) {
-            setDiscountPercentage(0);
-            setValidatedCode('');
-            setDiscountStatus({ text: error.response?.data?.message || 'Eroare la validare', isError: true });
-        } finally {
-            setValidatingCode(false);
-        }
-    };*/
-
-
     const handleReactivatePost = async () => {
         if(!selectedPost)
             return;
@@ -177,65 +141,6 @@ export default function GracePostsTab({ headerComponent }) {
             setReactivating(false);
         }
     }
-
-    /*const handleReactivatePost = async () => {
-        if (!selectedPost) return;
-        setReactivating(true);
-
-        try {
-            const payload = validatedCode ? { discount_code: validatedCode } : {};
-            const res = await axiosAuthGuard.post(`/api/sales/reactivate/${selectedPost._id}`, payload);
-
-            if (res.data.success) {
-                if (res.data.requiresPayment && res.data.clientSecret) {
-                    const secret = res.data.clientSecret;
-                    const isSetupIntent = secret.startsWith('seti_');
-
-                    const { error: initError } = await initPaymentSheet({
-                        merchantDisplayName: 'CarFlip',
-                        paymentIntentClientSecret: isSetupIntent ? undefined : secret,
-                        setupIntentClientSecret: isSetupIntent ? secret : undefined,
-                        returnURL: 'carflip://stripe-redirect',
-                    });
-
-                    if (initError) {
-                        Alert.alert("Eroare Stripe", initError.message || "Nu s-a putut inițializa plata.");
-                        setReactivating(false);
-                        return;
-                    }
-
-                    const { error: paymentError } = await presentPaymentSheet();
-
-                    if (paymentError) {
-                        showMessage({
-                            type: "warning",
-                            message: "Plată nefinalizată",
-                            description: "Poți încerca din nou mai târziu."
-                        });
-                        setReactivating(false);
-                        return;
-                    }
-                }
-
-                showMessage({
-                    type: "success", 
-                    message: "Succes!", 
-                    description: "Anunțul a fost reactivat și va fi public în scurt timp."
-                });
-                emitter.emit('refresh_active_posts');
-                setReactivateModalVisible(false);
-                fetchPosts();
-                
-            } else {
-                Alert.alert("Eroare", res.data.message || "Ceva nu a mers bine.");
-            }
-        } catch (error) {
-            console.log("Reactivate Error:", error);
-            Alert.alert("Eroare", "Nu s-a putut conecta la server.");
-        } finally {
-            setReactivating(false);
-        }
-    };*/
 
     const formatPrice = (price) => new Intl.NumberFormat('de-DE').format(price);
     const formatKm = (km) => new Intl.NumberFormat('de-DE').format(km);
@@ -382,76 +287,6 @@ export default function GracePostsTab({ headerComponent }) {
                     style={styles.optionsModalOverlay}
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 >
-                   {/* <View style={[styles.optionsModalContent, { paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 20 }]}>
-                        <View style={styles.handleBarContainer}>
-                            <View style={styles.handleBar} />
-                        </View>
-                        
-                        <View style={styles.reactivateHeader}>
-                            <Text style={styles.reactivateTitle}>Reactivare Anunț</Text>
-                            <Pressable onPress={() => setReactivateModalVisible(false)}>
-                                <Text style={styles.closeText}>Închide</Text>
-                            </Pressable>
-                        </View>
-
-                        <Text style={styles.label}>Cod de reducere (Opțional)</Text>
-                        <View style={styles.discountRow}>
-                            <View style={[styles.inputSelector, styles.discountInput]}>
-                                <TextInput 
-                                    style={styles.inputText}
-                                    placeholder="Introdu codul..."
-                                    placeholderTextColor={COLORS.placeholder}
-                                    autoCapitalize="characters"
-                                    value={discountCodeInput}
-                                    onChangeText={(text) => {
-                                        setDiscountCodeInput(text);
-                                        if (discountStatus) setDiscountStatus(null);
-                                    }}
-                                />
-                            </View>
-                            <Pressable 
-                                style={[styles.applyButton, validatingCode && {opacity: 0.7}]} 
-                                onPress={validateDiscountCode}
-                                disabled={validatingCode}
-                            >
-                                {validatingCode ? (
-                                    <ActivityIndicator color="#FFF" size="small" />
-                                ) : (
-                                    <Text style={styles.applyButtonText}>Aplică</Text>
-                                )}
-                            </Pressable>
-                        </View>
-                        {discountStatus && (
-                            <Text style={[styles.discountStatusText, { color: discountStatus.isError ? '#D32F2F' : '#388E3C' }]}>
-                                {discountStatus.text}
-                            </Text>
-                        )}
-
-                        <View style={styles.totalContainer}>
-                            <Text style={styles.totalLabel}>Total de plată:</Text>
-                            <View style={styles.totalPriceContainer}>
-                                {discountPercentage > 0 && (
-                                    <Text style={styles.oldPrice}>{basePrice} RON</Text>
-                                )}
-                                <Text style={styles.finalPrice}>{finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)} RON</Text>
-                                <Text style={styles.lunarText}> (lunar)</Text>
-                            </View>
-                        </View>
-
-                        <Pressable 
-                            style={[styles.payButton, reactivating && { opacity: 0.7 }]} 
-                            onPress={handleReactivatePost}
-                            disabled={reactivating}
-                        >
-                            {reactivating ? (
-                                <ActivityIndicator color="#FFF" />
-                            ) : (
-                                <Text style={styles.payButtonText}>
-                                    {finalPrice === 0 ? 'ACTIVEAZĂ GRATUIT' : 'PLĂTEȘTE ȘI ACTIVEAZĂ'}
-                                </Text>
-                            )}
-                        </Pressable>
-                    </View>*/}
                 </KeyboardAvoidingView>
             </Modal>
         </View>

@@ -74,6 +74,14 @@ export default function SearchResultScreen() {
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
             emitter.emit('visible_index_changed_search', newIndex); 
+
+            const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2);
+            nextPosts.forEach(post => {
+                if (post?.media?.[0]?.type === 'image') {
+                    FastImage.preload([{ uri: post.media[0].url }]);
+                }
+            });
+                   
     
             viewableItems.forEach(item => {
                 if (item.item && !item.item.isNoResults && !item.item.isEnd && item.item._id) {

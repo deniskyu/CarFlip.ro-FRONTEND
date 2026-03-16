@@ -147,11 +147,23 @@ export default function PreviewEditSaleScreen({ navigation }) {
                     metadataArray.push({ zoom_level: draftSale.media[i]?.zoom_level || 1 });
                     return {
                         uri: file.uri,
-                        type: file.type || (isVideo ? 'video/mp4' : 'image/jpeg'),
+                        type: isVideo ? 'video/mp4' : 'image/jpeg',
                         fileName: file.fileName || `raw_upload_${Date.now()}_${i}.${isVideo ? 'mp4' : 'jpg'}`,
                     };
                 });
     
+                for (const file of files) {
+                    let checkPath = file.uri;
+                    if (checkPath.startsWith('file://')) checkPath = checkPath.replace('file://', '');
+                    const exists = await RNBlobUtil.fs.exists(checkPath);
+                    if (!exists) {
+                        setPublishing(false);
+                        publishingRef.current = false;
+                        Alert.alert("Eroare", "Un fișier media nu mai este accesibil. Te rugăm să re-selectezi pozele.");
+                        return;
+                    }
+                }
+
                 fields.media_metadata = JSON.stringify(metadataArray);
     
                 const data = await uploadWithBlobUtil(

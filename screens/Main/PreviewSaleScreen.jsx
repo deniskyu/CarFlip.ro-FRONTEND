@@ -10,7 +10,6 @@ import {
     StatusBar
 } from 'react-native';
 import Slider from '@react-native-community/slider';
-//import { useStripe } from '@stripe/stripe-react-native';
 import { showMessage } from 'react-native-flash-message';
 import Animated, { 
     useSharedValue, 
@@ -125,7 +124,6 @@ const uploadWithBlobUtil = async (endpoint, fields, files, method = 'POST') => {
 
 export default function PreviewSaleScreen({ navigation }) {
     const { draftSale, setDraftSale } = useContext(Context);
-    //const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
@@ -192,18 +190,33 @@ export default function PreviewSaleScreen({ navigation }) {
                 allow_comments: String(draftSale.allow_comments),
             };
 
-            /*if (draftSale.discount_code) {
-                fields.discount_code = draftSale.discount_code;
-            }*/
 
-            const files = draftSale.media.map((file, i) => {
-                metadataArray.push({ zoom_level: file.zoom_level || 1 });
-                return {
-                    uri: file.uri,
-                    type: file.type || (file.type?.includes('video') ? 'video/mp4' : 'image/jpeg'),
-                    fileName: file.fileName || `raw_upload_${Date.now()}_${i}.${file.type?.includes('video') ? 'mp4' : 'jpg'}`,
-                };
-            });
+                const files = draftSale.media.map((file, i) => {
+                    metadataArray.push({ zoom_level: file.zoom_level || 1 });
+                    const isVideo = file.type && file.type.includes('video');
+                    return {
+                        uri: file.uri,
+                        type: isVideo ? 'video/mp4' : 'image/jpeg',
+                        fileName: file.fileName || `raw_upload_${Date.now()}_${i}.${isVideo ? 'mp4' : 'jpg'}`,
+                    };
+                });
+
+                for (const file of files) {
+                    let checkPath = file.uri;
+                    if (checkPath.startsWith('file://')) checkPath = checkPath.replace('file://', '');
+                    const exists = await RNBlobUtil.fs.exists(checkPath);
+                    if (!exists) {
+                        setPublishing(false);
+                        publishingRef.current = false;
+                        Alert.alert(
+                            "Fișiere expirate",
+                            "Pozele nu mai sunt accesibile. Te rugăm să le re-selectezi.",
+                            [{ text: "OK", onPress: () => navigation.goBack() }]
+                        );
+                        return;
+                    }
+                }
+                
 
             fields.media_metadata = JSON.stringify(metadataArray);
 
@@ -213,49 +226,9 @@ export default function PreviewSaleScreen({ navigation }) {
             // ─────────────────────────────────────────────────────────────────
 
             if (data.success) {
-                /*if (data.requiresPayment && data.clientSecret) {*/
                 if(false){
-                    /*const secret = data.clientSecret;
-                    const isSetupIntent = secret.startsWith('seti_');
-                
-                    const { error: initError } = await initPaymentSheet({
-                        merchantDisplayName: 'CarFlip',
-                        paymentIntentClientSecret: isSetupIntent ? undefined : secret,
-                        setupIntentClientSecret: isSetupIntent ? secret : undefined,
-                        returnURL: 'carflip://stripe-redirect',
-                    });
-                
-                    if (initError) {
-                        publishingRef.current = false;
-                        setPublishing(false);
-                        Alert.alert("Eroare Stripe", initError.message || "Nu s-a putut inițializa plata.");
-                        return;
-                    }
-                
-                    publishingRef.current = false;
-                    setPublishing(false);
-                    
-                    const { error: paymentError } = await presentPaymentSheet();
-                
-                    if (paymentError) {
-                        showMessage({
-                            type: "warning",
-                            message: "Plată nefinalizată",
-                            description: "Postarea anunțului tău nu s-a finalizat."
-                        });
-                    } else {
-                        showMessage({
-                            type: "success",
-                            message: "Succes!",
-                            description: "Plata a fost procesată! Serverul prelucrează acum pozele."
-                        });
-                        emitter.emit('refresh_active_posts');
-                        emitter.emit('reset_sale_form');
-                        setTimeout(() => setDraftSale(null), 300);
-                        navigation.navigate("ProfileTab");
-                    }*/
+                    /*logica*/
                 } else {
-                    // Cod 100% reducere — fără plată
                     setPublishing(false);
                     showMessage({
                         type: "success",

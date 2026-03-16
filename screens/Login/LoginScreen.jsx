@@ -15,6 +15,7 @@ export default function LoginScreen({ navigation }){
   const {url, logInContext} = useContext(Context);
 
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState('');
   const [data, setData] = useState({
     email: '',
@@ -121,16 +122,21 @@ export default function LoginScreen({ navigation }){
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Parolă</Text>
-            <TextInput 
-              onChangeText={(val) => onChangeHandler('password', val)}
-              value={data.password}
-              style={styles.inputBox}
-              secureTextEntry
-              maxLength={32}
-              placeholder="Introdu parola"
-              placeholderTextColor="rgba(255,255,255,0.5)"
-            />
-          </View>
+            <View style={styles.passwordContainer}>
+                <TextInput 
+                    onChangeText={(val) => onChangeHandler('password', val)}
+                    value={data.password}
+                    style={styles.passwordInput}
+                    secureTextEntry={!showPassword}
+                    maxLength={32}
+                    placeholder="Introdu parola"
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                />
+                <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
+                    <Image source={assets.view_icon} style={[styles.eyeIcon, showPassword && { opacity: 0.5 }]} />
+                </Pressable>
+            </View>
+        </View>
 
           <View style={styles.forgotPasswordBox}>
             <Pressable onPress={() => navigation.navigate('ForgotPasswordScreen')}>
@@ -299,5 +305,31 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: 2,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 14,
+  },
+  passwordInput: {
+      flex: 1,
+      height: 60,
+      paddingHorizontal: 18,
+      fontSize: 18,
+      color: '#FFFFFF',
+  },
+  eyeIconContainer: {
+      padding: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  eyeIcon: {
+      width: 20,
+      height: 20,
+      resizeMode: 'contain',
+      tintColor: 'rgba(255,255,255,0.7)',
   },
 });

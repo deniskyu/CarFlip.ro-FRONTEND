@@ -255,8 +255,8 @@ export default function AddSaleScreen({ navigation }) {
                         continue;
                     }                
                     if (file.type && file.type.includes('video')) {
-                        if (videoCount >= 2) {
-                            Alert.alert("Info", "Poți avea maxim 2 videoclipuri.");
+                        if (videoCount > 1) {
+                            Alert.alert("Info", "Poți avea maxim 1 videoclip.");
                             continue;
                         }
                         if (file.duration && file.duration > 25) {
@@ -471,29 +471,6 @@ export default function AddSaleScreen({ navigation }) {
         }
     };
 
-    /*const validateDiscountCode = async () => {
-        if (!discountCodeInput.trim()) return;
-        setValidatingCode(true);
-        setDiscountStatus(null);
-        try {
-            const response = await axiosAuthGuard.post(`/api/discount/validate/${discountCodeInput.trim()}`);
-            if (response.data.success) {
-                setDiscountPercentage(response.data.percentage_off);
-                setValidatedCode(discountCodeInput.trim());
-                setDiscountStatus({ text: response.data.message, isError: false });
-            } else {
-                setDiscountPercentage(0);
-                setValidatedCode('');
-                setDiscountStatus({ text: response.data.message, isError: true });
-            }
-        } catch (error) {
-            setDiscountPercentage(0);
-            setValidatedCode('');
-            setDiscountStatus({ text: error.response?.data?.message || 'Eroare la validare', isError: true });
-        } finally {
-            setValidatingCode(false);
-        }
-    };*/
 
     const handleNavigateToPreview = () => {
         const hasPhoto = media.some(file => file.type && file.type.includes('image'));
@@ -534,8 +511,6 @@ export default function AddSaleScreen({ navigation }) {
             phone_number: phoneNumber,
             description: description,
             allow_comments: !disableComments,
-            /*discount_code: validatedCode,
-            discountPercentage: discountPercentage*/
         };
 
         setDraftSale(draftData);
@@ -562,7 +537,7 @@ export default function AddSaleScreen({ navigation }) {
                     
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Imagini & Video ({media.length}/10)</Text>
-                        <Text style={styles.sectionSubtitle}>Maxim 10 fișiere (max 2 video, max 25s). Imaginile nu pot depăși 15 MB, iar videoclipurile 50 MB.
+                        <Text style={styles.sectionSubtitle}>Maxim 10 fișiere (max 1 video, max 25s). Imaginile nu pot depăși 15 MB, iar videoclipurile 50 MB.
                         </Text>
                         <Text style={[styles.sectionSubtitle, {marginBottom: 4}]}>O imagine este obligatorie, și va fi preview-ul. Procesarea anunțului va dura undeva la câteva minute.</Text>
                         <Text style={[styles.sectionSubtitle, {marginBottom: 12, color: '#800000'}]}>Dupa 3 luni anuntul va fi dezactivat automat. Poti intra la sectiunea de profil pentru a reactiva inca 3 luni anuntul.</Text>
@@ -856,52 +831,6 @@ export default function AddSaleScreen({ navigation }) {
                             </View>
                             <Text style={styles.checkboxLabel}>Oprește comentariile</Text>
                         </Pressable>
-
-                        {/*<Text style={styles.label}>Cod de reducere (Opțional)</Text>
-                        <View style={styles.discountRow}>
-                            <TextInput 
-                                style={[styles.inputSelector, styles.discountInput]}
-                                placeholder="Introdu codul..."
-                                placeholderTextColor={COLORS.placeholder}
-                                autoCapitalize="characters"
-                                value={discountCodeInput}
-                                onChangeText={(text) => {
-                                    setDiscountCodeInput(text);
-                                    if (validatedCode) {
-                                        setValidatedCode('');
-                                        setDiscountPercentage(0);
-                                    }
-                                    if (discountStatus) setDiscountStatus(null);
-                                }}
-                            />
-                            <Pressable 
-                                style={[styles.applyButton, validatingCode && {opacity: 0.7}]} 
-                                onPress={validateDiscountCode}
-                                disabled={validatingCode}
-                            >
-                                {validatingCode ? (
-                                    <ActivityIndicator color="#FFF" size="small" />
-                                ) : (
-                                    <Text style={styles.applyButtonText}>Aplică</Text>
-                                )}
-                            </Pressable>
-                        </View>
-                        {discountStatus && (
-                            <Text style={[styles.discountStatusText, { color: discountStatus.isError ? '#D32F2F' : '#388E3C' }]}>
-                                {discountStatus.text}
-                            </Text>
-                        )}*
-
-                        <View style={styles.totalContainer}>
-                            <Text style={styles.totalLabel}>Total de plată:</Text>
-                            <View style={styles.totalPriceContainer}>
-                                {discountPercentage > 0 && (
-                                    <Text style={styles.oldPrice}>{basePrice} RON</Text>
-                                )}
-                                <Text style={styles.finalPrice}>{finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)} RON</Text>
-                                <Text style={styles.lunarText}> (lunar)</Text>
-                            </View>
-                        </View>*/}
 
                     </View>
 

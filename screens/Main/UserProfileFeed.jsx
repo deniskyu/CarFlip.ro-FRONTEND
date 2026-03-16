@@ -22,6 +22,7 @@ import { useCustomScroll } from "../../helpers/useCustomScroll.js";
 const { width, height } = Dimensions.get('window');
 
 import { ITEM_HEIGHT } from "../../helpers/layout.js";
+import FastImage from '@d11/react-native-fast-image';
 
 export default function UserProfileFeed() {
     const navigation = useNavigation();
@@ -91,8 +92,8 @@ export default function UserProfileFeed() {
     
             const nextPosts = salesRef.current.slice(newIndex + 1, newIndex + 2);
             nextPosts.forEach(post => {
-                if (post?.media?.[0]?.type === 'image') { 
-                    Image.prefetch(post.media[0].url).catch(() => {});
+                if (post?.media?.[0]?.type === 'image') {
+                    FastImage.preload([{ uri: post.media[0].url }]);
                 }
             });
         }
