@@ -89,7 +89,7 @@ export default function NotificationScreen() {
 
     useFocusEffect(
         useCallback(() => {
-            checkNotificationPermission();
+            Platform.OS === 'android' ? checkNotificationPermission() : null;
         }, [])
     );
 
