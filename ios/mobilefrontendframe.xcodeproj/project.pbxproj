@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		201A7FB02F38F397000F305E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 201A7FAF2F38F397000F305E /* GoogleService-Info.plist */; };
+		2055FAA22F68DF9F001A5AD5 /* main.jsbundle in Resources */ = {isa = PBXBuildFile; fileRef = 2055FAA12F68DF9F001A5AD5 /* main.jsbundle */; };
 		206EDA542F6893350011C04C /* logo.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 206EDA532F6893350011C04C /* logo.jpeg */; };
 		3C08B480FAF38D7AF3AC0445 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
@@ -22,6 +23,7 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = mobilefrontendframe/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = mobilefrontendframe/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		201A7FAF2F38F397000F305E /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		2055FAA12F68DF9F001A5AD5 /* main.jsbundle */ = {isa = PBXFileReference; lastKnownFileType = text; path = main.jsbundle; sourceTree = "<group>"; };
 		206EDA532F6893350011C04C /* logo.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = logo.jpeg; sourceTree = "<group>"; };
 		20A9FB252F647CC900BB2E45 /* mobilefrontendframe.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = mobilefrontendframe.entitlements; path = mobilefrontendframe/mobilefrontendframe.entitlements; sourceTree = "<group>"; };
 		2ED092E564E7DB5F1F795ADE /* Pods_mobilefrontendframe.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_mobilefrontendframe.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -111,6 +113,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				2055FAA12F68DF9F001A5AD5 /* main.jsbundle */,
 				13B07FAE1A68108700A75B9A /* mobilefrontendframe */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
@@ -206,6 +209,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2055FAA22F68DF9F001A5AD5 /* main.jsbundle in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				201A7FB02F38F397000F305E /* GoogleService-Info.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
