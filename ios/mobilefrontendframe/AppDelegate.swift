@@ -34,22 +34,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     return true
   }
 
-  // --- MAGIA STRIPE FĂRĂ BRIDGING HEADER ---
   func application(
     _ app: UIApplication,
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey : Any] = [:]
   ) -> Bool {
-    // Căutăm RCTLinkingManager "pe întuneric" în memorie
     if let linkingManager = NSClassFromString("RCTLinkingManager") as? NSObject.Type {
         let selector = NSSelectorFromString("application:openURL:options:")
         if linkingManager.responds(to: selector) {
-            // Transformăm memoria într-o funcție reală de C ca să înghită toți cei 3 parametri
+
             typealias RCTLinkingMethod = @convention(c) (AnyObject, Selector, UIApplication, URL, [UIApplication.OpenURLOptionsKey : Any]) -> Bool
             let imp = linkingManager.method(for: selector)
             let method = unsafeBitCast(imp, to: RCTLinkingMethod.self)
             
-            // Trimitem link-ul de la Stripe mai departe
             return method(linkingManager, selector, app, url, options)
         }
     }
