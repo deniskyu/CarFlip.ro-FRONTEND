@@ -63,28 +63,28 @@ export default function NotificationScreen() {
     const { setUnreadCount, unreadChatCount } = useContext(Context);
 
     const checkNotificationPermission = async () => {
-        const permission = Platform.OS === 'ios' 
-            ? PERMISSIONS.IOS.NOTIFICATIONS 
-            : PERMISSIONS.ANDROID.POST_NOTIFICATIONS;
-    
-        const status = await check(permission);
-    
-        if (status === RESULTS.DENIED) {
-            // Nu a fost cerut niciodată — afișăm popup-ul sistemului
-            await request(permission);
-        } else if (status === RESULTS.BLOCKED) {
-            // Userul a refuzat anterior — nu putem arăta popup-ul din nou
-            // Îl direcționăm la Settings
-            Alert.alert(
-                "Notificări dezactivate",
-                "Pentru a primi notificări despre mesaje, comentarii și alerte, activează notificările din setările telefonului.",
-                [
-                    { text: "Anulează", style: "cancel" },
-                    { text: "Deschide Setări", onPress: () => Linking.openSettings() }
-                ]
-            );
+        try {
+            const permission = Platform.OS === 'ios' 
+                ? PERMISSIONS.IOS.NOTIFICATIONS 
+                : PERMISSIONS.ANDROID.POST_NOTIFICATIONS;
+        
+            const status = await check(permission);
+        
+            if (status === RESULTS.DENIED) {
+                await request(permission);
+            } else if (status === RESULTS.BLOCKED) {
+                Alert.alert(
+                    "Notificări dezactivate",
+                    "Pentru a primi notificări despre mesaje, comentarii și alerte, activează notificările din setările telefonului.",
+                    [
+                        { text: "Anulează", style: "cancel" },
+                        { text: "Deschide Setări", onPress: () => Linking.openSettings() }
+                    ]
+                );
+            }
+        } catch (e) {
+            console.log("Permission check failed:", e);
         }
-        // RESULTS.GRANTED → totul e OK, nu facem nimic
     };
 
     useFocusEffect(
