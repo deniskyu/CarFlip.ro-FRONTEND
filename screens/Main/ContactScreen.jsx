@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View, Text, StatusBar, ScrollView, Linking } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
-const CONTACT_EMAIL = 'carflip13@gmail.com';
+const CONTACT_EMAIL = 'carfip.ro@outlook.com';
 
 export default function ContactScreen() {
     const navigation = useNavigation();

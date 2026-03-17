@@ -1,6 +1,5 @@
 const url = 'https://car-flip.com';
 const app_version = 1;
-//const stripe_publishable_key = 'pk_test_51T0ljYPoKOC7bpc8NkVeCcKLwmv84Rjlr9xZFkOdSW3qvkvYMVkQITwu4bCDx9Hi18BF4oCFbLRU99AmvC5V08vg00Uue1HRPY';
 
 import back_arrow from './media/back_arrow.png';
 import comments_icon from './media/comments_icon.png';
@@ -38,7 +37,6 @@ export const assets = {
     edit_icon,
     grid_icon,
     settings_icon,
-//    stripe_publishable_key,
     vertical_dots,
     back_arrow,
     comments_icon,

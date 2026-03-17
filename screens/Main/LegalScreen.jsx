@@ -120,11 +120,10 @@ export default function LegalScreen() {
                 <Text style={styles.bulletItem}>• Conținut generat: anunțuri, fotografii, descrieri, comentarii, mesaje private</Text>
                 <Text style={styles.bulletItem}>• Date tehnice: token-uri de notificare (Firebase Cloud Messaging), tipul dispozitivului</Text>
                 <Text style={styles.bulletItem}>• Date de utilizare: interacțiuni cu anunțurile (vizualizări, aprecieri)</Text>
-                <Text style={styles.bulletItem}>• Date de plată: procesate exclusiv prin Stripe — CarFlip nu stochează și nu are acces la datele cardului bancar</Text>
 
                 <Text style={styles.subtitle}>2.2 Scopul colectării</Text>
                 <Text style={styles.paragraph}>
-                    Datele personale sunt colectate și prelucrate în următoarele scopuri: furnizarea și îmbunătățirea continuă a serviciului, trimiterea de notificări relevante (comentarii, mesaje, alerte), procesarea plăților prin Stripe, prevenirea fraudei și a utilizării abuzive a platformei, și comunicări tranzacționale legate de cont (coduri de verificare, resetare parolă).
+                    Datele personale sunt colectate și prelucrate în următoarele scopuri: furnizarea și îmbunătățirea continuă a serviciului, trimiterea de notificări relevante (comentarii, mesaje, alerte), prevenirea fraudei și a utilizării abuzive a platformei, și comunicări tranzacționale legate de cont (coduri de verificare, resetare parolă).
                 </Text>
                 <Text style={styles.paragraph}>
                     Nu trimitem email-uri de marketing sau newsletter. Toate comunicările prin email sunt strict tranzacționale.
@@ -132,7 +131,7 @@ export default function LegalScreen() {
 
                 <Text style={styles.subtitle}>2.3 Stocarea și securitatea datelor</Text>
                 <Text style={styles.paragraph}>
-                    Datele sunt stocate pe servere securizate cu acces restricționat. Parolele sunt criptate utilizând algoritmul bcrypt și nu sunt niciodată stocate în text clar. Fotografiile și fișierele video sunt găzduite pe infrastructura Cloudflare R2. Plățile sunt procesate integral de Stripe — datele cardului bancar nu tranzitează și nu sunt stocate pe serverele CarFlip.
+                    Datele sunt stocate pe servere securizate cu acces restricționat. Parolele sunt criptate utilizând algoritmul bcrypt și nu sunt niciodată stocate în text clar. Fotografiile și fișierele video sunt găzduite pe infrastructura Cloudflare R2.
                 </Text>
 
                 <Text style={styles.subtitle}>2.4 Mesaje private</Text>
@@ -144,7 +143,6 @@ export default function LegalScreen() {
                 <Text style={styles.paragraph}>
                     CarFlip nu vinde, nu închiriază și nu distribuie datele personale ale utilizatorilor. Datele sunt partajate exclusiv cu următorii furnizori de servicii, strict în scopul funcționării platformei:
                 </Text>
-                <Text style={styles.bulletItem}>• Stripe — procesarea plăților</Text>
                 <Text style={styles.bulletItem}>• Mailgun — transmiterea email-urilor tranzacționale</Text>
                 <Text style={styles.bulletItem}>• Firebase Cloud Messaging — transmiterea notificărilor push</Text>
                 <Text style={styles.bulletItem}>• Cloudflare R2 — stocarea fișierelor media</Text>
