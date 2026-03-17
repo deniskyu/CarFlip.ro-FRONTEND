@@ -17,7 +17,7 @@ import {
     Share
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { assets } from '../../assets.js';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import { showMessage } from 'react-native-flash-message';
@@ -37,6 +37,7 @@ const COLORS = {
 
 export default function ProfileScreen() {
     const navigation = useNavigation();
+    const route = useRoute();
 
     const {url} = useContext(Context);
 
@@ -45,6 +46,13 @@ export default function ProfileScreen() {
     const [uploading, setUploading] = useState(false);
 
     const [activeTab, setActiveTab] = useState('active');
+
+    useEffect(() => {
+        if (route.params?.initialTab) {
+            setActiveTab(route.params.initialTab);
+            navigation.setParams({ initialTab: undefined });
+        }
+    }, [route.params?.initialTab]);
 
     const [userData, setUserData] = useState({
         username: "",

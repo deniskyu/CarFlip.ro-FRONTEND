@@ -318,7 +318,15 @@ export default function NotificationScreen() {
             axiosAuthGuard.put(`/api/notifications/${item._id}/read`).catch(err => console.log(err));
         }
 
-        if (item.sale_id) {
+        if (item.type === 'GRACE_PERIOD') {
+            navigate('ProfileTab', {
+                screen: 'ProfileDrawer',
+                params: {
+                    screen: 'Profile',
+                    params: { initialTab: 'grace' }
+                }
+            });
+        } else if (item.sale_id) {
             navigate('HomeTab', {
                 screen: 'MainScreen',
                 params: {

@@ -282,7 +282,15 @@ export default function ContextProvider({children}){
                         params: { conversationId }
                     });
                 }
-            } else {
+            } else if (pendingNotification.type === 'GRACE_PERIOD') {
+                navigate('ProfileTab', {
+                    screen: 'ProfileDrawer',
+                    params: {
+                        screen: 'Profile',
+                        params: { initialTab: 'grace' }
+                    }
+                });}
+            else {
                 navigate('HomeTab', {
                     screen: 'MainScreen',
                     params: {
