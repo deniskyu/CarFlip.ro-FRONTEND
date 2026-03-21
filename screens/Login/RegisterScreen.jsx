@@ -435,6 +435,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(8, 21, 57, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 20,
   },
   modalContainer: {
     width: '90%',
@@ -449,10 +450,10 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#081539',
-    marginBottom: 12,
+    marginBottom: 10,
     textAlign: 'center',
   },
   modalSubtitle: {

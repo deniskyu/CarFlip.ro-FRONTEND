@@ -10,7 +10,6 @@ import {
     Pressable,
     AppState,
     Platform,
-    useWindowDimensions,
     PixelRatio
 } from "react-native";
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -20,18 +19,29 @@ import FilterModal from "./components/FilterModal.jsx";
 import PostItem from "./components/PostItem.jsx";
 import { emitter } from "../../helpers/eventBus.js";
 import FastImage from '@d11/react-native-fast-image';
-
 import { useCustomScroll } from "../../helpers/useCustomScroll.js"; 
 import { showMessage } from "react-native-flash-message";
+import { Layout, calibrateItemHeight } from "../../helpers/layout.js";
 
 const { width, height } = Dimensions.get('window');
-
-import { ITEM_HEIGHT } from "../../helpers/layout.js";
 
 const MAX_ITEMS = 50;
 
 export default function MainScreen({ navigation }) {
     const route = useRoute(); 
+
+    const [itemHeight, setItemHeight] = useState(Layout.ITEM_HEIGHT);
+
+    const handleContainerLayout = useCallback((event) => {
+        const { height: containerH } = event.nativeEvent.layout;
+        const rounded = PixelRatio.roundToNearestPixel(containerH);
+        if (!Layout.calibrated) {
+            calibrateItemHeight(rounded);
+        }
+        if (rounded !== itemHeight) {
+            setItemHeight(rounded);
+        }
+    }, [itemHeight]);
 
     const [sales, setSales] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -70,7 +80,7 @@ export default function MainScreen({ navigation }) {
     const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 60 }).current;
 
     const { flatListRef, activeIndexRef, scrollProps } = useCustomScroll({ 
-        itemHeight: ITEM_HEIGHT, 
+        itemHeight: itemHeight,
         dataLength: sales ? sales.length : 0 
     });
 
@@ -255,7 +265,7 @@ export default function MainScreen({ navigation }) {
 
                 setTimeout(() => {
                     if (flatListRef.current) {
-                        flatListRef.current.scrollToOffset({ offset: newIdx * ITEM_HEIGHT, animated: false });
+                        flatListRef.current.scrollToOffset({ offset: newIdx * itemHeight, animated: false });
                     }
                     setIsTrimming(false);
                     isResettingRef.current = false;
@@ -323,7 +333,6 @@ export default function MainScreen({ navigation }) {
             if (flatListRef.current) {
                 flatListRef.current.scrollToOffset({ offset: 0, animated: true });
             }
-
             handleRefresh();
         };
 
@@ -364,10 +373,11 @@ export default function MainScreen({ navigation }) {
             item={item} 
             index={index}
             screenId="main"
+            itemHeight={itemHeight}
             initialOpenComments={item.isPriority && !!targetCommentId}
             targetCommentId={item.isPriority ? targetCommentId : null}
         />
-    ), [targetCommentId]);
+    ), [targetCommentId, itemHeight]);
 
     if (loading && (!sales || sales.length === 0)) {
         return (
@@ -400,43 +410,45 @@ export default function MainScreen({ navigation }) {
 
             <SearchBar onPress={() => setFilterModalVisible(true)} />
 
-            <FlatList
-                ref={flatListRef}
-                data={sales}
-                renderItem={renderItem} 
-                keyExtractor={(item, index) => {
-                    if (item.isSeparator) return item._id || `separator_${index}`;
+            <View style={{ flex: 1 }} onLayout={handleContainerLayout}>
+                <FlatList
+                    ref={flatListRef}
+                    data={sales}
+                    renderItem={renderItem} 
+                    keyExtractor={(item, index) => {
+                        if (item.isSeparator) return item._id || `separator_${index}`;
+                        if (item.isHistory) {
+                            return `${item._id}_history_${item.loopIndex || 0}_${index}`;
+                        }
+                        return item._id ? item._id.toString() : `item_${index}`;
+                    }}
                     
-                    if (item.isHistory) {
-                        return `${item._id}_history_${item.loopIndex || 0}_${index}`;
-                    }
+                    {...scrollProps}
                     
-                    return item._id ? item._id.toString() : `item_${index}`;
-                }}
-                
-                {...scrollProps}
-                
-                getItemLayout={(data, index) => (
-                    { length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index }
-                )}
-                initialNumToRender={2}
-                windowSize={3}
-                maxToRenderPerBatch={2}
-                removeClippedSubviews={true}
-                
-                onViewableItemsChanged={onViewableItemsChanged}
-                viewabilityConfig={viewabilityConfig}
+                    getItemLayout={(data, index) => ({
+                        length: itemHeight,
+                        offset: itemHeight * index,
+                        index
+                    })}
+                    initialNumToRender={2}
+                    windowSize={3}
+                    maxToRenderPerBatch={2}
+                    removeClippedSubviews={true}
+                    
+                    onViewableItemsChanged={onViewableItemsChanged}
+                    viewabilityConfig={viewabilityConfig}
 
-                onRefresh={handleRefresh}
-                refreshing={refreshing}
-                
-                onEndReached={handleLoadMore}
-                onEndReachedThreshold={3} 
-                
-                ListFooterComponent={() => 
-                    isLoadingMore ? <ActivityIndicator size="small" color="#800000" style={{margin: 20}} /> : null
-                }
-            />
+                    onRefresh={handleRefresh}
+                    refreshing={refreshing}
+                    
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={3} 
+                    
+                    ListFooterComponent={() => 
+                        isLoadingMore ? <ActivityIndicator size="small" color="#800000" style={{margin: 20}} /> : null
+                    }
+                />
+            </View>
 
             {isTrimming && (
                 <View style={styles.trimmingOverlay}>

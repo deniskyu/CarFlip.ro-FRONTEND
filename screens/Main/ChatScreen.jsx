@@ -24,6 +24,7 @@ import { formatMessageTime, uploadChatImage } from '../../helpers/chatHelper.js'
 import { emitter } from '../../helpers/eventBus.js';
 import { Context } from '../../context/Context.js';
 import { assets } from '../../assets.js';
+import { TAB_BAR_HEIGHT } from '../../helpers/layout.js';
 
 const COLORS = {
     primary: '#800000',
@@ -586,7 +587,7 @@ export default function ChatScreen({ route, navigation }) {
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : TAB_BAR_HEIGHT}
             >
                 {loading ? (
                     <View style={styles.loadingContainer}>

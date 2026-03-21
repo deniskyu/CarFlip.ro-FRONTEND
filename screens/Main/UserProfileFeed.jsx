@@ -16,18 +16,18 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import PostItem from './components/PostItem.jsx';
 import { emitter } from '../../helpers/eventBus.js';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js'; 
-
 import { useCustomScroll } from "../../helpers/useCustomScroll.js";
+import { Layout } from "../../helpers/layout.js";
+import FastImage from '@d11/react-native-fast-image';
 
 const { width, height } = Dimensions.get('window');
-
-import { ITEM_HEIGHT } from "../../helpers/layout.js";
-import FastImage from '@d11/react-native-fast-image';
 
 export default function UserProfileFeed() {
     const navigation = useNavigation();
     const route = useRoute();
     const { posts, initialIndex, fetchConfig } = route.params;
+
+    const [itemHeight] = useState(Layout.ITEM_HEIGHT);
 
     const [localPosts, setLocalPosts] = useState(posts || []);
     const [currentVisibleIndex, setCurrentVisibleIndex] = useState(initialIndex || 0);
@@ -43,7 +43,7 @@ export default function UserProfileFeed() {
     salesRef.current = localPosts;
 
     const { flatListRef, activeIndexRef, scrollProps } = useCustomScroll({ 
-        itemHeight: ITEM_HEIGHT, 
+        itemHeight: itemHeight, 
         dataLength: localPosts ? localPosts.length : 0,
         initialIndex: initialIndex || 0
     });
@@ -82,7 +82,7 @@ export default function UserProfileFeed() {
             const newIndex = viewableItems[0].index;
             setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
-            emitter.emit('visible_index_changed_profile', newIndex)
+            emitter.emit('visible_index_changed_profile', newIndex);
     
             viewableItems.forEach(item => {
                 if (item.item && item.item._id) {
@@ -100,6 +100,7 @@ export default function UserProfileFeed() {
             if (toPreload.length > 0) FastImage.preload(toPreload);
         }
     }).current;
+
     useEffect(() => {
         const onLikeUpdate = ({ saleId, hasLiked, likesCount }) => {
             setLocalPosts(currentPosts => 
@@ -159,8 +160,8 @@ export default function UserProfileFeed() {
     };
 
     const getItemLayout = (data, index) => ({
-        length: ITEM_HEIGHT,
-        offset: ITEM_HEIGHT * index,
+        length: itemHeight,
+        offset: itemHeight * index,
         index,
     });
 
@@ -175,13 +176,14 @@ export default function UserProfileFeed() {
             onBackAction={handleBack}
             pfpIconVisible={false}
             screenId="profile"
+            itemHeight={itemHeight}
         />
-    ), []);
+    ), [itemHeight]);
 
     const ListFooter = () => {
         if (!showFooterLoading) return null;
         return (
-            <View style={styles.loadingFooter}>
+            <View style={[styles.loadingFooter, { height: itemHeight }]}>
                 <ActivityIndicator size="large" color="#FFFFFF" />
             </View>
         );
@@ -210,7 +212,6 @@ export default function UserProfileFeed() {
                 data={localPosts}
                 renderItem={renderItem}
                 keyExtractor={(item) => item._id.toString()}
-                
 
                 {...scrollProps}
                 
@@ -269,7 +270,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     loadingFooter: {
-        height: ITEM_HEIGHT,
         width: '100%',
         backgroundColor: 'black',
         justifyContent: 'center',

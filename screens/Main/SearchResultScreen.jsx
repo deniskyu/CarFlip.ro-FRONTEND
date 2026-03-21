@@ -16,11 +16,10 @@ import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import PostItem from './components/PostItem.jsx';
 import { emitter } from '../../helpers/eventBus.js'; 
 import FastImage from '@d11/react-native-fast-image';
-
 import { useCustomScroll } from "../../helpers/useCustomScroll.js"; 
+import { Layout } from "../../helpers/layout.js";
 
 const { width, height } = Dimensions.get('window');
-import { ITEM_HEIGHT } from "../../helpers/layout.js";
 
 const MAX_ITEMS = 50;
 const PAGE_LIMIT = 5;
@@ -31,6 +30,8 @@ export default function SearchResultScreen() {
     const { filters } = route.params || {};
 
     const excludeSeenActive = filters?.exclude_seen === 'true' || filters?.exclude_seen === true;
+
+    const [itemHeight] = useState(Layout.ITEM_HEIGHT);
 
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -51,7 +52,7 @@ export default function SearchResultScreen() {
     salesRef.current = results;
 
     const { flatListRef, activeIndexRef, scrollProps } = useCustomScroll({ 
-        itemHeight: ITEM_HEIGHT, 
+        itemHeight: itemHeight, 
         dataLength: results ? results.length : 0 
     });
 
@@ -83,8 +84,7 @@ export default function SearchResultScreen() {
                 }
             });
             if (toPreload.length > 0) FastImage.preload(toPreload);
-                   
-    
+
             viewableItems.forEach(item => {
                 if (item.item && !item.item.isNoResults && !item.item.isEnd && item.item._id) {
                     seenQueue.current.add(item.item._id);
@@ -247,7 +247,7 @@ export default function SearchResultScreen() {
 
                 setTimeout(() => {
                     if (flatListRef.current) {
-                        flatListRef.current.scrollToOffset({ offset: newIdx * ITEM_HEIGHT, animated: false });
+                        flatListRef.current.scrollToOffset({ offset: newIdx * itemHeight, animated: false });
                     }
                     setIsTrimming(false);
                     isResettingRef.current = false;
@@ -274,9 +274,10 @@ export default function SearchResultScreen() {
             item={item} 
             index={index}
             screenId="search"
+            itemHeight={itemHeight}
             onBackToFeed={handleBackToFeed}
         />
-    ), []);
+    ), [itemHeight]);
 
     return (
         <View style={styles.container}>
@@ -313,9 +314,11 @@ export default function SearchResultScreen() {
                     
                     {...scrollProps}
 
-                    getItemLayout={(data, index) => (
-                        { length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index }
-                    )}
+                    getItemLayout={(data, index) => ({
+                        length: itemHeight,
+                        offset: itemHeight * index,
+                        index
+                    })}
                     initialNumToRender={2}
                     windowSize={3}
                     maxToRenderPerBatch={2}

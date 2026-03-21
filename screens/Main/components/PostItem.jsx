@@ -26,13 +26,56 @@ import { emitter } from '../../../helpers/eventBus.js';
 
 const { width, height } = Dimensions.get('window');
 
-import { ITEM_HEIGHT } from '../../../helpers/layout.js';
+import { ITEM_HEIGHT, UI_SCALE, SUMMARY_SCALE } from '../../../helpers/layout.js';
 import FastImage from '@d11/react-native-fast-image';
 
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
-const FeedSeparator = () => (
-    <View style={styles.separatorContainer}>
+const sc = UI_SCALE;
+const scaled = {
+    iconSize: Math.round(30 * sc),
+    profileSize: Math.round(45 * sc),
+    profileRadius: Math.round(22.5 * sc),
+    profileBorderRadius: Math.round(25 * sc),
+    actionMargin: Math.round(20 * sc),
+    rightActionsBottom: Math.round(50 * sc),
+    bottomOverlayBottom: Math.round(20 * sc),
+    userNameFont: 16 * sc,
+    locationFont: 15 * sc,
+    brandFont: 16.5 * sc,
+    priceFont: 19 * sc,
+    tagFont: 12 * sc,
+    actionFont: 11 * sc,
+    tagPadV: Math.round(4 * sc),
+    tagPadH: Math.round(8 * sc),
+    tagsRowMargin: Math.round(18 * sc),
+};
+
+const ssc = SUMMARY_SCALE;
+const summaryScaled = {
+    titleFont: 24 * ssc,
+    priceFont: 22 * ssc,
+    negotiableFont: 14 * ssc,
+    priceMargin: Math.round(16 * ssc),
+    tagPadV: Math.round(5 * ssc),
+    tagPadH: Math.round(9 * ssc),
+    tagFont: 13 * ssc,
+    tagsMargin: Math.round(10 * ssc),
+    descLabelFont: 16 * ssc,
+    descContainerHeight: Math.round(164 * ssc),
+    descFont: 15 * ssc,
+    descLineHeight: Math.round(22 * ssc),
+    descPad: Math.round(10 * ssc),
+    descMargin: Math.round(12 * ssc),
+    locationFont: 18 * ssc,
+    phoneFont: 14 * ssc,
+    locationPadTop: Math.round(15 * ssc),
+    slidePadding: Math.round(20 * ssc),
+    slidePaddingTop: Math.round(122 * ssc),
+};
+
+const FeedSeparator = ({ itemHeight }) => (
+    <View style={[styles.separatorContainer, { height: itemHeight }]}>
         <View style={styles.separatorLine} />
         <View style={styles.separatorContent}>
             <Text style={styles.separatorCheck}>🎆</Text> 
@@ -44,8 +87,8 @@ const FeedSeparator = () => (
     </View>
 );
 
-const NoResultsSlide = ({ onBack }) => (
-    <View style={styles.separatorContainer}>
+const NoResultsSlide = ({ onBack, itemHeight }) => (
+    <View style={[styles.separatorContainer, { height: itemHeight }]}>
         <View style={styles.separatorContent}>
             <Text style={styles.emoji}>🔍</Text>
             <Text style={styles.separatorTitle}>Niciun rezultat găsit</Text>
@@ -57,8 +100,8 @@ const NoResultsSlide = ({ onBack }) => (
     </View>
 );
 
-const EndOfResults = ({ onBackToFeed }) => (
-    <View style={styles.separatorContainer}>
+const EndOfResults = ({ onBackToFeed, itemHeight }) => (
+    <View style={[styles.separatorContainer, { height: itemHeight }]}>
         <View style={styles.separatorLine} />
         <View style={styles.separatorContent}>
             <Text style={styles.separatorCheck}>🏁</Text> 
@@ -69,99 +112,99 @@ const EndOfResults = ({ onBackToFeed }) => (
     </View>
 );
 
-const SummarySlide = ({ item, formatPrice, formatKm }) => (
-    <View style={styles.summarySlide}>
-        <Text style={styles.summaryTitle}>
+const SummarySlide = ({ item, formatPrice, formatKm, itemHeight }) => (
+    <View style={[styles.summarySlide, { height: itemHeight, padding: summaryScaled.slidePadding, paddingTop: summaryScaled.slidePaddingTop }]}>
+        <Text style={[styles.summaryTitle, { fontSize: summaryScaled.titleFont }]}>
             {item.brand.name} {item.model.name}
         </Text>
-        <Text style={styles.summaryPrice}>
-            {formatPrice(item.price)} € <Text style={styles.negotiableText}>{item.negotiable ? '(Negociabil)' : '(Preț Fix)'}</Text>
+        <Text style={[styles.summaryPrice, { fontSize: summaryScaled.priceFont, marginBottom: summaryScaled.priceMargin }]}>
+            {formatPrice(item.price)} € <Text style={[styles.negotiableText, { fontSize: summaryScaled.negotiableFont }]}>{item.negotiable ? '(Negociabil)' : '(Preț Fix)'}</Text>
         </Text>
 
-        <View style={styles.summaryTagsContainer}>
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>{item.production_year}</Text>
+        <View style={[styles.summaryTagsContainer, { marginBottom: summaryScaled.tagsMargin }]}>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{item.production_year}</Text>
             </View>
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>{formatKm(item.mileage)} km</Text>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{formatKm(item.mileage)} km</Text>
             </View>
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>{capitalize(item.engine.fuel_type)}</Text>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.engine.fuel_type)}</Text>
             </View>
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>{item.engine.capacity}</Text>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{item.engine.capacity}</Text>
             </View>
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>{capitalize(item.transmission)}</Text>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.transmission)}</Text>
             </View>
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>{capitalize(item.body_type)}</Text>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.body_type)}</Text>
             </View>
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>{capitalize(item.color)}</Text>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.color)}</Text>
             </View>
             {item.drivetrain && (
-                <View style={styles.summaryTag}>
-                    <Text style={styles.summaryTagText}>{item.drivetrain.toUpperCase()}</Text>
+                <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                    <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{item.drivetrain.toUpperCase()}</Text>
                 </View>
             )}
             {item.pollution_standard && (
-                <View style={styles.summaryTag}>
-                    <Text style={styles.summaryTagText}>{capitalize(item.pollution_standard)}</Text>
+                <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                    <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.pollution_standard)}</Text>
                 </View>
             )}
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>
                     {item.steering_wheel === 'right' ? "Volan Dreapta" : "Volan Stânga"}
                 </Text>
             </View>
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>
                     {item.exchange_accepted ? "Schimb: Da" : "Schimb: Nu"}
                 </Text>
             </View>
-            <View style={styles.summaryTag}>
-                <Text style={styles.summaryTagText}>
+            <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>
                     {item.registration_status === 'registered' ? "Înmatriculat" : "Neînmatriculat"}
                 </Text>
             </View>
 
             {item.for_dismante && (
-                <View style={[styles.summaryTag, styles.dismantleTag]}>
-                    <Text style={[styles.summaryTagText, styles.dismantleTagText]}>
+                <View style={[styles.summaryTag, styles.dismantleTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                    <Text style={[styles.summaryTagText, styles.dismantleTagText, { fontSize: summaryScaled.tagFont }]}>
                         ⚠️ Pentru dezmembrare
                     </Text>
                 </View>
             )}
 
-            <View style={[styles.summaryTag, item.vin ? styles.vinTagActive : null]}>
-                <Text style={[styles.summaryTagText, item.vin ? styles.vinTagTextActive : null]}>
+            <View style={[styles.summaryTag, item.vin ? styles.vinTagActive : null, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, item.vin ? styles.vinTagTextActive : null, { fontSize: summaryScaled.tagFont }]}>
                     {item.vin ? `VIN: ${item.vin}` : "VIN: Nespecificat"}
                 </Text>
             </View>
         </View>
 
-        <Text style={styles.descriptionLabel}>Descriere:</Text>
-        <View style={styles.descriptionContainer}>
+        <Text style={[styles.descriptionLabel, { fontSize: summaryScaled.descLabelFont }]}>Descriere:</Text>
+        <View style={[styles.descriptionContainer, { height: summaryScaled.descContainerHeight, padding: summaryScaled.descPad, marginBottom: summaryScaled.descMargin }]}>
             <ScrollView nestedScrollEnabled={true}
                 onStartShouldSetResponder={() => true}
                 onMoveShouldSetResponder={() => true}
                 onResponderTerminationRequest={() => false}
             >
-                <Text style={styles.summaryDescription}>
+                <Text style={[styles.summaryDescription, { fontSize: summaryScaled.descFont, lineHeight: summaryScaled.descLineHeight }]}>
                     {item.description || "Fără descriere adăugată."}
                 </Text>
             </ScrollView>
         </View>
 
-        <View style={styles.summaryLocation}>
-            <Text style={styles.locationText1}>📍 {item.location.city}, {item.location.county}</Text>
-            <Text style={styles.phoneText}>📞 {item.phone_number}</Text>
+        <View style={[styles.summaryLocation, { paddingTop: summaryScaled.locationPadTop }]}>
+            <Text style={[styles.locationText1, { fontSize: summaryScaled.locationFont }]}>📍 {item.location.city}, {item.location.county}</Text>
+            <Text style={[styles.phoneText, { fontSize: summaryScaled.phoneFont }]}>📞 {item.phone_number}</Text>
         </View>
     </View>
 );
 
-const MediaSlide = ({ mediaItem, isZooming, handleZoomChange, isPaused, dbScale }) => {
+const MediaSlide = ({ mediaItem, isZooming, handleZoomChange, isPaused, dbScale, itemHeight }) => {
     const videoRef = useRef(null);
     const [duration, setDuration] = useState(0);
     const [isScrubbing, setIsScrubbing] = useState(false);
@@ -186,12 +229,12 @@ const MediaSlide = ({ mediaItem, isZooming, handleZoomChange, isPaused, dbScale 
     }, [duration]);
 
     return (
-        <View style={styles.slideRoot}>
-            <View style={[styles.matrioskaWrapper, { transform: [{ scale: dbScale }] }]}>
+        <View style={[styles.slideRoot, { height: itemHeight }]}>
+            <View style={[styles.matrioskaWrapper, { height: itemHeight, transform: [{ scale: dbScale }] }]}>
                 <ZoomableMedia 
                     uri={mediaItem.url} 
                     type={mediaItem.type} 
-                    height={ITEM_HEIGHT} 
+                    height={itemHeight} 
                     paused={isPaused}
                     onZoomChange={handleZoomChange}
                     videoRef={videoRef}
@@ -239,13 +282,13 @@ const ToastNotification = ({ message, visible }) => {
     );
 };
 
-const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = false, targetCommentId = null, pfpIconVisible = true, screenId = 'main' }) => {
+const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = false, targetCommentId = null, pfpIconVisible = true, screenId = 'main', itemHeight = ITEM_HEIGHT }) => {
     const navigation = useNavigation();
     const isFocused = useIsFocused();
 
-    if (item.isSeparator) return <FeedSeparator />;
-    if (item.isEnd) return <EndOfResults onBackToFeed={onBackToFeed} />;
-    if (item.isNoResults) return <NoResultsSlide onBack={onBackToFeed} />;
+    if (item.isSeparator) return <FeedSeparator itemHeight={itemHeight} />;
+    if (item.isEnd) return <EndOfResults onBackToFeed={onBackToFeed} itemHeight={itemHeight} />;
+    if (item.isNoResults) return <NoResultsSlide onBack={onBackToFeed} itemHeight={itemHeight} />;
     if (!item.user_id || !item.user_id._id) return null;
 
     const slidesData = useMemo(() => 
@@ -429,18 +472,19 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
 
     const renderSlide = ({ item: mediaItem, index }) => {
         if (mediaItem.isSummary) {
-            return <SummarySlide item={item} formatPrice={formatPrice} formatKm={formatKm} />;
+            return <SummarySlide item={item} formatPrice={formatPrice} formatKm={formatKm} itemHeight={itemHeight} />;
         }
         const dbScale = mediaItem.zoom_level || 1;
         const isPaused = !isFocused || !isVisible || currentIndex !== index;
         return (
-            <Pressable style={styles.mediaContainer} onPress={handleDoubleTap} activeOpacity={1}>
+            <Pressable style={[styles.mediaContainer, { height: itemHeight }]} onPress={handleDoubleTap} activeOpacity={1}>
                 <MediaSlide 
                     mediaItem={mediaItem}
                     isZooming={isZooming}
                     handleZoomChange={handleZoomChange}
                     isPaused={isPaused}
                     dbScale={dbScale}
+                    itemHeight={itemHeight}
                 />
                 {!isZooming && <View style={styles.gradientOverlay} pointerEvents="none" />}
             </Pressable>
@@ -450,7 +494,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     const shouldHideUI = isZooming || currentIndex === slidesData.length - 1;
 
     return (
-        <View style={styles.postContainer}>
+        <View style={[styles.postContainer, { height: itemHeight }]}>
             <FlatList
                 ref={flatListRef}
                 data={slidesData}
@@ -481,49 +525,64 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                 <Image source={assets.red_like_icon} style={styles.bigHeartImage} resizeMode="contain" fadeDuration={0} />
             </Animated.View>
 
-            <View style={[styles.rightActions, { opacity: shouldHideUI ? 0 : 1 }]} pointerEvents={shouldHideUI ? 'none' : 'box-none'}>
+            <View style={[styles.rightActions, { bottom: scaled.rightActionsBottom, opacity: shouldHideUI ? 0 : 1 }]} pointerEvents={shouldHideUI ? 'none' : 'box-none'}>
                 {pfpIconVisible && (
                     <Pressable onPress={() => handleProfilePress(item.user_id._id)}>
-                        <View style={styles.actionButtonProfile}>
-                            <View style={[styles.profileBorder, styles.iconShadow]}>
+                        <View style={[styles.actionButtonProfile, { marginBottom: scaled.actionMargin }]}>
+                            <View style={[styles.profileBorder, styles.iconShadow, { borderRadius: scaled.profileBorderRadius }]}>
                                 <Image 
                                     source={item.user_image ? { uri: item.user_image } : assets.default_profile} 
-                                    style={styles.profileImage} fadeDuration={0}
+                                    style={[styles.profileImage, { width: scaled.profileSize, height: scaled.profileSize, borderRadius: scaled.profileRadius }]} fadeDuration={0}
                                 />
                             </View>
                         </View>
                     </Pressable>
                 )}
-                <Pressable style={styles.actionButton} onPress={handleLikeToggle}>
-                    <View style={[styles.iconContainer, styles.iconShadow]}>
-                        <Image source={assets.like_icon} style={[styles.iconImage, { opacity: liked ? 0 : 1 }]} fadeDuration={0} />
-                        <Image source={assets.red_like_icon} style={[styles.iconImage, styles.absoluteIcon, { opacity: liked ? 1 : 0 }]} fadeDuration={0} />
+                <Pressable style={[styles.actionButton, { marginBottom: scaled.actionMargin }]} onPress={handleLikeToggle}>
+                    <View style={[styles.iconContainer, styles.iconShadow, { width: scaled.iconSize, height: scaled.iconSize }]}>
+                        <Image source={assets.like_icon} style={[styles.iconImage, { width: scaled.iconSize, height: scaled.iconSize, opacity: liked ? 0 : 1 }]} fadeDuration={0} />
+                        <Image source={assets.red_like_icon} style={[styles.absoluteIcon, { width: scaled.iconSize, height: scaled.iconSize, opacity: liked ? 1 : 0 }]} fadeDuration={0} />
                     </View>
-                    <Text style={styles.actionText}>{likesCount}</Text>
+                    <Text style={[styles.actionText, { fontSize: scaled.actionFont }]}>{likesCount}</Text>
                 </Pressable>
-                <Pressable style={styles.actionButton} onPress={() => commentsAllowed ? setCommentsVisible(true) : showToast()}>
-                    <View style={[styles.iconContainer, styles.iconShadow]}>
-                        <Image source={assets.comments_icon} style={[styles.iconImage, !commentsAllowed && { tintColor: '#aaaaaa', opacity: 0.8 }]} fadeDuration={0}/>
+                <Pressable style={[styles.actionButton, { marginBottom: scaled.actionMargin }]} onPress={() => commentsAllowed ? setCommentsVisible(true) : showToast()}>
+                    <View style={[styles.iconContainer, styles.iconShadow, { width: scaled.iconSize, height: scaled.iconSize }]}>
+                        <Image source={assets.comments_icon} style={[styles.iconImage, { width: scaled.iconSize, height: scaled.iconSize }, !commentsAllowed && { tintColor: '#aaaaaa', opacity: 0.8 }]} fadeDuration={0}/>
                     </View>
-                    {commentsAllowed && <Text style={styles.actionText}>{commentsCount}</Text>}
+                    {commentsAllowed && <Text style={[styles.actionText, { fontSize: scaled.actionFont }]}>{commentsCount}</Text>}
                 </Pressable>
-                <Pressable style={styles.actionButton} onPress={() => handleShare()}><View style={[styles.iconContainer, styles.iconShadow]}><Image source={assets.share_icon} style={styles.iconImage} fadeDuration={0}/></View><Text style={styles.actionText}>Share</Text></Pressable>
-                <Pressable style={styles.actionButton} onPress={handleCall}><View style={[styles.iconContainer, styles.iconShadow]}><Image source={assets.call_icon} style={styles.iconImage} fadeDuration={0}/></View><Text style={styles.actionText}>Sună</Text></Pressable>
-                <Pressable style={styles.actionButton} onPress={() => setReportVisible(true)}><View style={[styles.iconContainer, styles.iconShadow]}><Image source={assets.report_icon} style={styles.iconImage} fadeDuration={0}/></View><Text style={styles.actionText}>Report</Text></Pressable>
+                <Pressable style={[styles.actionButton, { marginBottom: scaled.actionMargin }]} onPress={() => handleShare()}>
+                    <View style={[styles.iconContainer, styles.iconShadow, { width: scaled.iconSize, height: scaled.iconSize }]}>
+                        <Image source={assets.share_icon} style={[styles.iconImage, { width: scaled.iconSize, height: scaled.iconSize }]} fadeDuration={0}/>
+                    </View>
+                    <Text style={[styles.actionText, { fontSize: scaled.actionFont }]}>Share</Text>
+                </Pressable>
+                <Pressable style={[styles.actionButton, { marginBottom: scaled.actionMargin }]} onPress={handleCall}>
+                    <View style={[styles.iconContainer, styles.iconShadow, { width: scaled.iconSize, height: scaled.iconSize }]}>
+                        <Image source={assets.call_icon} style={[styles.iconImage, { width: scaled.iconSize, height: scaled.iconSize }]} fadeDuration={0}/>
+                    </View>
+                    <Text style={[styles.actionText, { fontSize: scaled.actionFont }]}>Sună</Text>
+                </Pressable>
+                <Pressable style={[styles.actionButton, { marginBottom: scaled.actionMargin }]} onPress={() => setReportVisible(true)}>
+                    <View style={[styles.iconContainer, styles.iconShadow, { width: scaled.iconSize, height: scaled.iconSize }]}>
+                        <Image source={assets.report_icon} style={[styles.iconImage, { width: scaled.iconSize, height: scaled.iconSize }]} fadeDuration={0}/>
+                    </View>
+                    <Text style={[styles.actionText, { fontSize: scaled.actionFont }]}>Report</Text>
+                </Pressable>
             </View>
 
-            <View style={[styles.bottomOverlay, { opacity: shouldHideUI ? 0 : 1 }]} pointerEvents="none">
+            <View style={[styles.bottomOverlay, { bottom: scaled.bottomOverlayBottom, opacity: shouldHideUI ? 0 : 1 }]} pointerEvents="none">
                 <View style={styles.userInfoRow}>
-                    <Pressable onPress={() => handleProfilePress(item.user_id._id)}><Text style={styles.userNameText}>@{item.user_name || 'Utilizator'}</Text></Pressable>
-                    <Text style={styles.locationText2}>• {item.location?.city}</Text>
+                    <Pressable onPress={() => handleProfilePress(item.user_id._id)}><Text style={[styles.userNameText, { fontSize: scaled.userNameFont }]}>@{item.user_name || 'Utilizator'}</Text></Pressable>
+                    <Text style={[styles.locationText2, { fontSize: scaled.locationFont }]}>• {item.location?.city}</Text>
                 </View>
-                <Text style={styles.brandTitle}>{item.brand.name} {item.model.name}</Text>
-                <Text style={styles.overlayPrice}>{formatPrice(item.price)} €</Text>
-                <View style={styles.tagsRow}>
-                    <View style={styles.glassTag}><Text style={styles.tagText}>{item.production_year}</Text></View>
-                    <View style={styles.glassTag}><Text style={styles.tagText}>{formatKm(item.mileage)} km</Text></View>
-                    <View style={styles.glassTag}><Text style={styles.tagText}>{item.engine.fuel_type}</Text></View>
-                    <View style={[styles.glassTag, styles.viewsTag]}><Image source={assets.view_icon} style={styles.viewsIcon} resizeMode="contain" /><Text style={styles.tagText}>{item.views ? formatKm(item.views) : 0}</Text></View>
+                <Text style={[styles.brandTitle, { fontSize: scaled.brandFont }]}>{item.brand.name} {item.model.name}</Text>
+                <Text style={[styles.overlayPrice, { fontSize: scaled.priceFont }]}>{formatPrice(item.price)} €</Text>
+                <View style={[styles.tagsRow, { marginBottom: scaled.tagsRowMargin }]}>
+                    <View style={[styles.glassTag, { paddingVertical: scaled.tagPadV, paddingHorizontal: scaled.tagPadH }]}><Text style={[styles.tagText, { fontSize: scaled.tagFont }]}>{item.production_year}</Text></View>
+                    <View style={[styles.glassTag, { paddingVertical: scaled.tagPadV, paddingHorizontal: scaled.tagPadH }]}><Text style={[styles.tagText, { fontSize: scaled.tagFont }]}>{formatKm(item.mileage)} km</Text></View>
+                    <View style={[styles.glassTag, { paddingVertical: scaled.tagPadV, paddingHorizontal: scaled.tagPadH }]}><Text style={[styles.tagText, { fontSize: scaled.tagFont }]}>{item.engine.fuel_type}</Text></View>
+                    <View style={[styles.glassTag, styles.viewsTag, { paddingVertical: scaled.tagPadV, paddingHorizontal: scaled.tagPadH }]}><Image source={assets.view_icon} style={styles.viewsIcon} resizeMode="contain" /><Text style={[styles.tagText, { fontSize: scaled.tagFont }]}>{item.views ? formatKm(item.views) : 0}</Text></View>
                 </View>
             </View>
 
@@ -533,7 +592,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
         </View>
     );
 }, (prevProps, nextProps) => {
-    return prevProps.item._id === nextProps.item._id && prevProps.item.hasLiked === nextProps.item.hasLiked && prevProps.item.likes_count === nextProps.item.likes_count;
+    return prevProps.item._id === nextProps.item._id && prevProps.item.hasLiked === nextProps.item.hasLiked && prevProps.item.likes_count === nextProps.item.likes_count && prevProps.itemHeight === nextProps.itemHeight;
 });
 
 const styles = StyleSheet.create({
@@ -546,11 +605,11 @@ const styles = StyleSheet.create({
     separatorSubtitle: { color: '#aaa', fontSize: 16, textAlign: 'center', marginBottom: 20, lineHeight: 24 },
     separatorSmall: { color: '#666', fontSize: 14, fontStyle: 'italic' },
     mediaContainer: { width: width, height: ITEM_HEIGHT, backgroundColor: 'white', overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
-    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '23%', backgroundColor: 'rgba(0, 0, 0, 0.12)' },
+    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.75%', backgroundColor: 'rgba(0, 0, 0, 0.12)' },
     bigHeartContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 20, elevation: 20, backgroundColor: 'transparent' },
     bigHeartImage: { width: 100, height: 100, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3.84 },
     summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },
-    summaryTitle: { fontSize: 24, fontWeight: '900', color: '#800000', marginBottom: 2 },
+    summaryTitle: { fontSize: 24, fontWeight: '900', color: '#800000', marginBottom: 2, marginTop: 10 },
     summaryPrice: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 16 },
     negotiableText: { fontSize: 14, color: '#888', fontWeight: 'normal' },
     summaryTagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
@@ -566,25 +625,25 @@ const styles = StyleSheet.create({
     summaryLocation: { paddingTop: 15, borderTopWidth: 1, borderTopColor: '#eee' },
     locationText1: { fontSize: 18, color: '#081539', fontWeight: '800', marginBottom: 5 },
     phoneText: { fontSize: 14, color: '#800000', fontWeight: 'bold' },
-    rightActions: { position: 'absolute', right: 10, bottom: 50, alignItems: 'center', zIndex: 10 },
-    actionButtonProfile: { alignItems: 'center', marginBottom: 20 },
-    actionButton: { alignItems: 'center', marginBottom: 20 },
-    iconContainer: { width: 30, height: 30, justifyContent: 'center', alignItems: 'center', marginBottom: 4, position: 'relative' },
+    rightActions: { position: 'absolute', right: 10, alignItems: 'center', zIndex: 10 },
+    actionButtonProfile: { alignItems: 'center' },
+    actionButton: { alignItems: 'center' },
+    iconContainer: { justifyContent: 'center', alignItems: 'center', marginBottom: 4, position: 'relative' },
     iconShadow: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2.5, elevation: 3 },
-    iconImage: { width: 30, height: 30, resizeMode: 'contain' },
-    absoluteIcon: { position: 'absolute', top: 0, left: 0, width: 30, height: 30 },
-    actionText: { color: 'white', fontSize: 11, fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
-    profileBorder: { borderWidth: 2, borderColor: 'white', borderRadius: 25, padding: 1 },
-    profileImage: { width: 45, height: 45, borderRadius: 22.5 },
-    bottomOverlay: { position: 'absolute', bottom: 20, left: 14, width: '80%', zIndex: 5 },
+    iconImage: { resizeMode: 'contain' },
+    absoluteIcon: { position: 'absolute', top: 0, left: 0 },
+    actionText: { color: 'white', fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
+    profileBorder: { borderWidth: 2, borderColor: 'white', padding: 1 },
+    profileImage: { },
+    bottomOverlay: { position: 'absolute', left: 14, width: '80%', zIndex: 5 },
     userInfoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-    userNameText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', textShadowColor: 'rgba(0, 0, 0, 0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3, marginRight: 6 },
-    locationText2: { color: 'white', fontSize: 15, fontWeight: '500', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
-    brandTitle: { fontSize: 16.5, fontWeight: '800', marginVertical: 4, color: '#FFFFFF', marginBottom: 4, textShadowColor: 'rgba(0, 0, 0, 0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 5 },
-    overlayPrice: { fontSize: 19, fontWeight: '700', color: '#f0f0f0', marginBottom: 10, textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4 },
-    tagsRow: { flexDirection: 'row', marginBottom: 18 },
-    glassTag: { backgroundColor: 'rgba(0, 0, 0, 0.25)', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 4, marginRight: 5 },
-    tagText: { color: 'white', fontSize: 12, fontWeight: '600' },
+    userNameText: { color: '#FFFFFF', fontWeight: '600', textShadowColor: 'rgba(0, 0, 0, 0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3, marginRight: 6 },
+    locationText2: { color: 'white', fontWeight: '500', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
+    brandTitle: { fontWeight: '800', marginVertical: 4, color: '#FFFFFF', marginBottom: 4, textShadowColor: 'rgba(0, 0, 0, 0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 5 },
+    overlayPrice: { fontWeight: '700', color: '#f0f0f0', marginBottom: 10, textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4 },
+    tagsRow: { flexDirection: 'row' },
+    glassTag: { backgroundColor: 'rgba(0, 0, 0, 0.25)', borderRadius: 4, marginRight: 5 },
+    tagText: { color: 'white', fontWeight: '600' },
     emoji: { fontSize: 60, marginBottom: 20 },
     viewsTag: { flexDirection: 'row', alignItems: 'center', marginLeft: 4 },
     viewsIcon: { width: 14, height: 14, tintColor: 'white', marginRight: 4, opacity: 0.9 },

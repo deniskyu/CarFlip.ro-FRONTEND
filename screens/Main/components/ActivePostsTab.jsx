@@ -17,6 +17,7 @@ import { assets } from '../../../assets.js'
 import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
 import { showMessage } from 'react-native-flash-message';
 import { emitter } from '../../../helpers/eventBus.js';
+import { UI_SCALE } from '../../../helpers/layout.js';
 
 const COLORS = {
     primary: '#800000',
@@ -27,6 +28,16 @@ const COLORS = {
     tagBg: '#EEEEEE',
     danger: '#D32F2F',
     success: '#388E3C'
+};
+
+const csc = UI_SCALE;
+const cardScaled = {
+    titleFont: 15 * csc,
+    tagFont: 11 * csc,
+    tagPadH: Math.round(6 * csc),
+    tagPadV: Math.round(3 * csc),
+    priceFont: 17 * csc,
+    locationFont: 11 * csc,
 };
 
 export default function ActivePostsTab({ headerComponent }) {
@@ -229,7 +240,7 @@ export default function ActivePostsTab({ headerComponent }) {
 
                 <View style={styles.infoContainer}>
                     <View style={styles.cardTopRow}>
-                        <Text style={styles.cardTitle} numberOfLines={1}>
+                        <Text style={[styles.cardTitle, { fontSize: cardScaled.titleFont }]} numberOfLines={1}>
                             {item.brand?.name} {item.model?.name}
                         </Text>
                         <Pressable style={styles.optionsButton} onPress={() => openOptions(item)} hitSlop={10}>
@@ -238,20 +249,20 @@ export default function ActivePostsTab({ headerComponent }) {
                     </View>
 
                     <View style={styles.tagsContainer}>
-                        <View style={styles.tag}>
-                            <Text style={styles.tagText}>{item.production_year}</Text>
+                        <View style={[styles.tag, { paddingHorizontal: cardScaled.tagPadH, paddingVertical: cardScaled.tagPadV }]}>
+                            <Text style={[styles.tagText, { fontSize: cardScaled.tagFont }]}>{item.production_year}</Text>
                         </View>
-                        <View style={styles.tag}>
-                            <Text style={styles.tagText}>{formatKm(item.mileage)} km</Text>
+                        <View style={[styles.tag, { paddingHorizontal: cardScaled.tagPadH, paddingVertical: cardScaled.tagPadV }]}>
+                            <Text style={[styles.tagText, { fontSize: cardScaled.tagFont }]}>{formatKm(item.mileage)} km</Text>
                         </View>
-                        <View style={styles.tag}>
-                            <Text style={styles.tagText}>{capitalize(item.engine?.fuel_type)}</Text>
+                        <View style={[styles.tag, { paddingHorizontal: cardScaled.tagPadH, paddingVertical: cardScaled.tagPadV }]}>
+                            <Text style={[styles.tagText, { fontSize: cardScaled.tagFont }]}>{capitalize(item.engine?.fuel_type)}</Text>
                         </View>
                     </View>
 
                     <View style={styles.bottomRow}>
-                        <Text style={styles.priceText}>{formatPrice(item.price)} €</Text>
-                        <Text style={styles.locationText}>{item.location?.county}</Text>
+                        <Text style={[styles.priceText, { fontSize: cardScaled.priceFont }]}>{formatPrice(item.price)} €</Text>
+                        <Text style={[styles.locationText, { fontSize: cardScaled.locationFont }]}>{item.location?.county}</Text>
                     </View>
                 </View>
             </Pressable>

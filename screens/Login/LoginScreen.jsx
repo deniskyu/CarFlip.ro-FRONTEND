@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginTop: -50,
+    marginTop: -44,
   },
   scrollContent: {
     flexGrow: 1,
@@ -203,13 +203,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   headerTitle: {
-    fontSize: 38,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 10,
   },
   headerSubtitle: {
-    fontSize: 18,
+    fontSize: 17.5,
     color: 'rgba(255,255,255,0.8)',
     fontWeight: '500',
   },
