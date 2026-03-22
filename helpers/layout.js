@@ -4,7 +4,7 @@ const { height } = Dimensions.get('window');
 
 export const TAB_BAR_HEIGHT = Platform.OS === 'ios'
     ? 80
-    : height < 780 ? 56 : 90
+    : Math.min(90, Math.max(56, Math.round(56 + (height - 720) * (34 / 130))));
 
 export const Layout = {
     ITEM_HEIGHT: PixelRatio.roundToNearestPixel(height - TAB_BAR_HEIGHT),
