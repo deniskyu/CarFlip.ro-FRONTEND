@@ -174,11 +174,13 @@ export default function MainNavigation() {
             screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarShowLabel: false,
+                safeAreaInsets: Platform.OS === 'android' ? { bottom: 0 } : undefined,
                 tabBarStyle: {
                     backgroundColor: '#800000',
                     borderTopWidth: 0,
                     height: TAB_BAR_HEIGHT,
                     paddingTop: Platform.OS === 'ios' ? 10 : 2,
+                    paddingBottom: 0,
                 },
                 tabBarIcon: ({ focused }) => {
                     let iconSource;
