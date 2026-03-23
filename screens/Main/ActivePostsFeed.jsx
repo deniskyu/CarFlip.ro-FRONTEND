@@ -9,7 +9,9 @@ import {
     StatusBar, 
     Platform,
     ActivityIndicator,
-    Image
+    Image,
+    Keyboard,
+    PixelRatio,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PostItem from './components/PostItem.jsx'; 
@@ -26,7 +28,24 @@ export default function ActivePostsFeed() {
     const route = useRoute();
     const { posts, initialIndex, fetchConfig } = route.params;
 
-    const [itemHeight] = useState(Layout.ITEM_HEIGHT);
+    const [itemHeight, setItemHeight] = useState(Layout.ITEM_HEIGHT);
+
+    const keyboardVisible = useRef(false);
+
+    useEffect(() => {
+        const showSub = Keyboard.addListener('keyboardDidShow', () => { keyboardVisible.current = true; });
+        const hideSub = Keyboard.addListener('keyboardDidHide', () => { keyboardVisible.current = false; });
+        return () => { showSub.remove(); hideSub.remove(); };
+    }, []);
+
+    const handleContainerLayout = useCallback((event) => {
+        if (keyboardVisible.current) return;
+        const { height: containerH } = event.nativeEvent.layout;
+        const rounded = PixelRatio.roundToNearestPixel(containerH);
+        if (rounded !== itemHeight) {
+            setItemHeight(rounded);
+        }
+    }, [itemHeight]);
 
     const [localPosts, setLocalPosts] = useState(posts || []);
     const [currentVisibleIndex, setCurrentVisibleIndex] = useState(initialIndex || 0);
@@ -163,28 +182,30 @@ export default function ActivePostsFeed() {
                 </Pressable>
             </View>
 
-            <FlatList
-                ref={flatListRef}
-                data={localPosts}
-                renderItem={renderItem}
-                keyExtractor={(item) => item._id} 
-        
-                {...scrollProps}
+            <View style={{ flex: 1 }} onLayout={handleContainerLayout}>
+                <FlatList
+                    ref={flatListRef}
+                    data={localPosts}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item._id} 
+            
+                    {...scrollProps}
 
-                initialScrollIndex={initialIndex}
-                getItemLayout={getItemLayout}
-                viewabilityConfig={viewabilityConfig}
-                onViewableItemsChanged={onViewableItemsChanged}
-                
-                onEndReached={loadMorePosts}
-                onEndReachedThreshold={3}
-                ListFooterComponent={ListFooter}
+                    initialScrollIndex={initialIndex}
+                    getItemLayout={getItemLayout}
+                    viewabilityConfig={viewabilityConfig}
+                    onViewableItemsChanged={onViewableItemsChanged}
+                    
+                    onEndReached={loadMorePosts}
+                    onEndReachedThreshold={3}
+                    ListFooterComponent={ListFooter}
 
-                initialNumToRender={2}
-                windowSize={3}
-                maxToRenderPerBatch={2}
-                removeClippedSubviews={true}
-            />
+                    initialNumToRender={2}
+                    windowSize={3}
+                    maxToRenderPerBatch={2}
+                    removeClippedSubviews={true}
+                />
+            </View>
         </View>
     );
 }

@@ -10,7 +10,8 @@ import {
     Pressable,
     AppState,
     Platform,
-    PixelRatio
+    PixelRatio,
+    Keyboard,
 } from "react-native";
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axiosAuthGuard from "../../helpers/axiosAuthGuard.js";
@@ -32,7 +33,16 @@ export default function MainScreen({ navigation }) {
 
     const [itemHeight, setItemHeight] = useState(Layout.ITEM_HEIGHT);
 
+    const keyboardVisible = useRef(false);
+
+    useEffect(() => {
+        const showSub = Keyboard.addListener('keyboardDidShow', () => { keyboardVisible.current = true; });
+        const hideSub = Keyboard.addListener('keyboardDidHide', () => { keyboardVisible.current = false; });
+        return () => { showSub.remove(); hideSub.remove(); };
+    }, []);
+
     const handleContainerLayout = useCallback((event) => {
+        if (keyboardVisible.current) return;
         const { height: containerH } = event.nativeEvent.layout;
         const rounded = PixelRatio.roundToNearestPixel(containerH);
         if (!Layout.calibrated) {

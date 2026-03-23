@@ -10,6 +10,8 @@ import {
     StatusBar,
     Platform,
     AppState,
+    Keyboard,
+    PixelRatio,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
@@ -31,7 +33,24 @@ export default function SearchResultScreen() {
 
     const excludeSeenActive = filters?.exclude_seen === 'true' || filters?.exclude_seen === true;
 
-    const [itemHeight] = useState(Layout.ITEM_HEIGHT);
+    const [itemHeight, setItemHeight] = useState(Layout.ITEM_HEIGHT);
+
+    const keyboardVisible = useRef(false);
+
+    useEffect(() => {
+        const showSub = Keyboard.addListener('keyboardDidShow', () => { keyboardVisible.current = true; });
+        const hideSub = Keyboard.addListener('keyboardDidHide', () => { keyboardVisible.current = false; });
+        return () => { showSub.remove(); hideSub.remove(); };
+    }, []);
+
+    const handleContainerLayout = useCallback((event) => {
+        if (keyboardVisible.current) return;
+        const { height: containerH } = event.nativeEvent.layout;
+        const rounded = PixelRatio.roundToNearestPixel(containerH);
+        if (rounded !== itemHeight) {
+            setItemHeight(rounded);
+        }
+    }, [itemHeight]);
 
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -303,33 +322,35 @@ export default function SearchResultScreen() {
                     <Text style={styles.loadingText}>Căutăm...</Text>
                 </View>
             ) : (
-                <FlatList
-                    ref={flatListRef}
-                    data={results}
-                    renderItem={renderItem}
-                    keyExtractor={(item, index) => {
-                        if (item._id) return item._id.toString();
-                        return `fallback_${index}`;
-                    }}
-                    
-                    {...scrollProps}
+                <View style={{ flex: 1 }} onLayout={handleContainerLayout}>
+                    <FlatList
+                        ref={flatListRef}
+                        data={results}
+                        renderItem={renderItem}
+                        keyExtractor={(item, index) => {
+                            if (item._id) return item._id.toString();
+                            return `fallback_${index}`;
+                        }}
+                        
+                        {...scrollProps}
 
-                    getItemLayout={(data, index) => ({
-                        length: itemHeight,
-                        offset: itemHeight * index,
-                        index
-                    })}
-                    initialNumToRender={2}
-                    windowSize={3}
-                    maxToRenderPerBatch={2}
-                    removeClippedSubviews={true}
-                    
-                    viewabilityConfig={viewabilityConfig}
-                    onViewableItemsChanged={onViewableItemsChanged}
-                    
-                    onEndReached={handleLoadMore}
-                    onEndReachedThreshold={3}
-                />
+                        getItemLayout={(data, index) => ({
+                            length: itemHeight,
+                            offset: itemHeight * index,
+                            index
+                        })}
+                        initialNumToRender={2}
+                        windowSize={3}
+                        maxToRenderPerBatch={2}
+                        removeClippedSubviews={true}
+                        
+                        viewabilityConfig={viewabilityConfig}
+                        onViewableItemsChanged={onViewableItemsChanged}
+                        
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={3}
+                    />
+                </View>
             )}
 
             {isTrimming && (

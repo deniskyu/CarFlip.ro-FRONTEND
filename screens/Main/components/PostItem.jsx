@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
     separatorSubtitle: { color: '#aaa', fontSize: 16, textAlign: 'center', marginBottom: 20, lineHeight: 24 },
     separatorSmall: { color: '#666', fontSize: 14, fontStyle: 'italic' },
     mediaContainer: { width: width, height: ITEM_HEIGHT, backgroundColor: 'white', overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
-    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.75%', backgroundColor: 'rgba(0, 0, 0, 0.12)' },
+    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '23%', backgroundColor: 'rgba(0, 0, 0, 0.12)' },
     bigHeartContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 20, elevation: 20, backgroundColor: 'transparent' },
     bigHeartImage: { width: 100, height: 100, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3.84 },
     summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },

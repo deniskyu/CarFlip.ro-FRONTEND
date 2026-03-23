@@ -24,7 +24,7 @@ import { formatMessageTime, uploadChatImage } from '../../helpers/chatHelper.js'
 import { emitter } from '../../helpers/eventBus.js';
 import { Context } from '../../context/Context.js';
 import { assets } from '../../assets.js';
-import { TAB_BAR_HEIGHT } from '../../helpers/layout.js';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const COLORS = {
     primary: '#800000',
@@ -114,6 +114,8 @@ export default function ChatScreen({ route, navigation }) {
     const [selectedMessageForDelete, setSelectedMessageForDelete] = useState(null);
 
     const flatListRef = useRef(null);
+
+    const tabBarHeight = useBottomTabBarHeight();
 
     const fetchMessages = useCallback(async (cursor = null) => {
         try {
@@ -587,7 +589,7 @@ export default function ChatScreen({ route, navigation }) {
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : TAB_BAR_HEIGHT}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : tabBarHeight}
             >
                 {loading ? (
                     <View style={styles.loadingContainer}>
