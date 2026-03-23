@@ -20,6 +20,7 @@ import axios from 'axios';
 import { Context } from '../../context/Context.js';
 import { LOCATIONS } from './staticData.js';
 import { emitter } from '../../helpers/eventBus.js';
+import { normalizeMediaUri } from '../../helpers/normalizeMediaUri.js';
 
 const COLORS = {
     primary: '#800000',
@@ -137,11 +138,6 @@ export default function AddSaleScreen({ navigation }) {
     const [phoneNumber, setPhoneNumber] = useState(''); 
     const [description, setDescription] = useState('');
 
-    const [discountCodeInput, setDiscountCodeInput] = useState('');
-    const [validatedCode, setValidatedCode] = useState('');
-    const [discountPercentage, setDiscountPercentage] = useState(0);
-    const [discountStatus, setDiscountStatus] = useState(null);
-    const [validatingCode, setValidatingCode] = useState(false);
 
     const [modalVisible, setModalVisible] = useState(false);
     const [currentSelectionType, setCurrentSelectionType] = useState(null);
@@ -151,9 +147,6 @@ export default function AddSaleScreen({ navigation }) {
     const [loadingData, setLoadingData] = useState(false);
 
     const [loadingMedia, setLoadingMedia] = useState(false);
-
-    const basePrice = 45;
-    const finalPrice = discountPercentage > 0 ? basePrice - (basePrice * discountPercentage / 100) : basePrice;
 
     useEffect(() => {
         fetchBrands();
@@ -266,7 +259,12 @@ export default function AddSaleScreen({ navigation }) {
                         videoCount++;
                     }
                     if (currentMedia.length < 10) {
-                        currentMedia.push(file);
+                        const normalized = await normalizeMediaUri(file);
+                        if (normalized) {
+                            currentMedia.push(normalized);
+                        } else {
+                            Alert.alert('Eroare', `Fișierul "${file.fileName || 'fișier'}" nu a putut fi procesat.`);
+                        }
                     }
                 }
                 setMedia(currentMedia);
@@ -410,10 +408,6 @@ export default function AddSaleScreen({ navigation }) {
         setDisableComments(false);
         setPhoneNumber('');
         setDescription('');
-        setDiscountCodeInput('');
-        setValidatedCode('');
-        setDiscountPercentage(0);
-        setDiscountStatus(null);
     }, []);
 
     useEffect(() => {

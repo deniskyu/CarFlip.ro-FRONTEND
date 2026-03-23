@@ -30,6 +30,7 @@ const COLORS = {
 };
 
 import { LOCATIONS } from './staticData.js';
+import { normalizeMediaUri } from '../../helpers/normalizeMediaUri.js';
 
 const ENGINE_CAPACITIES = [
     { id: 'electric', name: 'Fără (Electric)' }
@@ -163,7 +164,12 @@ export default function EditSaleScreen({ route, navigation }) {
                         videoCount++;
                     }
                     if (currentMedia.length < 10) {
-                        currentMedia.push(file);
+                        const normalized = await normalizeMediaUri(file);
+                        if (normalized) {
+                            currentMedia.push(normalized);
+                        } else {
+                            Alert.alert('Eroare', `Fișierul "${file.fileName || 'fișier'}" nu a putut fi procesat.`);
+                        }
                     }
                 }
                 setNewLocalMedia(currentMedia);

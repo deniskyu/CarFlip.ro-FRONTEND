@@ -179,13 +179,6 @@ const PreviewMediaSlide = ({ mediaItem, index, currentIndex, isVisible, isZoomin
             
             {!isZooming && !isEditing && <View style={styles.gradientOverlay} pointerEvents="none" />}
 
-            {isVideo && !isZooming && !isEditing && (
-                <CarScrubber 
-                    progress={videoProgress}
-                    onSeekStart={onSeekStart}
-                    onSeekEnd={onSeekEnd}
-                />
-            )}
         </View>
     );
 };
