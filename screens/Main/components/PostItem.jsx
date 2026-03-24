@@ -282,7 +282,7 @@ const ToastNotification = ({ message, visible }) => {
     );
 };
 
-const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = false, targetCommentId = null, pfpIconVisible = true, screenId = 'main', itemHeight = ITEM_HEIGHT }) => {
+const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = false, targetCommentId = null, pfpIconVisible = true, screenId = 'main', itemHeight = ITEM_HEIGHT,  guestMode = false }) => {
     const navigation = useNavigation();
     const isFocused = useIsFocused();
 
@@ -290,6 +290,14 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     if (item.isEnd) return <EndOfResults onBackToFeed={onBackToFeed} itemHeight={itemHeight} />;
     if (item.isNoResults) return <NoResultsSlide onBack={onBackToFeed} itemHeight={itemHeight} />;
     if (!item.user_id || !item.user_id._id) return null;
+
+    const requireAuth = () => {
+        if (guestMode) {
+            Alert.alert("Cont necesar", "Creează un cont pentru a accesa această funcționalitate.");
+            return true;
+        }
+        return false;
+    };
 
     const slidesData = useMemo(() => 
         [...item.media, { isSummary: true, _id: 'summary_card' }], 
@@ -348,6 +356,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     }, [item.hasLiked, item.likes_count]);
 
     const handleShare = useCallback(async () => {
+        if (requireAuth()) return;
         try {
             await Share.share({
                 message: `${assets.url}/post/${item._id}`,
@@ -370,6 +379,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     }, []);
 
     const handleLikeToggle = useCallback(async () => {
+        if (requireAuth()) return;
         const newState = !liked;
         const newCount = newState ? likesCount + 1 : likesCount - 1;
         setLiked(newState);
@@ -393,6 +403,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
         const now = Date.now();
         const DOUBLE_PRESS_DELAY = 300;
         if (lastTap.current && (now - lastTap.current) < DOUBLE_PRESS_DELAY) {
+            if (requireAuth()) return;
             triggerHeartAnimation();
             if (!liked) handleLikeToggle();
         } else {
@@ -401,6 +412,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     }, [liked, triggerHeartAnimation, handleLikeToggle]);
 
     const handleCall = () => {
+        if (requireAuth()) return;
         if (!item.phone_number) {
             Alert.alert("Eroare", "Numărul de telefon nu este disponibil.");
             return;
@@ -414,7 +426,10 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
             .catch(err => console.error("Eroare la apelare:", err));
     };
 
-    const handleProfilePress = (userId) => navigation.navigate('SearchProfileResult', { userId });
+    const handleProfilePress = (userId) => {
+        if (requireAuth()) return;
+        navigation.navigate('SearchProfileResult', { userId });
+    }
 
     const onViewableItemsChanged = useRef(({ viewableItems }) => {
         if (viewableItems && viewableItems.length > 0) {
@@ -545,7 +560,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                     </View>
                     <Text style={[styles.actionText, { fontSize: scaled.actionFont }]}>{likesCount}</Text>
                 </Pressable>
-                <Pressable style={[styles.actionButton, { marginBottom: scaled.actionMargin }]} onPress={() => commentsAllowed ? setCommentsVisible(true) : showToast()}>
+                <Pressable style={[styles.actionButton, { marginBottom: scaled.actionMargin }]} onPress={() => { if (requireAuth()) return; commentsAllowed ? setCommentsVisible(true) : showToast(); }}>
                     <View style={[styles.iconContainer, styles.iconShadow, { width: scaled.iconSize, height: scaled.iconSize }]}>
                         <Image source={assets.comments_icon} style={[styles.iconImage, { width: scaled.iconSize, height: scaled.iconSize }, !commentsAllowed && { tintColor: '#aaaaaa', opacity: 0.8 }]} fadeDuration={0}/>
                     </View>
@@ -563,7 +578,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                     </View>
                     <Text style={[styles.actionText, { fontSize: scaled.actionFont }]}>Sună</Text>
                 </Pressable>
-                <Pressable style={[styles.actionButton, { marginBottom: scaled.actionMargin }]} onPress={() => setReportVisible(true)}>
+                <Pressable style={[styles.actionButton, { marginBottom: scaled.actionMargin }]} onPress={() => { if (requireAuth()) return; setReportVisible(true); }}>
                     <View style={[styles.iconContainer, styles.iconShadow, { width: scaled.iconSize, height: scaled.iconSize }]}>
                         <Image source={assets.report_icon} style={[styles.iconImage, { width: scaled.iconSize, height: scaled.iconSize }]} fadeDuration={0}/>
                     </View>
@@ -592,7 +607,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
         </View>
     );
 }, (prevProps, nextProps) => {
-    return prevProps.item._id === nextProps.item._id && prevProps.item.hasLiked === nextProps.item.hasLiked && prevProps.item.likes_count === nextProps.item.likes_count && prevProps.itemHeight === nextProps.itemHeight;
+    return prevProps.item._id === nextProps.item._id && prevProps.item.hasLiked === nextProps.item.hasLiked && prevProps.item.likes_count === nextProps.item.likes_count && prevProps.itemHeight === nextProps.itemHeight && prevProps.guestMode === nextProps.guestMode;
 });
 
 const styles = StyleSheet.create({

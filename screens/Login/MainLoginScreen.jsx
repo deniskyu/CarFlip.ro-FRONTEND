@@ -1,13 +1,21 @@
 import { SafeAreaView, Platform, Dimensions, Pressable, View, Text, StyleSheet, StatusBar, Image } from 'react-native';
 import { assets } from '../../assets.js';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const wwidth = Dimensions.get('window').width;
 const wheight = Dimensions.get('window').height;
 
 export default function MainLoginScreen({navigation}){
+  const insets = useSafeAreaInsets();
+
   return(
     <View style={styles.container}>
        <StatusBar hidden/>
+       <View style={{ position: 'absolute', top: insets.top + 10, left: 24, zIndex: 10 }}>
+           <Pressable onPress={() => navigation.goBack()} hitSlop={20} style={{ padding: 5 }}>
+               <Image source={assets.back_arrow} style={{ width: 28, height: 28, resizeMode: 'contain', tintColor: '#081539' }} />
+           </Pressable>
+       </View>
        <SafeAreaView style={styles.safe}>
             
             <View style={styles.middleSection}>

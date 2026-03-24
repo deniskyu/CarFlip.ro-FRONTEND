@@ -6,10 +6,12 @@ import RegisterScreen from '../screens/Login/RegisterScreen.jsx';
 import LoginScreen from '../screens/Login/LoginScreen.jsx';
 import ForgotPasswordScreen from '../screens/Login/ForgotPasswordScreen.jsx';
 import LegalScreen from "../screens/Main/LegalScreen.jsx";
+import PublicMainScreen from '../screens/Main/PublicMainScreen.jsx';
 
 export default function RegisterNavigation(){
     return(
         <Stack.Navigator>
+            <Stack.Screen name="PublicMainScreen" component={PublicMainScreen} options={{headerShown: false}} />
             <Stack.Screen name='MainLoginScreen' component={MainLoginScreen} options={{headerShown: false}}/>
             <Stack.Screen name='LoginScreen' component={LoginScreen} options={{headerShown: false}}/>
             <Stack.Screen name='RegisterScreen' component={RegisterScreen} options={{headerShown: false}} />

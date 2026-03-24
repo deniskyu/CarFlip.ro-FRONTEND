@@ -27,7 +27,6 @@ import SecurityScreen from '../../screens/Main/SecurityScreen.jsx';
 import ContactScreen from '../../screens/Main/ContactScreen.jsx';
 import PrivacyScreen from '../../screens/Main/PrivacyScreen.jsx';
 import LegalScreen from '../../screens/Main/LegalScreen.jsx';
-import { TAB_BAR_HEIGHT } from '../../helpers/layout.js';
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
