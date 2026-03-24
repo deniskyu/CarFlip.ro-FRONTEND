@@ -11,6 +11,7 @@ import {
     Platform,
     PixelRatio,
     Keyboard,
+    Modal
 } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
@@ -27,7 +28,7 @@ const MAX_ITEMS = 50;
 
 export default function PublicMainScreen() {
     const navigation = useNavigation();
-
+    const [welcomeVisible, setWelcomeVisible] = useState(true);
     const [itemHeight, setItemHeight] = useState(Layout.ITEM_HEIGHT);
 
     const keyboardVisible = useRef(false);
@@ -55,6 +56,7 @@ export default function PublicMainScreen() {
     const [refreshing, setRefreshing] = useState(false);
     
     const [nextCursor, setNextCursor] = useState(null);
+    const [feedMode, setFeedMode] = useState('new');
 
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const isLoadingMoreRef = useRef(false);
@@ -62,8 +64,22 @@ export default function PublicMainScreen() {
 
     const [isTrimming, setIsTrimming] = useState(false);
 
+    const [currentVisibleIndex, setCurrentVisibleIndex] = useState(0);
+
+    const historyLoopRef = useRef(0);
+    const nextCursorRef = useRef(null);
+    const feedModeRef = useRef('new');
+
     const salesRef = useRef(sales);
     salesRef.current = sales;
+
+    useEffect(() => {
+        nextCursorRef.current = nextCursor;
+    }, [nextCursor]);
+
+    useEffect(() => {
+        feedModeRef.current = feedMode;
+    }, [feedMode]);
 
     const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 60 }).current;
 
@@ -75,6 +91,7 @@ export default function PublicMainScreen() {
     const onViewableItemsChanged = useRef(({ viewableItems }) => {
         if (viewableItems && viewableItems.length > 0) {
             const newIndex = viewableItems[0].index;
+            setCurrentVisibleIndex(newIndex);
             activeIndexRef.current = newIndex;
 
             const toPreload = [];
@@ -90,9 +107,9 @@ export default function PublicMainScreen() {
         }
     }).current;
         
-    const fetchFeed = async (isRefresh = false, currentCursor = null) => {
+    const fetchFeed = async (isRefresh = false, currentCursor = null, currentMode = 'new') => {
         try {
-            let url = `${assets.url}/api/sales/public-feed?limit=5`;
+            let url = `${assets.url}/api/sales/public-feed?limit=5&mode=${currentMode}`;
             if (currentCursor) {
                 url += `&cursor=${currentCursor}`;
             }
@@ -102,8 +119,59 @@ export default function PublicMainScreen() {
             if (response.data.success) {
                 let newPosts = response.data.data;
                 let newCursor = response.data.nextCursor;
+                const endOfNew = response.data.endOfNewPosts;
+
+                if (endOfNew && currentMode === 'new') {
+                    const separator = { _id: `separator-${Date.now()}-${Math.random()}`, isSeparator: true };
+                    
+                    setFeedMode('history');
+                    historyLoopRef.current = 0;
+                    
+                    const historyResponse = await axios.get(`${assets.url}/api/sales/public-feed?limit=5&mode=history`);
+                    let historyPosts = historyResponse.data.data || [];
+                    newCursor = historyResponse.data.nextCursor;
+
+                    historyPosts = historyPosts.map(p => ({ 
+                        ...p, 
+                        isHistory: true,
+                        loopIndex: 0 
+                    }));
+
+                    if (isRefresh) {
+                        historyLoopRef.current = 0;
+                        const finalList = [separator, ...historyPosts];
+
+                        const toPreload = finalList
+                            .filter(p => p.media?.[0]?.type === 'image')
+                            .slice(0, 3)
+                            .map(p => ({ uri: p.media[0].url }));
+                        if (toPreload.length > 0) FastImage.preload(toPreload);
+                            
+                        setSales(finalList.length > 0 ? finalList : []);
+                    } else {
+                        setSales(prev => {
+                            const hasSeparator = prev.some(item => item.isSeparator);
+                            if (hasSeparator) {
+                                return [...prev, ...historyPosts];
+                            }
+                            return [...prev, separator, ...historyPosts];
+                        });
+                    }
+                    
+                    setNextCursor(newCursor);
+                    return;
+                }
+
+                if (currentMode === 'history') {
+                    newPosts = newPosts.map(p => ({ 
+                        ...p, 
+                        isHistory: true,
+                        loopIndex: historyLoopRef.current 
+                    }));
+                }
 
                 if (isRefresh) {
+                    historyLoopRef.current = 0;
                     const toPreload = newPosts
                         .filter(p => p.media?.[0]?.type === 'image')
                         .slice(0, 3)
@@ -112,9 +180,23 @@ export default function PublicMainScreen() {
                     
                     setSales(newPosts);
                 } else {
+                    const loopIndexSnapshot = historyLoopRef.current;
                     setSales(prev => {
-                        const existingIds = new Set(prev.map(p => p._id));
-                        const filteredNew = newPosts.filter(p => !existingIds.has(p._id));
+                        const existingIdsInCurrentLoop = new Set(
+                            prev.filter(p => p.isHistory && p.loopIndex === loopIndexSnapshot).map(p => p._id)
+                        );
+                        const existingNewIds = new Set(
+                            prev.filter(p => !p.isHistory && !p.isSeparator).map(p => p._id)
+                        );
+
+                        const filteredNew = newPosts.filter(p => {
+                            if (currentMode === 'history') {
+                                return !existingIdsInCurrentLoop.has(p._id);
+                            } else {
+                                return !existingNewIds.has(p._id);
+                            }
+                        });
+
                         return [...prev, ...filteredNew];
                     });
                 }
@@ -148,19 +230,41 @@ export default function PublicMainScreen() {
                     }
                     setIsTrimming(false);
                     isResettingRef.current = false;
+                
+                    if (!isLoadingMoreRef.current) {
+                        isLoadingMoreRef.current = true;
+                        setIsLoadingMore(true);
+                        fetchFeed(false, nextCursorRef.current, feedModeRef.current);
+                    }
                 }, 150);
             }
         }
     };
 
     useEffect(() => {
-        fetchFeed(true, null);
+        fetchFeed(true, null, 'new');
+    }, []);
+
+    useEffect(() => {
+        const onLikeUpdate = ({ saleId, hasLiked, likesCount }) => {
+            setSales(currentSales => 
+                currentSales.map(item => {
+                    if (item._id === saleId) {
+                        return { ...item, hasLiked: hasLiked, likes_count: likesCount };
+                    }
+                    return item;
+                })
+            );
+        };
+        emitter.on('like_update', onLikeUpdate);
+        return () => emitter.off('like_update', onLikeUpdate);
     }, []);
 
     const handleRefresh = () => {
         setRefreshing(true);
         setNextCursor(null);
-        fetchFeed(true, null);
+        setFeedMode('new');
+        fetchFeed(true, null, 'new');
     };
 
     const handleLoadMore = async () => {
@@ -168,9 +272,14 @@ export default function PublicMainScreen() {
         isLoadingMoreRef.current = true;
         setIsLoadingMore(true);
         if (nextCursor) {
-            fetchFeed(false, nextCursor);
+            fetchFeed(false, nextCursor, feedMode);
         } else {
-            fetchFeed(false, null);
+            if (feedMode === 'new') {
+                fetchFeed(false, null, 'new');
+            } else if (feedMode === 'history') {
+                historyLoopRef.current += 1;
+                fetchFeed(false, null, 'history');
+            }
         }
     };
 
@@ -229,6 +338,10 @@ export default function PublicMainScreen() {
                     data={sales}
                     renderItem={renderItem} 
                     keyExtractor={(item, index) => {
+                        if (item.isSeparator) return item._id || `separator_${index}`;
+                        if (item.isHistory) {
+                            return `${item._id}_history_${item.loopIndex || 0}_${index}`;
+                        }
                         return item._id ? item._id.toString() : `item_${index}`;
                     }}
                     
@@ -264,6 +377,29 @@ export default function PublicMainScreen() {
                     <ActivityIndicator size="large" color="#800000" />
                 </View>
             )}
+            <Modal
+                visible={welcomeVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setWelcomeVisible(false)}
+            >
+                <View style={styles.welcomeOverlay}>
+                    <View style={styles.welcomeCard}>
+                        <Text style={styles.welcomeTitle}>Bine ai venit pe CarFlip!</Text>
+                        <Text style={styles.welcomeText}>
+                            Creează un cont gratuit pentru a putea publica anunțuri, trimite mesaje vânzătorilor, vizualiza profiluri și a primi un feed personalizat cu anunțuri noi.
+                        </Text>
+                        <View style={styles.welcomeButtons}>
+                            <Pressable style={styles.welcomeDismiss} onPress={() => setWelcomeVisible(false)}>
+                                <Text style={styles.welcomeDismissText}>Închide</Text>
+                            </Pressable>
+                            <Pressable style={styles.welcomeLogin} onPress={() => { setWelcomeVisible(false); navigation.navigate('MainLoginScreen'); }}>
+                                <Text style={styles.welcomeLoginText}>Intră în cont</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -333,5 +469,61 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 999,
+    },
+    welcomeOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 30,
+    },
+    welcomeCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        padding: 24,
+        width: '100%',
+        maxWidth: 340,
+    },
+    welcomeTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#081539',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    welcomeText: {
+        fontSize: 14,
+        color: '#555',
+        lineHeight: 21,
+        textAlign: 'center',
+        marginBottom: 24,
+    },
+    welcomeButtons: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    welcomeDismiss: {
+        flex: 1,
+        paddingVertical: 13,
+        borderRadius: 10,
+        backgroundColor: '#E0E0E0',
+        alignItems: 'center',
+    },
+    welcomeDismissText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#333',
+    },
+    welcomeLogin: {
+        flex: 1,
+        paddingVertical: 13,
+        borderRadius: 10,
+        backgroundColor: '#800000',
+        alignItems: 'center',
+    },
+    welcomeLoginText: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#FFFFFF',
     },
 });

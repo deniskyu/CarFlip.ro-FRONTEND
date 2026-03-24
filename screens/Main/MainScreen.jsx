@@ -279,6 +279,12 @@ export default function MainScreen({ navigation }) {
                     }
                     setIsTrimming(false);
                     isResettingRef.current = false;
+                
+                    if (!isLoadingMoreRef.current) {
+                        isLoadingMoreRef.current = true;
+                        setIsLoadingMore(true);
+                        fetchFeed(false, nextCursorRef.current, feedModeRef.current);
+                    }
                 }, 150);
             }
         }
