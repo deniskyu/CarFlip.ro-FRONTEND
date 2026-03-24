@@ -3,21 +3,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { assets } from '../../assets.js';
 
-const LAST_UPDATED = '13 martie 2026';
+const LAST_UPDATED = '24 martie 2026';
 
 export default function LegalScreen() {
     const navigation = useNavigation();
     const route = useRoute();
 
-    // Dacă vii din LoginScreen (stack), showBack = true
-    // Dacă vii din Drawer, showBack = false (default)
     const showBack = route.params?.showBack === true;
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
-            {/* HEADER */}
             <View style={styles.header}>
                 {showBack ? (
                     <Pressable onPress={() => navigation.goBack()} hitSlop={20} style={styles.backButton}>
@@ -47,121 +44,173 @@ export default function LegalScreen() {
             >
                 <Text style={styles.lastUpdated}>Ultima actualizare: {LAST_UPDATED}</Text>
 
-                {/* ═══════════════════════════════════════════
-                    SECȚIUNEA 1: TERMENI ȘI CONDIȚII
-                   ═══════════════════════════════════════════ */}
                 <Text style={styles.mainTitle}>1. Termeni și condiții de utilizare</Text>
 
-                <Text style={styles.subtitle}>1.1 Introducere</Text>
+                <Text style={styles.subtitle}>1.1 Introducere și operator</Text>
                 <Text style={styles.paragraph}>
-                    Prezentul document reglementează condițiile de utilizare ale aplicației mobile CarFlip, operată de Echipa CarFlip. Prin crearea unui cont sau utilizarea serviciilor noastre, confirmi că ai citit, ai înțeles și ești de acord cu acești termeni în integralitatea lor. Dacă nu ești de acord cu oricare dintre aceste prevederi, te rugăm să nu utilizezi aplicația.
+                    Prezentul document reglementează condițiile de utilizare ale aplicației mobile CarFlip, operată de Echipa CarFlip, un proiect independent cu sediul în România (contact: carflip.ro@outlook.com). Prin crearea unui cont sau utilizarea serviciilor noastre, confirmi că ai citit, ai înțeles și ești de acord cu acești termeni în integralitatea lor. Dacă nu ești de acord cu oricare dintre aceste prevederi, te rugăm să nu utilizezi aplicația.
                 </Text>
 
                 <Text style={styles.subtitle}>1.2 Descrierea serviciului</Text>
                 <Text style={styles.paragraph}>
-                    CarFlip este o platformă de anunțuri auto destinată pieței din România. Serviciul permite utilizatorilor să publice anunțuri de vânzare vehicule, să caute vehicule disponibile, să interacționeze prin comentarii și mesaje private, și să gestioneze un profil personal. Aplicația este disponibilă pe dispozitive mobile iOS și Android.
+                    CarFlip este o platformă gratuită și non-profit de anunțuri auto, destinată în principal pieței din România, Republica Moldova, Bulgaria și Serbia. Serviciul permite utilizatorilor să publice anunțuri de vânzare vehicule, să caute vehicule disponibile, să interacționeze prin comentarii și mesaje private, și să gestioneze un profil personal. Aplicația este disponibilă pe dispozitive mobile iOS și Android. Platforma nu percepe niciun cost pentru publicarea sau vizualizarea anunțurilor.
                 </Text>
 
-                <Text style={styles.subtitle}>1.3 Contul de utilizator</Text>
+                <Text style={styles.subtitle}>1.3 Vârsta minimă</Text>
                 <Text style={styles.paragraph}>
-                    Pentru a utiliza serviciile CarFlip, este necesară crearea unui cont cu o adresă de email validă și o parolă. Contul este activat prin verificarea unui cod OTP transmis pe email. Ești singurul responsabil pentru păstrarea confidențialității datelor tale de autentificare. Orice activitate desfășurată prin contul tău este responsabilitatea ta exclusivă. În cazul în care suspectezi o utilizare neautorizată a contului, te rugăm să ne contactezi imediat.
+                    Pentru a crea un cont pe CarFlip, trebuie să ai vârsta minimă de 16 ani. Prin crearea contului, confirmi că ai împlinit această vârstă. Dacă ai între 16 și 18 ani, confirmi că ai obținut acordul unui părinte sau tutore legal pentru utilizarea platformei. Echipa CarFlip își rezervă dreptul de a solicita dovada vârstei și de a suspenda conturile utilizatorilor care nu îndeplinesc cerința de vârstă minimă.
                 </Text>
 
-                <Text style={styles.subtitle}>1.4 Publicarea anunțurilor</Text>
+                <Text style={styles.subtitle}>1.4 Contul de utilizator</Text>
                 <Text style={styles.paragraph}>
-                    Publicarea unui anunț pe CarFlip este gratis. Anularea anunțului poate fi realizată prin ștergerea anunțului sau a contului din aplicație.
+                    Pentru a utiliza serviciile CarFlip, este necesară crearea unui cont cu o adresă de email validă și o parolă. Contul este activat prin verificarea unui cod OTP transmis pe email. Ești singurul responsabil pentru păstrarea confidențialității datelor tale de autentificare. Orice activitate desfășurată prin contul tău este responsabilitatea ta exclusivă. Un utilizator poate deține un singur cont activ. În cazul în care suspectezi o utilizare neautorizată a contului, te rugăm să ne contactezi imediat la carflip.ro@outlook.com.
                 </Text>
 
-                <Text style={styles.subtitle}>1.5 Rolul platformei</Text>
+                <Text style={styles.subtitle}>1.5 Publicarea anunțurilor</Text>
+                <Text style={styles.paragraph}>
+                    Publicarea anunțurilor pe CarFlip este complet gratuită. Fiecare anunț este activ pentru o perioadă de 3 luni de la data publicării, după care expiră automat. Utilizatorul poate reactiva anunțul gratuit din secțiunea de profil. Ștergerea anunțului poate fi realizată oricând din aplicație. Anunțurile trec printr-un proces automat de procesare media (compresie imagini și video) înainte de publicare.
+                </Text>
+
+                <Text style={styles.subtitle}>1.6 Rolul platformei</Text>
                 <Text style={styles.paragraph}>
                     CarFlip funcționează exclusiv ca intermediar între vânzători și potențialii cumpărători. Platforma nu participă, nu mediază și nu garantează în niciun fel tranzacțiile efectuate între utilizatori. Nu oferim garanții privind exactitatea informațiilor din anunțuri, starea tehnică a vehiculelor, legalitatea documentelor sau buna-credință a utilizatorilor. Orice tranzacție se desfășoară pe propria răspundere a părților implicate.
                 </Text>
 
-                <Text style={styles.subtitle}>1.6 Conținut interzis</Text>
+                <Text style={styles.subtitle}>1.7 Conținut interzis</Text>
                 <Text style={styles.paragraph}>
-                    Este strict interzisă publicarea următoarelor tipuri de conținut pe platforma CarFlip: anunțuri pentru vehicule furate sau cu proveniență ilegală, vehicule fără documente legale valabile, informații false sau înșelătoare despre vehicule, conținut pornografic, obscen sau ofensator, spam, publicitate neautorizată sau conținut duplicat, piese contrafăcute sau orice alte produse și servicii ilegale. Încălcarea acestor reguli poate duce la eliminarea conținutului și suspendarea imediată a contului.
+                    Este strict interzisă publicarea următoarelor tipuri de conținut pe platforma CarFlip:
+                </Text>
+                <Text style={styles.bulletItem}>• Anunțuri pentru vehicule furate sau cu proveniență ilegală</Text>
+                <Text style={styles.bulletItem}>• Vehicule fără documente legale valabile</Text>
+                <Text style={styles.bulletItem}>• Informații false sau înșelătoare despre vehicule (kilometraj, stare, preț)</Text>
+                <Text style={styles.bulletItem}>• Conținut pornografic, obscen, violent sau ofensator</Text>
+                <Text style={styles.bulletItem}>• Spam, publicitate neautorizată sau conținut duplicat</Text>
+                <Text style={styles.bulletItem}>• Piese contrafăcute sau orice alte produse și servicii ilegale</Text>
+                <Text style={styles.bulletItem}>• Conținut care încalcă drepturile de proprietate intelectuală ale terților</Text>
+                <Text style={styles.bulletItem}>• Informații personale ale altor persoane fără consimțământul acestora</Text>
+                <Text style={styles.paragraph}>
+                    Încălcarea acestor reguli poate duce la eliminarea conținutului și suspendarea contului.
                 </Text>
 
-                <Text style={styles.subtitle}>1.7 Suspendarea și închiderea conturilor</Text>
+                <Text style={styles.subtitle}>1.8 Suspendarea și închiderea conturilor</Text>
                 <Text style={styles.paragraph}>
-                    Echipa CarFlip își rezervă dreptul de a suspenda sau închide permanent orice cont de utilizator, fără notificare prealabilă, în cazul în care se constată încălcarea prezentelor termeni, activitate frauduloasă, publicarea de conținut ilegal, sau orice altă utilizare abuzivă a platformei. Decizia de suspendare este la discreția exclusivă a echipei CarFlip.
+                    Echipa CarFlip își rezervă dreptul de a suspenda sau închide orice cont de utilizator în cazul în care se constată încălcarea prezenților termeni, activitate frauduloasă, publicarea de conținut ilegal, sau orice altă utilizare abuzivă a platformei. Înainte de suspendarea permanentă, utilizatorul va fi notificat prin email cu motivul deciziei, cu excepția cazurilor grave (fraudă, conținut ilegal) care pot necesita acțiune imediată. Utilizatorul poate contesta decizia de suspendare prin email la carflip.ro@outlook.com în termen de 15 zile calendaristice de la notificare.
                 </Text>
 
-                <Text style={styles.subtitle}>1.8 Proprietate intelectuală</Text>
+                <Text style={styles.subtitle}>1.9 Proprietate intelectuală</Text>
                 <Text style={styles.paragraph}>
-                    Conținutul publicat de utilizatori (fotografii, descrieri, date despre vehicule) rămâne proprietatea acestora. Prin publicarea conținutului pe CarFlip, utilizatorul acordă platformei o licență neexclusivă, gratuită și revocabilă de a afișa, distribui și utiliza acest conținut în cadrul platformei, precum și în materiale promoționale asociate serviciului (capturi de ecran pentru App Store, prezentări, reclame).
+                    Conținutul publicat de utilizatori (fotografii, descrieri, date despre vehicule) rămâne proprietatea acestora. Prin publicarea conținutului pe CarFlip, utilizatorul acordă platformei o licență neexclusivă, gratuită și revocabilă de a afișa, distribui și utiliza acest conținut în cadrul platformei, precum și în materiale promoționale asociate serviciului (capturi de ecran pentru App Store, prezentări).
                 </Text>
                 <Text style={styles.paragraph}>
                     Brandul CarFlip, designul aplicației, codul sursă și toate elementele grafice asociate sunt proprietatea exclusivă a Echipei CarFlip și nu pot fi reproduse sau utilizate fără acordul scris prealabil.
                 </Text>
 
-                <Text style={styles.subtitle}>1.9 Limitarea răspunderii</Text>
+                <Text style={styles.subtitle}>1.10 Limitarea răspunderii</Text>
                 <Text style={styles.paragraph}>
-                    CarFlip nu poate fi ținut responsabil pentru pierderi financiare, daune directe sau indirecte rezultate din utilizarea platformei, tranzacții între utilizatori, indisponibilitatea temporară a serviciului, sau acțiunile altor utilizatori. Serviciul este furnizat „ca atare" (as is), fără garanții explicite sau implicite.
+                    CarFlip nu poate fi ținut responsabil pentru pierderi financiare, daune directe sau indirecte rezultate din utilizarea platformei, tranzacții între utilizatori, indisponibilitatea temporară a serviciului, sau acțiunile altor utilizatori. Serviciul este furnizat „ca atare" (as is), fără garanții explicite sau implicite. Această limitare nu afectează drepturile legale ale consumatorilor prevăzute de legislația Uniunii Europene și legislația română.
                 </Text>
 
-                <Text style={styles.subtitle}>1.10 Modificarea termenilor</Text>
+                <Text style={styles.subtitle}>1.11 Modificarea termenilor</Text>
                 <Text style={styles.paragraph}>
-                    Echipa CarFlip își rezervă dreptul de a modifica prezentele termeni și condiții în orice moment. Modificările intră în vigoare la data publicării lor în aplicație. Continuarea utilizării serviciului după publicarea modificărilor constituie acceptarea noilor termeni.
+                    Echipa CarFlip își rezervă dreptul de a modifica prezenții termeni și condiții. Utilizatorii vor fi notificați prin intermediul aplicației sau prin email cu cel puțin 15 zile înainte de intrarea în vigoare a modificărilor semnificative. Continuarea utilizării serviciului după intrarea în vigoare a modificărilor constituie acceptarea noilor termeni. Dacă nu ești de acord cu modificările, poți șterge contul oricând din secțiunea Securitate a aplicației.
                 </Text>
 
                 <View style={styles.sectionDivider} />
 
-                {/* ═══════════════════════════════════════════
-                    SECȚIUNEA 2: POLITICA DE CONFIDENȚIALITATE
-                   ═══════════════════════════════════════════ */}
                 <Text style={styles.mainTitle}>2. Politica de confidențialitate</Text>
 
-                <Text style={styles.subtitle}>2.1 Date colectate</Text>
+                <Text style={styles.paragraph}>
+                    Această politică de confidențialitate este elaborată în conformitate cu Regulamentul (UE) 2016/679 privind protecția persoanelor fizice în ceea ce privește prelucrarea datelor cu caracter personal (GDPR) și legislația română aplicabilă.
+                </Text>
+
+                <Text style={styles.subtitle}>2.1 Operatorul de date</Text>
+                <Text style={styles.paragraph}>
+                    Operatorul de date cu caracter personal este Echipa CarFlip, cu sediul în România. Pentru orice solicitări legate de datele tale personale, ne poți contacta la: carflip.ro@outlook.com. Ne angajăm să răspundem oricărei solicitări în termen de maximum 30 de zile calendaristice.
+                </Text>
+
+                <Text style={styles.subtitle}>2.2 Date colectate</Text>
                 <Text style={styles.paragraph}>
                     În cadrul utilizării aplicației CarFlip, colectăm următoarele categorii de date personale:
                 </Text>
-                <Text style={styles.bulletItem}>• Informații de cont: nume de utilizator, adresă de email, parolă (stocată exclusiv în formă criptată)</Text>
-                <Text style={styles.bulletItem}>• Conținut generat: anunțuri, fotografii, descrieri, comentarii, mesaje private</Text>
-                <Text style={styles.bulletItem}>• Date tehnice: token-uri de notificare (Firebase Cloud Messaging), tipul dispozitivului</Text>
-                <Text style={styles.bulletItem}>• Date de utilizare: interacțiuni cu anunțurile (vizualizări, aprecieri)</Text>
-
-                <Text style={styles.subtitle}>2.2 Scopul colectării</Text>
+                <Text style={styles.bulletItem}>• Informații de cont: nume de utilizator, adresă de email, parolă (stocată exclusiv în formă criptată cu algoritmul bcrypt)</Text>
+                <Text style={styles.bulletItem}>• Conținut generat de utilizator: anunțuri, fotografii, videoclipuri, descrieri, comentarii, mesaje private</Text>
+                <Text style={styles.bulletItem}>• Date tehnice: token-uri de notificare Firebase Cloud Messaging (FCM), tipul dispozitivului</Text>
+                <Text style={styles.bulletItem}>• Date de utilizare: interacțiuni cu anunțurile (vizualizări, aprecieri), postări vizualizate</Text>
                 <Text style={styles.paragraph}>
-                    Datele personale sunt colectate și prelucrate în următoarele scopuri: furnizarea și îmbunătățirea continuă a serviciului, trimiterea de notificări relevante (comentarii, mesaje, alerte), prevenirea fraudei și a utilizării abuzive a platformei, și comunicări tranzacționale legate de cont (coduri de verificare, resetare parolă).
-                </Text>
-                <Text style={styles.paragraph}>
-                    Nu trimitem email-uri de marketing sau newsletter. Toate comunicările prin email sunt strict tranzacționale.
+                    Nu colectăm date de localizare GPS, nu utilizăm cookie-uri, nu implementăm tehnologii de tracking comportamental și nu colectăm date biometrice.
                 </Text>
 
-                <Text style={styles.subtitle}>2.3 Stocarea și securitatea datelor</Text>
+                <Text style={styles.subtitle}>2.3 Scopul și baza legală a prelucrării</Text>
                 <Text style={styles.paragraph}>
-                    Datele sunt stocate pe servere securizate cu acces restricționat. Parolele sunt criptate utilizând algoritmul bcrypt și nu sunt niciodată stocate în text clar. Fotografiile și fișierele video sunt găzduite pe infrastructura Cloudflare R2.
+                    Datele personale sunt prelucrate în următoarele scopuri și pe baza următoarelor temeiuri legale (conform Art. 6 GDPR):
+                </Text>
+                <Text style={styles.bulletItem}>• Executarea contractului (Art. 6 alin. 1 lit. b): furnizarea serviciului, gestionarea contului, publicarea și afișarea anunțurilor, funcționalitatea de mesagerie și comentarii</Text>
+                <Text style={styles.bulletItem}>• Interesul legitim (Art. 6 alin. 1 lit. f): prevenirea fraudei și a utilizării abuzive, îmbunătățirea serviciului, funcționalitatea de feed personalizat (postări nevăzute vs. văzute)</Text>
+                <Text style={styles.bulletItem}>• Consimțământul (Art. 6 alin. 1 lit. a): trimiterea notificărilor push (care poate fi retras oricând din setările dispozitivului)</Text>
+                <Text style={styles.bulletItem}>• Obligația legală (Art. 6 alin. 1 lit. c): răspunsul la solicitări ale autorităților competente, dacă este cazul</Text>
+                <Text style={styles.paragraph}>
+                    Nu trimitem email-uri de marketing sau newsletter. Toate comunicările prin email sunt strict tranzacționale (coduri de verificare, resetare parolă, notificări privind contul).
                 </Text>
 
-                <Text style={styles.subtitle}>2.4 Mesaje private</Text>
+                <Text style={styles.subtitle}>2.4 Stocarea și securitatea datelor</Text>
                 <Text style={styles.paragraph}>
-                    Mesajele private transmise între utilizatori sunt stocate temporar și sunt șterse automat după 30 de zile calendaristice de la trimitere. Această ștergere este automată și ireversibilă.
+                    Datele sunt stocate pe infrastructură situată în Spațiul Economic European (SEE):
+                </Text>
+                <Text style={styles.bulletItem}>• Baza de date (MongoDB Atlas) — regiune UE</Text>
+                <Text style={styles.bulletItem}>• Serverul aplicației (Hetzner) — Falkenstein, Germania</Text>
+                <Text style={styles.bulletItem}>• Fișiere media (Cloudflare R2) — rețeaua globală Cloudflare, cu respectarea clauzelor contractuale standard pentru transferuri internaționale</Text>
+                <Text style={styles.paragraph}>
+                    Măsuri de securitate implementate: criptarea parolelor cu bcrypt, comunicații HTTPS/TLS, acces restricționat la servere, rate limiting pe API, sistem de blocare utilizatori.
                 </Text>
 
-                <Text style={styles.subtitle}>2.5 Partajarea datelor cu terți</Text>
+                <Text style={styles.subtitle}>2.5 Perioada de retenție a datelor</Text>
                 <Text style={styles.paragraph}>
-                    CarFlip nu vinde, nu închiriază și nu distribuie datele personale ale utilizatorilor. Datele sunt partajate exclusiv cu următorii furnizori de servicii, strict în scopul funcționării platformei:
+                    Datele personale sunt păstrate conform următoarelor perioade:
                 </Text>
-                <Text style={styles.bulletItem}>• Mailgun — transmiterea email-urilor tranzacționale</Text>
-                <Text style={styles.bulletItem}>• Firebase Cloud Messaging — transmiterea notificărilor push</Text>
-                <Text style={styles.bulletItem}>• Cloudflare R2 — stocarea fișierelor media</Text>
+                <Text style={styles.bulletItem}>• Contul și datele asociate (anunțuri, comentarii, aprecieri): pe durata existenței contului</Text>
+                <Text style={styles.bulletItem}>• Mesajele private: șterse automat după 30 de zile calendaristice de la trimitere (ștergere automată și ireversibilă)</Text>
+                <Text style={styles.bulletItem}>• Anunțurile expirate: dezactivate automat după 3 luni, datele rămân asociate contului până la ștergerea manuală sau ștergerea contului</Text>
+                <Text style={styles.bulletItem}>• După ștergerea contului: toate datele asociate (anunțuri, comentarii, mesaje, profil, fișiere media) sunt șterse automat și definitiv. Datele anonimizate pot fi păstrate temporar în backup-uri de securitate pentru maximum 30 de zile</Text>
 
-                <Text style={styles.subtitle}>2.6 Drepturile utilizatorului</Text>
+                <Text style={styles.subtitle}>2.6 Partajarea datelor cu terți</Text>
                 <Text style={styles.paragraph}>
-                    În conformitate cu legislația aplicabilă privind protecția datelor personale, ai dreptul de a: accesa datele tale personale stocate pe platformă, solicita corectarea informațiilor incorecte prin actualizarea profilului, solicita ștergerea completă a contului și a tuturor datelor asociate (disponibilă în secțiunea Securitate a aplicației), și retrage consimțământul pentru notificările push prin setările dispozitivului.
+                    CarFlip nu vinde, nu închiriază și nu distribuie datele personale ale utilizatorilor către terți în scopuri comerciale. Datele sunt partajate exclusiv cu următorii furnizori de servicii (împuterniciți), strict în scopul funcționării platformei:
+                </Text>
+                <Text style={styles.bulletItem}>• Mailgun (Sinch Email) — transmiterea email-urilor tranzacționale</Text>
+                <Text style={styles.bulletItem}>• Firebase Cloud Messaging (Google) — transmiterea notificărilor push</Text>
+                <Text style={styles.bulletItem}>• Cloudflare R2 (Cloudflare, Inc.) — stocarea fișierelor media (imagini, videoclipuri)</Text>
+                <Text style={styles.bulletItem}>• MongoDB Atlas (MongoDB, Inc.) — stocarea bazei de date</Text>
+                <Text style={styles.paragraph}>
+                    Toți furnizorii menționați respectă GDPR și/sau au implementate clauze contractuale standard pentru protecția datelor.
                 </Text>
 
-                <Text style={styles.subtitle}>2.7 Cookie-uri și tracking</Text>
+                <Text style={styles.subtitle}>2.7 Drepturile utilizatorului conform GDPR</Text>
                 <Text style={styles.paragraph}>
-                    Aplicația mobilă CarFlip nu utilizează cookie-uri. Nu implementăm tehnologii de tracking comportamental și nu colectăm date de localizare. Singurele date tehnice colectate sunt cele minime necesare funcționării serviciului de notificări.
+                    În conformitate cu Regulamentul (UE) 2016/679 (GDPR), ai următoarele drepturi privind datele tale personale:
+                </Text>
+                <Text style={styles.bulletItem}>• Dreptul de acces (Art. 15): poți solicita o copie a tuturor datelor personale pe care le deținem despre tine</Text>
+                <Text style={styles.bulletItem}>• Dreptul la rectificare (Art. 16): poți corecta informațiile incorecte prin actualizarea profilului din aplicație sau prin solicitare la adresa de email de contact</Text>
+                <Text style={styles.bulletItem}>• Dreptul la ștergere (Art. 17): poți solicita ștergerea completă a contului și a tuturor datelor asociate, disponibilă direct din aplicație (Profil → Securitate → Ștergere cont)</Text>
+                <Text style={styles.bulletItem}>• Dreptul la restricționarea prelucrării (Art. 18): poți solicita restricționarea prelucrării datelor tale în anumite circumstanțe</Text>
+                <Text style={styles.bulletItem}>• Dreptul la portabilitatea datelor (Art. 20): poți solicita datele tale într-un format structurat, utilizat în mod curent și care poate fi citit automat (JSON)</Text>
+                <Text style={styles.bulletItem}>• Dreptul la opoziție (Art. 21): poți obiecta în orice moment la prelucrarea datelor bazată pe interesul nostru legitim</Text>
+                <Text style={styles.bulletItem}>• Dreptul de retragere a consimțământului (Art. 7): poți retrage consimțământul pentru notificările push oricând, din setările dispozitivului</Text>
+                <Text style={styles.paragraph}>
+                    Pentru exercitarea oricăruia dintre aceste drepturi, contactează-ne la carflip.ro@outlook.com. Vom răspunde în termen de maximum 30 de zile calendaristice.
+                </Text>
+
+                <Text style={styles.subtitle}>2.8 Plângeri</Text>
+                <Text style={styles.paragraph}>
+                    Dacă consideri că prelucrarea datelor tale personale încalcă prevederile GDPR, ai dreptul de a depune o plângere la Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP), cu sediul în Bd. G-ral. Gheorghe Magheru nr. 28-30, Sector 1, București, 010336, România. Website: www.dataprotection.ro.
+                </Text>
+
+                <Text style={styles.subtitle}>2.9 Transferuri internaționale de date</Text>
+                <Text style={styles.paragraph}>
+                    Datele personale sunt stocate și prelucrate preponderent în cadrul Spațiului Economic European (SEE). În cazul în care anumiți furnizori de servicii (Cloudflare, Google/Firebase) prelucrează date în afara SEE, aceștia asigură un nivel adecvat de protecție prin clauze contractuale standard aprobate de Comisia Europeană sau prin certificări recunoscute (EU-US Data Privacy Framework).
                 </Text>
 
                 <View style={styles.sectionDivider} />
 
-                {/* ═══════════════════════════════════════════
-                    SECȚIUNEA 3: REGULILE COMUNITĂȚII
-                   ═══════════════════════════════════════════ */}
                 <Text style={styles.mainTitle}>3. Regulile comunității</Text>
 
                 <Text style={styles.paragraph}>
@@ -181,11 +230,11 @@ export default function LegalScreen() {
                 </Text>
 
                 <Text style={styles.ruleItem}>
-                    <Text style={styles.ruleBold}>Folosește fotografii reale.</Text> Fotografiile trebuie să fie ale vehiculului efectiv. Utilizarea imaginilor descărcate de pe internet, a fotografiilor de stoc sau a imaginilor manipulate este interzisă.
+                    <Text style={styles.ruleBold}>Folosește fotografii reale.</Text> Fotografiile trebuie să fie ale vehiculului efectiv vândut. Utilizarea imaginilor descărcate de pe internet, a fotografiilor de stoc sau a imaginilor manipulate este interzisă.
                 </Text>
 
                 <Text style={styles.ruleItem}>
-                    <Text style={styles.ruleBold}>Prețuri reale.</Text> Nu publica prețuri artificiale, simbolice sau înșelătoare cu scopul de a atrage atenția.
+                    <Text style={styles.ruleBold}>Prețuri reale.</Text> Nu publica prețuri artificiale, simbolice (de exemplu 1€) sau înșelătoare cu scopul de a atrage atenția.
                 </Text>
 
                 <Text style={styles.ruleItem}>
@@ -201,27 +250,26 @@ export default function LegalScreen() {
                 </Text>
 
                 <Text style={[styles.paragraph, { marginTop: 16 }]}>
-                    Încălcarea repetată sau gravă a regulilor comunității poate duce la suspendarea sau ștergerea permanentă a contului, fără notificare prealabilă și fără drept de apel.
+                    Încălcarea regulilor comunității poate duce la avertisment, suspendarea temporară sau permanentă a contului, în funcție de gravitatea și frecvența abaterilor. Deciziile de suspendare pot fi contestate conform secțiunii 1.8.
                 </Text>
 
                 <View style={styles.sectionDivider} />
 
-                {/* ═══════════════════════════════════════════
-                    SECȚIUNEA 4: DISPOZIȚII FINALE
-                   ═══════════════════════════════════════════ */}
                 <Text style={styles.mainTitle}>4. Dispoziții finale</Text>
 
                 <Text style={styles.paragraph}>
-                    Prezentele termeni și condiții, politica de confidențialitate și regulile comunității constituie un acord integral între utilizator și Echipa CarFlip privind utilizarea platformei.
+                    Prezenții termeni și condiții, politica de confidențialitate și regulile comunității constituie un acord integral între utilizator și Echipa CarFlip privind utilizarea platformei.
                 </Text>
                 <Text style={styles.paragraph}>
-                    Legea aplicabilă este legea română. Orice litigiu va fi soluționat pe cale amiabilă, iar în cazul în care acest lucru nu este posibil, de către instanțele competente din România.
+                    Legea aplicabilă este legea română, completată cu prevederile Regulamentului (UE) 2016/679 (GDPR) și ale celorlalte reglementări europene în materie de protecție a datelor cu caracter personal. Orice litigiu va fi soluționat pe cale amiabilă, iar în cazul în care acest lucru nu este posibil, de către instanțele competente din România.
                 </Text>
                 <Text style={styles.paragraph}>
-                    Pentru orice întrebări, nelămuriri sau solicitări legate de conținutul acestui document, ne poți contacta prin intermediul secțiunii Contact din aplicație.
+                    Prezentul document nu afectează drepturile conferite de legislația de protecție a consumatorilor din Uniunea Europeană.
+                </Text>
+                <Text style={styles.paragraph}>
+                    Pentru orice întrebări, nelămuriri sau solicitări legate de conținutul acestui document, ne poți contacta prin intermediul secțiunii Contact din aplicație sau la adresa: carflip.ro@outlook.com
                 </Text>
 
-                {/* FOOTER */}
                 <View style={styles.footer}>
                     <Text style={styles.footerBrand}>CAR FLIP</Text>
                     <Text style={styles.footerText}>© {new Date().getFullYear()} CarFlip. Toate drepturile rezervate.</Text>
@@ -237,8 +285,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFFFFF',
     },
-
-    // ── Header ─────────────────────────────────
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -276,8 +322,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#081539',
         borderRadius: 2,
     },
-
-    // ── Scroll ─────────────────────────────────
     scrollView: {
         flex: 1,
     },
@@ -286,15 +330,11 @@ const styles = StyleSheet.create({
         paddingTop: 8,
         paddingBottom: 50,
     },
-
-    // ── Meta ───────────────────────────────────
     lastUpdated: {
         fontSize: 12,
         color: '#AAAAAA',
         marginBottom: 24,
     },
-
-    // ── Titluri ────────────────────────────────
     mainTitle: {
         fontSize: 20,
         fontWeight: '800',
@@ -308,8 +348,6 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginBottom: 8,
     },
-
-    // ── Text ───────────────────────────────────
     paragraph: {
         fontSize: 14,
         color: '#555555',
@@ -323,8 +361,6 @@ const styles = StyleSheet.create({
         marginBottom: 6,
         paddingLeft: 8,
     },
-
-    // ── Reguli ─────────────────────────────────
     ruleItem: {
         fontSize: 14,
         color: '#555555',
@@ -335,15 +371,11 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#081539',
     },
-
-    // ── Separator ──────────────────────────────
     sectionDivider: {
         height: 1,
         backgroundColor: '#F0F0F0',
         marginVertical: 32,
     },
-
-    // ── Footer ─────────────────────────────────
     footer: {
         alignItems: 'center',
         marginTop: 32,
