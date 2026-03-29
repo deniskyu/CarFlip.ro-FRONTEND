@@ -26,6 +26,7 @@ import { Context } from '../../context/Context.js';
 import { assets } from '../../assets.js';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
+
 const COLORS = {
     primary: '#800000',
     secondary: '#081539',
@@ -562,20 +563,22 @@ export default function ChatScreen({ route, navigation }) {
                     <Image source={assets.back_arrow} style={styles.backIcon} />
                 </Pressable>
 
-                <Pressable onPress={() => {
-                    console.log('apasat')
-                    navigation.navigate('HomeTab', {
-                        screen: 'SearchProfileResult',
-                        params: {
-                            userId: resolvedParticipantId
-                        }
-                    });
-                }}>
+                <Pressable 
+                    style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                    onPress={() => {
+                        navigation.navigate('HomeTab', {
+                            screen: 'SearchProfileResult',
+                            params: {
+                                userId: resolvedParticipantId
+                            }
+                        });
+                    }}
+                >
                     <Image source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar} style={styles.headerAvatar} />
+                    <Text style={styles.headerName} numberOfLines={1}>
+                        {resolvedParticipantName}
+                    </Text>
                 </Pressable>
-                <Text style={styles.headerName} numberOfLines={1}>
-                    {resolvedParticipantName}
-                </Text>
 
                 <Pressable
                     style={styles.reportButton}
@@ -588,8 +591,8 @@ export default function ChatScreen({ route, navigation }) {
 
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : tabBarHeight}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={0}
             >
                 {loading ? (
                     <View style={styles.loadingContainer}>
@@ -830,7 +833,7 @@ const styles = StyleSheet.create({
     },
     backButton: {
         padding: 4,
-        marginRight: 8,
+        marginRight: 14,
     },
     backIcon: {
         width: 22,

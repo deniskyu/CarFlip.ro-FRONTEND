@@ -8,7 +8,11 @@ import InAppNotification from './screens/Main/components/InAppNotification.jsx';
 
 import { authEvents } from './helpers/authEvents.js';
 import { notificationRef } from './helpers/notificationHelper.js'; 
-import { assets } from './assets.js';
+import { Text } from 'react-native';
+
+
+(Text as any).defaultProps = (Text as any).defaultProps || {};
+(Text as any).defaultProps.maxFontSizeMultiplier = 1.25;
 
 export default function App(){
 

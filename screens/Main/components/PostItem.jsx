@@ -78,7 +78,7 @@ const FeedSeparator = ({ itemHeight }) => (
     <View style={[styles.separatorContainer, { height: itemHeight }]}>
         <View style={styles.separatorLine} />
         <View style={styles.separatorContent}>
-            <Text style={styles.separatorCheck}>🎆</Text> 
+            <Text style={styles.separatorCheck}>✅</Text> 
             <Text style={styles.separatorTitle}>Ești la zi!</Text>
             <Text style={styles.separatorSubtitle}>Ai văzut toate anunțurile noi din ultimele 30 de zile.</Text>
             <Text style={styles.separatorSmall}>Mai jos sunt anunțurile anterioare.</Text>
@@ -586,9 +586,18 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                 </Pressable>
             </View>
 
-            <View style={[styles.bottomOverlay, { bottom: scaled.bottomOverlayBottom, opacity: shouldHideUI ? 0 : 1 }]} pointerEvents="none">
+            <View 
+                style={[styles.bottomOverlay, { bottom: scaled.bottomOverlayBottom, opacity: shouldHideUI ? 0 : 1 }]} 
+                pointerEvents={shouldHideUI ? 'none' : 'box-none'}
+            >
                 <View style={styles.userInfoRow}>
-                    <Pressable onPress={() => handleProfilePress(item.user_id._id)}><Text style={[styles.userNameText, { fontSize: scaled.userNameFont }]}>@{item.user_name || 'Utilizator'}</Text></Pressable>
+                    {pfpIconVisible ? (
+                        <Pressable onPress={() => handleProfilePress(item.user_id._id)}>
+                            <Text style={[styles.userNameText, { fontSize: scaled.userNameFont }]}>@{item.user_name || 'Utilizator'}</Text>
+                        </Pressable>
+                    ) : (
+                        <Text style={[styles.userNameText, { fontSize: scaled.userNameFont }]}>@{item.user_name || 'Utilizator'}</Text>
+                    )}
                     <Text style={[styles.locationText2, { fontSize: scaled.locationFont }]}>• {item.location?.city}</Text>
                 </View>
                 <Text style={[styles.brandTitle, { fontSize: scaled.brandFont }]}>{item.brand.name} {item.model.name}</Text>
@@ -620,7 +629,7 @@ const styles = StyleSheet.create({
     separatorSubtitle: { color: '#aaa', fontSize: 16, textAlign: 'center', marginBottom: 20, lineHeight: 24 },
     separatorSmall: { color: '#666', fontSize: 14, fontStyle: 'italic' },
     mediaContainer: { width: width, height: ITEM_HEIGHT, backgroundColor: 'white', overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
-    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '23%', backgroundColor: 'rgba(0, 0, 0, 0.12)' },
+    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '23%', backgroundColor: 'rgba(0, 0, 0, 0.13)' },
     bigHeartContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 20, elevation: 20, backgroundColor: 'transparent' },
     bigHeartImage: { width: 100, height: 100, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3.84 },
     summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },

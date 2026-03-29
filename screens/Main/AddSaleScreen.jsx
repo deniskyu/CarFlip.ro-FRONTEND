@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
 import { Context } from '../../context/Context.js';
-import { LOCATIONS } from './staticData.js';
+import { LOCATIONS, FUEL_TYPES } from './staticData.js';
 import { emitter } from '../../helpers/eventBus.js';
 import { normalizeMediaUri } from '../../helpers/normalizeMediaUri.js';
 
@@ -33,14 +33,6 @@ const COLORS = {
     disabled: '#F0F0F0'
 };
 
-const FUEL_TYPES = [
-    { id: 'benzina', name: 'Benzină' },
-    { id: 'motorina', name: 'Motorină' },
-    { id: 'electric', name: 'Electric' },
-    { id: 'hibrid', name: 'Hibrid' },
-    { id: 'gpl', name: 'GPL' },
-    { id: 'benzina_gpl', name: 'Benzină + GPL' }
-];
 
 const ENGINE_CAPACITIES = [
     { id: 'electric', name: 'Fără (Electric)' }
@@ -533,8 +525,8 @@ export default function AddSaleScreen({ navigation }) {
                         <Text style={styles.sectionTitle}>Imagini & Video ({media.length}/10)</Text>
                         <Text style={styles.sectionSubtitle}>Maxim 10 fișiere (max 1 video, max 25s). Imaginile nu pot depăși 15 MB, iar videoclipurile 50 MB.
                         </Text>
-                        <Text style={[styles.sectionSubtitle, {marginBottom: 4}]}>O imagine este obligatorie, și va fi preview-ul. Procesarea anunțului va dura undeva la câteva minute.</Text>
-                        <Text style={[styles.sectionSubtitle, {marginBottom: 12, color: '#800000'}]}>Dupa 3 luni anuntul va fi dezactivat automat. Poti intra la sectiunea de profil pentru a reactiva inca 3 luni anuntul.</Text>
+                        <Text style={[styles.sectionSubtitle, {marginBottom: 4}]}>O imagine este obligatorie, și va fi cea de copertă in profil. Procesarea anunțului va dura undeva la câteva minute. si aici, lipsește una sau doua.</Text>
+                        <Text style={[styles.sectionSubtitle, {marginBottom: 12, color: '#800000'}]}>După 3 luni, anunțul va fi dezactivat automat. Poți intra la secțiunea de profil pentru a reactiva încă 3 luni anunțul.</Text>
                         <View style={{ position: 'relative' }}>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaRow}>
                                 <Pressable style={styles.addMediaButton} onPress={handlePickMedia} disabled={loadingMedia}>

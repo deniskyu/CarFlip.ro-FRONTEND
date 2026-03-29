@@ -230,7 +230,11 @@ export const LOCATIONS = [
     { id: 'benzina', name: 'Benzină' },
     { id: 'motorina', name: 'Motorină' },
     { id: 'electric', name: 'Electric' },
-    { id: 'hibrid', name: 'Hibrid' },
-    { id: 'gpl', name: 'GPL' },
-    { id: 'benzina_gpl', name: 'Benzină + GPL' }
+    { id: 'hibrid_benzina', name: 'Hibrid Benzină' },
+    { id: 'hibrid_motorina', name: 'Hibrid Motorină' },
+    { id: 'hidrogen', name: 'Hidrogen' },
+    { id: 'benzina_gpl', name: 'Benzină + GPL' },
+    { id: 'etanol', name: 'Etanol' },
+    { id: 'lpg', name: 'Lpg' },
+    { id: 'altceva', name: 'Altceva' },
 ];

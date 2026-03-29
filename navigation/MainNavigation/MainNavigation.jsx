@@ -6,6 +6,7 @@ import { Image, Platform, View, Text } from 'react-native';
 import { assets } from '../../assets.js';
 import { Context } from '../../context/Context.js';
 import { emitter } from '../../helpers/eventBus.js';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 
 import MainScreen from '../../screens/Main/MainScreen.jsx';
 import ProfileScreen from '../../screens/Main/ProfileScreen.jsx';
@@ -95,7 +96,7 @@ function ChatStackNavigation() {
             }}
         >
             <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
-            <Stack.Screen name="ChatScreen" component={ChatScreen} />
+            <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ animation: 'none' }}/>
         </Stack.Navigator>
     );
 }
@@ -299,7 +300,24 @@ export default function MainNavigation() {
                     },
                 })}
             />
-            <Tab.Screen name="ChatTab" component={ChatStackNavigation} />
+            <Tab.Screen
+                name="ChatTab"
+                component={ChatStackNavigation}
+                options={({ route }) => {
+                    const routeName = getFocusedRouteNameFromRoute(route) ?? 'ChatListScreen';
+                    return {
+                        tabBarStyle: routeName === 'ChatScreen'
+                            ? { display: 'none' }
+                            : {
+                                backgroundColor: '#800000',
+                                borderTopWidth: 0,
+                                paddingBottom: 0,
+                                marginBottom: 0,
+                                ...(Platform.OS === 'ios' ? { height: 80, paddingTop: 10 } : { paddingBottom: 0, paddingTop: 2 }),
+                            },
+                    };
+                }}
+            />
             <Tab.Screen 
                 name="ProfileTab" 
                 component={ProfileStackNavigation} 
