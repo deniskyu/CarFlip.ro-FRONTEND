@@ -1,15 +1,28 @@
 import React from "react";
-import { View, Text, StyleSheet, ActivityIndicator, StatusBar, Dimensions } from "react-native";
+import { View, StyleSheet, ActivityIndicator, StatusBar, Dimensions, Image } from "react-native";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { assets } from "../assets";
 
 const { width, height } = Dimensions.get("window");
 
 const SplashScreen = () => {
+    const insets = useSafeAreaInsets();
+
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#800000" />
-            <View style={styles.content}>
-                <Text style={styles.logoText}>CarFlip</Text>
-                <ActivityIndicator size="large" color="#FFFFFF" style={{ marginTop: 30 }} />
+            <StatusBar barStyle="light-content" backgroundColor="#fefefe" />
+            
+            <ActivityIndicator size="large" color="#800000" />
+
+            <View style={[
+                styles.bottomLogoContainer, 
+                { bottom: insets.bottom + 20 }
+            ]}>
+                <Image 
+                    source={assets.logo} 
+                    style={styles.carImage} 
+                    resizeMode="contain" 
+                />
             </View>
         </View>
     );
@@ -22,20 +35,20 @@ const styles = StyleSheet.create({
         left: 0,
         width: width,
         height: height,
-        backgroundColor: '#800000', 
+        backgroundColor: '#fefefe', 
         zIndex: 9999,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    content: {
+    bottomLogoContainer: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
         alignItems: 'center',
     },
-    logoText: {
-        fontSize: 52,
-        fontWeight: '900',
-        color: 'white',
-        letterSpacing: 2,
-        fontStyle: 'italic',
+    carImage: {
+        width: width * 0.3,
+        height: width * 0.3,
     }
 });
 

@@ -15,6 +15,7 @@ import {
     ActivityIndicator,
     Image
 } from 'react-native';
+import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Context } from '../../context/Context.js';
 
@@ -112,6 +113,7 @@ export default function EditSaleScreen({ route, navigation }) {
     };
 
     const isPickingRef = useRef(false);
+    const scrollViewRef = useRef(null);
 
     const handlePickNewMedia = async () => {
         if (isPickingRef.current) return;
@@ -137,8 +139,8 @@ export default function EditSaleScreen({ route, navigation }) {
                 let currentMedia = [];
                 let videoCount = 0;
 
-                const MAX_IMAGE_SIZE = 15 * 1024 * 1024; // 15 mb
-                const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 mb
+                const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
+                const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
     
                 for (let file of newFiles) {
                     const isVideo = file.type && file.type.includes('video');
@@ -270,6 +272,8 @@ export default function EditSaleScreen({ route, navigation }) {
         navigation.navigate('PreviewEditSaleScreen');
     };
 
+    const firstImageIndex = newLocalMedia.findIndex(f => f.type && f.type.includes('image'));
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
@@ -286,6 +290,7 @@ export default function EditSaleScreen({ route, navigation }) {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
             >
                 <ScrollView 
+                    ref={scrollViewRef}
                     contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
@@ -320,21 +325,58 @@ export default function EditSaleScreen({ route, navigation }) {
                             <Text style={styles.newMediaNote}>
                                 Aceste fișiere vor înlocui complet pozele/videoclipurile actuale după salvare. După schimbare, va dura câteva minute ca anunțul să fie procesat.
                             </Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaRow}>
-                                {newLocalMedia.map((file, index) => (
-                                    <View key={index} style={styles.mediaItem}>
-                                        <Image source={{ uri: file.uri }} style={styles.mediaImage} />
-                                        {file.type && file.type.includes('video') && (
-                                            <View style={styles.videoBadge}>
-                                                <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>VIDEO</Text>
-                                            </View>
-                                        )}
-                                        <Pressable style={styles.deleteButton} onPress={() => removeNewMedia(index)}>
-                                            <Text style={styles.deleteText}>X</Text>
-                                        </Pressable>
-                                    </View>
-                                ))}
-                            </ScrollView>
+                            <View style={styles.mediaRow}>
+                                <DraggableFlatList
+                                    data={newLocalMedia}
+                                    horizontal={true}
+                                    containerStyle={{ flex: 1 }}
+                                    ListFooterComponent={<View style={{ width: 20 }} />}
+                                    onDragBegin={() => scrollViewRef.current?.setNativeProps({ scrollEnabled: false })}
+                                    onDragEnd={({ data }) => {
+                                        setNewLocalMedia(data);
+                                        scrollViewRef.current?.setNativeProps({ scrollEnabled: true });
+                                    }}
+                                    keyExtractor={(item, index) => `${item.uri}-${index}`}
+                                    showsHorizontalScrollIndicator={false}
+                                    renderItem={({ item, getIndex, drag, isActive }) => {
+                                        const index = getIndex();
+                                        return (
+                                            <ScaleDecorator activeScale={0.95}>
+                                                <Pressable
+                                                    onLongPress={drag}
+                                                    delayLongPress={150}
+                                                    style={[
+                                                        styles.mediaItemOuter,
+                                                        isActive && styles.mediaItemActive,
+                                                        index === firstImageIndex && styles.mediaItemFirst,
+                                                    ]}
+                                                >
+                                                    <View style={styles.mediaItemInner}>
+                                                        <Image source={{ uri: item.uri }} style={styles.mediaImage} />
+                                                        {item.type && item.type.includes('video') && (
+                                                            <View style={styles.videoBadge}>
+                                                                <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>VIDEO</Text>
+                                                            </View>
+                                                        )}
+                                                    </View>
+                                                    {index === firstImageIndex && (
+                                                        <View style={styles.coverBadge}>
+                                                            <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>COPERTĂ</Text>
+                                                        </View>
+                                                    )}
+                                                    <Pressable
+                                                        style={styles.deleteButton}
+                                                        onPress={() => removeNewMedia(index)}
+                                                        hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+                                                    >
+                                                        <Text style={styles.deleteText}>X</Text>
+                                                    </Pressable>
+                                                </Pressable>
+                                            </ScaleDecorator>
+                                        );
+                                    }}
+                                />
+                            </View>
                         </View>
                     )}
 
@@ -638,14 +680,43 @@ const styles = StyleSheet.create({
     },
     mediaRow: {
         flexDirection: 'row',
+        alignItems: 'center',
+        height: 110,
     },
-    mediaItem: {
+    mediaItemOuter: {
         width: 100,
         height: 100,
         borderRadius: 12,
         marginRight: 10,
+        backgroundColor: '#000',
+    },
+    mediaItemInner: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 12,
         overflow: 'hidden',
         backgroundColor: '#000',
+    },
+    mediaItemActive: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.35,
+        shadowRadius: 6,
+        elevation: 10,
+    },
+    mediaItemFirst: {
+        borderWidth: 2.5,
+        borderColor: COLORS.primary,
+        borderRadius: 12,
+    },
+    coverBadge: {
+        position: 'absolute',
+        bottom: 5,
+        right: 5,
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        borderRadius: 4,
     },
     mediaImage: {
         width: '100%',

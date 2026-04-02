@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
         tintColor: 'white',
     },
     postButton: {
-        backgroundColor: '#007AFF', 
+        backgroundColor: '#c00000', 
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 20,

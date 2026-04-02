@@ -14,6 +14,7 @@ import {
     Platform,
     KeyboardAvoidingView
 } from 'react-native';
+import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
@@ -193,6 +194,7 @@ export default function AddSaleScreen({ navigation }) {
     };
 
     const isPickingRef = useRef(false);
+    const scrollViewRef = useRef(null);
 
     const handlePickMedia = async () => {
         if (isPickingRef.current) return;
@@ -503,6 +505,8 @@ export default function AddSaleScreen({ navigation }) {
         navigation.navigate('PreviewSaleScreen');
     };
 
+    const firstImageIndex = media.findIndex(f => f.type && f.type.includes('image'));
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
@@ -515,45 +519,100 @@ export default function AddSaleScreen({ navigation }) {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
             >
                 <ScrollView 
+                    ref={scrollViewRef}
                     contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="on-drag"
                 >
                     
-                    <View style={styles.section}>
+                   <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Imagini & Video ({media.length}/10)</Text>
-                        <Text style={styles.sectionSubtitle}>Maxim 10 fișiere (max 1 video, max 25s). Imaginile nu pot depăși 15 MB, iar videoclipurile 50 MB.
+                        <Text style={styles.sectionSubtitle}>
+                            Maxim 10 fișiere (max 1 video, max 25s). Imaginile nu pot depăși 15 MB, iar videoclipurile 50 MB.
                         </Text>
-                        <Text style={[styles.sectionSubtitle, {marginBottom: 4}]}>O imagine este obligatorie, și va fi cea de copertă in profil. Procesarea anunțului va dura undeva la câteva minute. si aici, lipsește una sau doua.</Text>
-                        <Text style={[styles.sectionSubtitle, {marginBottom: 12, color: '#800000'}]}>După 3 luni, anunțul va fi dezactivat automat. Poți intra la secțiunea de profil pentru a reactiva încă 3 luni anunțul.</Text>
-                        <View style={{ position: 'relative' }}>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaRow}>
-                                <Pressable style={styles.addMediaButton} onPress={handlePickMedia} disabled={loadingMedia}>
-                                    {loadingMedia ? (
-                                        <ActivityIndicator size="small" color={COLORS.primary} />
-                                    ) : (
-                                        <>
-                                            <Text style={styles.plusSign}>+</Text>
-                                            <Text style={styles.addText}>Adaugă</Text>
-                                        </>
-                                    )}
-                                </Pressable>
+                        <Text style={[styles.sectionSubtitle, {marginBottom: 4}]}>
+                            O imagine este obligatorie, și va fi cea de copertă in profil. Procesarea anunțului va dura undeva la câteva minute.
+                        </Text>
+                        <Text style={[styles.sectionSubtitle, {marginBottom: 12, color: '#800000'}]}>
+                            După 3 luni, anunțul va fi dezactivat automat. Poți intra la secțiunea de profil pentru a reactiva încă 3 luni anunțul.
+                        </Text>
 
-                                {media.map((file, index) => (
-                                    <View key={index} style={styles.mediaItem}>
-                                        <Image source={{ uri: file.uri }} style={styles.mediaImage} />
-                                        {file.type && file.type.includes('video') && (
-                                            <View style={styles.videoBadge}>
-                                                <Text style={{color: 'white', fontSize: 10, fontWeight: 'bold'}}>VIDEO</Text>
+                        <View style={styles.mediaRow}>
+                            {/* Buton Adaugă — fix în stânga */}
+                            <Pressable
+                                style={styles.addMediaButton}
+                                onPress={handlePickMedia}
+                                disabled={loadingMedia}
+                            >
+                                {loadingMedia ? (
+                                    <ActivityIndicator size="small" color={COLORS.primary} />
+                                ) : (
+                                    <>
+                                        <Text style={styles.plusSign}>+</Text>
+                                        <Text style={styles.addText}>Adaugă</Text>
+                                    </>
+                                )}
+                            </Pressable>
+
+                            {/* Lista drag & drop */}
+                            <DraggableFlatList
+                                data={media}
+                                horizontal={true}
+                                containerStyle={{ flex: 1 }}
+                                ListFooterComponent={<View style={{ width: 20 }} />}
+                                onDragBegin={() => scrollViewRef.current?.setNativeProps({ scrollEnabled: false })}
+                                onDragEnd={({ data }) => {
+                                    setMedia(data);
+                                    scrollViewRef.current?.setNativeProps({ scrollEnabled: true });
+                                }}
+                                keyExtractor={(item, index) => `${item.uri}-${index}`}
+                                showsHorizontalScrollIndicator={false}
+                                renderItem={({ item, getIndex, drag, isActive }) => {
+                                const index = getIndex();
+                                return (
+                                    <ScaleDecorator activeScale={0.95}>
+                                        {/* Strat exterior — pentru bordură + shadow, fără overflow hidden */}
+                                        <Pressable
+                                            onLongPress={drag}
+                                            delayLongPress={150}
+                                            style={[
+                                                styles.mediaItemOuter,
+                                                isActive && styles.mediaItemActive,
+                                                index === firstImageIndex && styles.mediaItemFirst,
+                                            ]}
+                                        >
+                                            {/* Strat interior — pentru overflow hidden (imaginea să fie rotunjită) */}
+                                            <View style={styles.mediaItemInner}>
+                                                <Image source={{ uri: item.uri }} style={styles.mediaImage} />
+
+                                                {item.type && item.type.includes('video') && (
+                                                    <View style={styles.videoBadge}>
+                                                        <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>VIDEO</Text>
+                                                    </View>
+                                                )}
                                             </View>
-                                        )}
-                                        <Pressable style={styles.deleteButton} onPress={() => removeMedia(index)}>
-                                            <Text style={styles.deleteText}>X</Text>
+
+                                            {/* Badge COPERTĂ — în afara overflow hidden */}
+                                            {index === firstImageIndex && (
+                                                <View style={styles.coverBadge}>
+                                                    <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>COPERTĂ</Text>
+                                                </View>
+                                            )}
+
+                                            {/* Buton ștergere — în afara overflow hidden */}
+                                            <Pressable
+                                                style={styles.deleteButton}
+                                                onPress={() => removeMedia(index)}
+                                                hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+                                            >
+                                                <Text style={styles.deleteText}>X</Text>
+                                            </Pressable>
                                         </Pressable>
-                                    </View>
-                                ))}
-                            </ScrollView>
+                                    </ScaleDecorator>
+                                );
+                            }}
+                            />
                         </View>
                     </View>
 
@@ -918,6 +977,44 @@ const styles = StyleSheet.create({
     },
     mediaRow: {
         flexDirection: 'row',
+        alignItems: 'center',
+        height: 110, // fix — previne glitch de layout la drag
+    },
+    mediaItemOuter: {
+        width: 100,
+        height: 100,
+        borderRadius: 12,
+        marginRight: 10,
+        backgroundColor: '#000',
+        // fără overflow: 'hidden' aici!
+    },
+    mediaItemInner: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 12,
+        overflow: 'hidden',   // doar imaginea e clipped
+        backgroundColor: '#000',
+    },
+    mediaItemActive: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.35,
+        shadowRadius: 6,
+        elevation: 10,
+    },
+    mediaItemFirst: {
+        borderWidth: 2.5,
+        borderColor: COLORS.primary,
+        borderRadius: 12,
+    },
+    coverBadge: {
+        position: 'absolute',
+        bottom: 5,
+        right: 5,
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        borderRadius: 4,
     },
     addMediaButton: {
         width: 100,
@@ -939,14 +1036,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#888',
         fontWeight: '600'
-    },
-    mediaItem: {
-        width: 100,
-        height: 100,
-        borderRadius: 12,
-        marginRight: 10,
-        overflow: 'hidden',
-        backgroundColor: '#000',
     },
     mediaImage: {
         width: '100%',

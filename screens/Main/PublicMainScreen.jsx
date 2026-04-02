@@ -260,6 +260,12 @@ export default function PublicMainScreen() {
         return () => emitter.off('like_update', onLikeUpdate);
     }, []);
 
+    useEffect(() => {
+        const show = () => setWelcomeVisible(true);
+        emitter.on('show_auth_modal', show);
+        return () => emitter.off('show_auth_modal', show);
+    }, []);
+
     const handleRefresh = () => {
         setRefreshing(true);
         setNextCursor(null);

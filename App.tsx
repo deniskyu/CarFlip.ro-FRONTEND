@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'react-native';
 import FlashMessage from "react-native-flash-message";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import IndexNavigation from './navigation/IndexNavigation.jsx';
 import ContextProvider from './context/ContextProvider.jsx';
@@ -27,10 +29,14 @@ export default function App(){
   }, []);
 
   return(
-    <ContextProvider key={appKey}>
-        <IndexNavigation />
-        <FlashMessage position="top" /> 
-        <InAppNotification ref={notificationRef} />
-    </ContextProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaProvider> 
+              <ContextProvider key={appKey}>
+                  <IndexNavigation />
+                  <FlashMessage position="top" />
+                  <InAppNotification ref={notificationRef} />
+              </ContextProvider>
+          </SafeAreaProvider>
+      </GestureHandlerRootView>
   );
 };

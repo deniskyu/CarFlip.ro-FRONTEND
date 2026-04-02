@@ -32,7 +32,7 @@ const scaled = {
 
 const ssc = SUMMARY_SCALE;
 const summaryScaled = {
-    titleFont: 24 * ssc,
+    titleFont: 26.5 * ssc,
     priceFont: 22 * ssc,
     negotiableFont: 14 * ssc,
     priceMargin: Math.round(16 * ssc),
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     editingBorder: { borderWidth: 2, borderColor: '#800000' },
     gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '23%', backgroundColor: 'rgba(0, 0, 0, 0.13)' },
     summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },
-    summaryTitle: { fontSize: 24, fontWeight: '900', color: '#800000', marginBottom: 2, marginTop: 10 },
+    summaryTitle: { fontSize: 26.5, fontWeight: '900', color: '#800000', marginBottom: 2, marginTop: 10 },
     summaryPrice: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 16 },
     summaryTagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
     summaryTag: { backgroundColor: '#f5f5f5', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 6, marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: '#e0e0e0' },

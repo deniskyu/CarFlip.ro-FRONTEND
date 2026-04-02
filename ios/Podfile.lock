@@ -2625,7 +2625,7 @@ PODS:
     - Yoga
   - RNFS (2.20.0):
     - React-Core
-  - RNGestureHandler (2.28.0):
+  - RNGestureHandler (2.30.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -2713,7 +2713,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNReanimated (3.19.1):
+  - RNReanimated (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -2740,11 +2740,11 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated (= 3.19.1)
-    - RNReanimated/worklets (= 3.19.1)
+    - RNReanimated/reanimated (= 3.19.5)
+    - RNReanimated/worklets (= 3.19.5)
     - SocketRocket
     - Yoga
-  - RNReanimated/reanimated (3.19.1):
+  - RNReanimated/reanimated (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -2771,10 +2771,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated/apple (= 3.19.1)
+    - RNReanimated/reanimated/apple (= 3.19.5)
     - SocketRocket
     - Yoga
-  - RNReanimated/reanimated/apple (3.19.1):
+  - RNReanimated/reanimated/apple (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -2803,7 +2803,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNReanimated/worklets (3.19.1):
+  - RNReanimated/worklets (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -2830,10 +2830,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/worklets/apple (= 3.19.1)
+    - RNReanimated/worklets/apple (= 3.19.5)
     - SocketRocket
     - Yoga
-  - RNReanimated/worklets/apple (3.19.1):
+  - RNReanimated/worklets/apple (3.19.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -3419,10 +3419,10 @@ SPEC CHECKSUMS:
   RNFBApp: f8214d164557da22cba8cb12743d1a4cd2b44bb5
   RNFBMessaging: 80a5c0ca6c99dd6b26adc178be3d598845d96067
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
-  RNGestureHandler: 8c4c3ff641284e689208dc01e51d5c1e6807cf3c
+  RNGestureHandler: de01e1cb30d5cdba044030918bbb3cc427857d57
   RNKeychain: 75a69663382c48a55fbe875a6f1bd83fe7169b6a
   RNPermissions: e1faf7a884937576c02fbe21fda75f3670aa7a14
-  RNReanimated: d130bbb28f61440381f7295aae9430f7b09687c5
+  RNReanimated: a01781a42dfc8dd0e6efcf453118dd65dd31bc09
   RNScreens: 19742633a9a5c09b7bea3ac0cddb96695048de77
   RNSVG: 15b549eab93d3c7f1de4f7ab612a88132ebc1bca
   RNVectorIcons: 0e8833406efa1e777fbcb433b8c62db21143c182

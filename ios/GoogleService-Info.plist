@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>org.reactjs.native.example.mobilefrontendframe</string>
+	<string>ro.carflip.app</string>
 	<key>PROJECT_ID</key>
 	<string>carflip-64045</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:994038025094:ios:7c8ca5bb784f83b7767a07</string>
+	<string>1:994038025094:ios:05bfc85f98533772767a07</string>
 </dict>
 </plist>

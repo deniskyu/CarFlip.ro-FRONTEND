@@ -53,7 +53,7 @@ const scaled = {
 
 const ssc = SUMMARY_SCALE;
 const summaryScaled = {
-    titleFont: 24 * ssc,
+    titleFont: 26.5 * ssc,
     priceFont: 22 * ssc,
     negotiableFont: 14 * ssc,
     priceMargin: Math.round(16 * ssc),
@@ -293,7 +293,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
 
     const requireAuth = () => {
         if (guestMode) {
-            Alert.alert("Cont necesar", "Creează un cont pentru a accesa această funcționalitate.");
+            emitter.emit('show_auth_modal');
             return true;
         }
         return false;
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
     bigHeartContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 20, elevation: 20, backgroundColor: 'transparent' },
     bigHeartImage: { width: 100, height: 100, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3.84 },
     summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },
-    summaryTitle: { fontSize: 24, fontWeight: '900', color: '#800000', marginBottom: 2, marginTop: 10 },
+    summaryTitle: { fontSize: 26.5, fontWeight: '900', color: '#800000', marginBottom: 2, marginTop: 10 },
     summaryPrice: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 16 },
     negotiableText: { fontSize: 14, color: '#888', fontWeight: 'normal' },
     summaryTagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
