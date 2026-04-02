@@ -22,6 +22,7 @@ import { Context } from '../../context/Context.js';
 import { LOCATIONS, FUEL_TYPES } from './staticData.js';
 import { emitter } from '../../helpers/eventBus.js';
 import { normalizeMediaUri } from '../../helpers/normalizeMediaUri.js';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const COLORS = {
     primary: '#800000',
@@ -513,17 +514,13 @@ export default function AddSaleScreen({ navigation }) {
                 <Text style={styles.headerTitle}>Vinde Mașina</Text>
             </View>
 
-            <KeyboardAvoidingView 
-                style={{ flex: 1 }} 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
-            >
-                <ScrollView 
+                <KeyboardAwareScrollView
                     ref={scrollViewRef}
                     contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    keyboardDismissMode="on-drag"
+                    enableOnAndroid={true}
+                    extraScrollHeight={20}
                 >
                     
                    <View style={styles.section}>
@@ -887,8 +884,7 @@ export default function AddSaleScreen({ navigation }) {
                     </Pressable>
                     
                     <View style={{height: 50}} /> 
-                </ScrollView>
-            </KeyboardAvoidingView>
+            </KeyboardAwareScrollView>
 
             <Modal
                 animationType="slide"
