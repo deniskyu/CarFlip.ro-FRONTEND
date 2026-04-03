@@ -72,6 +72,8 @@ export default function EditSaleScreen({ route, navigation }) {
     const [currentSelectionType, setCurrentSelectionType] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [scrollEnabled, setScrollEnabled] = useState(true);
+
     useEffect(() => {
         const formattedCounties = LOCATIONS.map(item => ({
             id: item.judet,
@@ -291,10 +293,11 @@ export default function EditSaleScreen({ route, navigation }) {
             >
                 <ScrollView 
                     ref={scrollViewRef}
-                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
+                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    keyboardDismissMode="on-drag"
+                    keyboardDismissMode="none"
+                    scrollEnabled={scrollEnabled}
                 >
                     
                     <View style={styles.infoCard}>
@@ -331,12 +334,12 @@ export default function EditSaleScreen({ route, navigation }) {
                                     horizontal={true}
                                     containerStyle={{ flex: 1 }}
                                     ListFooterComponent={<View style={{ width: 20 }} />}
-                                    onDragBegin={() => scrollViewRef.current?.setNativeProps({ scrollEnabled: false })}
+                                    onDragBegin={() => setScrollEnabled(false)}
                                     onDragEnd={({ data }) => {
                                         setNewLocalMedia(data);
-                                        scrollViewRef.current?.setNativeProps({ scrollEnabled: true });
+                                        setScrollEnabled(true);
                                     }}
-                                    keyExtractor={(item, index) => `${item.uri}-${index}`}
+                                    keyExtractor={(item) => item.uri}
                                     showsHorizontalScrollIndicator={false}
                                     renderItem={({ item, getIndex, drag, isActive }) => {
                                         const index = getIndex();
@@ -555,7 +558,7 @@ export default function EditSaleScreen({ route, navigation }) {
                     >
                         <Text style={styles.publishButtonText}>PREVIZUALIZARE</Text>
                     </Pressable>
-                    
+                    <View style={{height: 70}} />
                 </ScrollView>
             </KeyboardAvoidingView>
 
@@ -681,11 +684,11 @@ const styles = StyleSheet.create({
     mediaRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        height: 110,
+        height: Platform.OS === 'ios' ? 110 : 100,
     },
     mediaItemOuter: {
-        width: 100,
-        height: 100,
+        width: Platform.OS === 'ios' ? 100 : 90,
+        height: Platform.OS === 'ios' ? 100 : 90,
         borderRadius: 12,
         marginRight: 10,
         backgroundColor: '#000',

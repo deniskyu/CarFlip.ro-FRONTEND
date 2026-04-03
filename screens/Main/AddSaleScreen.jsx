@@ -12,7 +12,7 @@ import {
     Alert, 
     ActivityIndicator, 
     Platform,
-    KeyboardAvoidingView
+    KeyboardAvoidingView,
 } from 'react-native';
 import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,7 +22,7 @@ import { Context } from '../../context/Context.js';
 import { LOCATIONS, FUEL_TYPES } from './staticData.js';
 import { emitter } from '../../helpers/eventBus.js';
 import { normalizeMediaUri } from '../../helpers/normalizeMediaUri.js';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+
 
 const COLORS = {
     primary: '#800000',
@@ -141,6 +141,8 @@ export default function AddSaleScreen({ navigation }) {
     const [loadingData, setLoadingData] = useState(false);
 
     const [loadingMedia, setLoadingMedia] = useState(false);
+
+    const [scrollEnabled, setScrollEnabled] = useState(true);
 
     useEffect(() => {
         fetchBrands();
@@ -466,7 +468,7 @@ export default function AddSaleScreen({ navigation }) {
 
         if (
             !selectedBrand || !selectedModel || !selectedFuel || !selectedCapacity ||
-            !price || !mileage || !hasPhoto || !phoneNumber || !selectedYear || // Am schimbat !media.length cu !hasPhoto
+            !price || !mileage || !hasPhoto || !phoneNumber || !selectedYear ||
             !selectedCounty || !selectedCity || !selectedBody || !selectedColor ||
             !selectedTransmission || !selectedDrivetrain || !selectedPollution || !description.trim()
         ) {
@@ -514,13 +516,17 @@ export default function AddSaleScreen({ navigation }) {
                 <Text style={styles.headerTitle}>Vinde Mașina</Text>
             </View>
 
-                <KeyboardAwareScrollView
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+                <ScrollView
                     ref={scrollViewRef}
-                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
+                    scrollEnabled={scrollEnabled}
+                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    enableOnAndroid={true}
-                    extraScrollHeight={20}
+                    keyboardDismissMode="none"
                 >
                     
                    <View style={styles.section}>
@@ -535,41 +541,39 @@ export default function AddSaleScreen({ navigation }) {
                             După 3 luni, anunțul va fi dezactivat automat. Poți intra la secțiunea de profil pentru a reactiva încă 3 luni anunțul.
                         </Text>
 
-                        <View style={styles.mediaRow}>
-                            {/* Buton Adaugă — fix în stânga */}
-                            <Pressable
-                                style={styles.addMediaButton}
-                                onPress={handlePickMedia}
-                                disabled={loadingMedia}
-                            >
-                                {loadingMedia ? (
-                                    <ActivityIndicator size="small" color={COLORS.primary} />
-                                ) : (
-                                    <>
-                                        <Text style={styles.plusSign}>+</Text>
-                                        <Text style={styles.addText}>Adaugă</Text>
-                                    </>
-                                )}
-                            </Pressable>
+                        <Pressable
+                            style={styles.addMediaButton}
+                            onPress={handlePickMedia}
+                            disabled={loadingMedia}
+                        >
+                            {loadingMedia ? (
+                                <ActivityIndicator size="small" color={COLORS.primary} />
+                            ) : (
+                                <>
+                                    <Text style={styles.plusSign}>+</Text>
+                                    <Text style={styles.addText}>Adaugă</Text>
+                                </>
+                            )}
+                        </Pressable>
 
-                            {/* Lista drag & drop */}
+                        {media.length > 0 && (
+                        <View style={styles.mediaRow}>
                             <DraggableFlatList
                                 data={media}
                                 horizontal={true}
                                 containerStyle={{ flex: 1 }}
                                 ListFooterComponent={<View style={{ width: 20 }} />}
-                                onDragBegin={() => scrollViewRef.current?.setNativeProps({ scrollEnabled: false })}
+                                onDragBegin={() => setScrollEnabled(false)}
                                 onDragEnd={({ data }) => {
                                     setMedia(data);
-                                    scrollViewRef.current?.setNativeProps({ scrollEnabled: true });
+                                    setScrollEnabled(true);
                                 }}
-                                keyExtractor={(item, index) => `${item.uri}-${index}`}
+                                keyExtractor={(item) => item.uri}
                                 showsHorizontalScrollIndicator={false}
                                 renderItem={({ item, getIndex, drag, isActive }) => {
                                 const index = getIndex();
                                 return (
                                     <ScaleDecorator activeScale={0.95}>
-                                        {/* Strat exterior — pentru bordură + shadow, fără overflow hidden */}
                                         <Pressable
                                             onLongPress={drag}
                                             delayLongPress={150}
@@ -579,7 +583,6 @@ export default function AddSaleScreen({ navigation }) {
                                                 index === firstImageIndex && styles.mediaItemFirst,
                                             ]}
                                         >
-                                            {/* Strat interior — pentru overflow hidden (imaginea să fie rotunjită) */}
                                             <View style={styles.mediaItemInner}>
                                                 <Image source={{ uri: item.uri }} style={styles.mediaImage} />
 
@@ -590,14 +593,12 @@ export default function AddSaleScreen({ navigation }) {
                                                 )}
                                             </View>
 
-                                            {/* Badge COPERTĂ — în afara overflow hidden */}
                                             {index === firstImageIndex && (
                                                 <View style={styles.coverBadge}>
                                                     <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>COPERTĂ</Text>
                                                 </View>
                                             )}
 
-                                            {/* Buton ștergere — în afara overflow hidden */}
                                             <Pressable
                                                 style={styles.deleteButton}
                                                 onPress={() => removeMedia(index)}
@@ -611,6 +612,7 @@ export default function AddSaleScreen({ navigation }) {
                             }}
                             />
                         </View>
+                        )}
                     </View>
 
                     <View style={styles.formContainer}>
@@ -883,8 +885,9 @@ export default function AddSaleScreen({ navigation }) {
                         <Text style={styles.publishButtonText}>PREVIZUALIZARE</Text>
                     </Pressable>
                     
-                    <View style={{height: 50}} /> 
-            </KeyboardAwareScrollView>
+                    <View style={{height: 70}} /> 
+                </ScrollView>
+            </KeyboardAvoidingView>
 
             <Modal
                 animationType="slide"
@@ -974,21 +977,20 @@ const styles = StyleSheet.create({
     mediaRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        height: 110, // fix — previne glitch de layout la drag
+        height: Platform.OS === 'ios' ? 110 : 100,
     },
     mediaItemOuter: {
-        width: 100,
-        height: 100,
+        width: Platform.OS === 'ios' ? 100 : 90,
+        height: Platform.OS === 'ios' ? 100 : 90,
         borderRadius: 12,
         marginRight: 10,
         backgroundColor: '#000',
-        // fără overflow: 'hidden' aici!
     },
     mediaItemInner: {
         width: '100%',
         height: '100%',
         borderRadius: 12,
-        overflow: 'hidden',   // doar imaginea e clipped
+        overflow: 'hidden',
         backgroundColor: '#000',
     },
     mediaItemActive: {
@@ -1019,7 +1021,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 10,
+        marginBottom: 12,
         borderWidth: 1,
         borderColor: '#CCC',
         borderStyle: 'dashed'

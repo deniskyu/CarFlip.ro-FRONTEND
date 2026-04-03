@@ -103,7 +103,7 @@ export default function ProfileScreen() {
     };
 
     const handlePickImage = async () => {
-        const options = { mediaType: 'photo', quality: 0.7, selectionLimit: 1 };
+        const options = { mediaType: 'photo', quality: 0.7, selectionLimit: 1, maxWidth: 800, maxHeight: 800 };
         const result = await launchImageLibrary(options);
         if (result.didCancel || result.errorCode) return;
         if (result.assets && result.assets.length > 0) {
