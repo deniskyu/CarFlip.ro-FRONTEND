@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    SafeAreaView,
     FlatList,
     Pressable,
     TextInput,
@@ -15,6 +14,7 @@ import {
     Platform,
     StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import { Image as CompressorImage } from 'react-native-compressor';
@@ -539,7 +539,7 @@ export default function ChatScreen({ route, navigation }) {
     if (resolvingParticipant && !resolvedParticipantId) {
         return (
             <SafeAreaView style={styles.container}>
-                <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} />
+                <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} translucent={false} />
                 <View style={styles.header}>
                     <Pressable onPress={() => navigation.popToTop()} style={styles.backButton} hitSlop={10}>
                         <Image source={assets.back_arrow} style={styles.backIcon} />
@@ -556,7 +556,7 @@ export default function ChatScreen({ route, navigation }) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} />
+            <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} translucent={false} />
 
             <View style={styles.header}>
                 <Pressable onPress={() => navigation.navigate('ChatListScreen')} style={styles.backButton} hitSlop={10}>
@@ -829,7 +829,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 12,
         paddingVertical: 12,
-        paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 12 : 12,
+        paddingTop: 12,
     },
     backButton: {
         padding: 4,
@@ -988,7 +988,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderTopWidth: 1,
         borderTopColor: COLORS.border,
-        paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+        paddingBottom: 8,
     },
     galleryButton: {
         width: 38,

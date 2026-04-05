@@ -12,7 +12,8 @@ import {
     Linking,
     Alert,
     Animated,
-    Share
+    Share,
+    Modal
 } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import { assets } from '../../../assets.js';
@@ -78,7 +79,7 @@ const FeedSeparator = ({ itemHeight }) => (
     <View style={[styles.separatorContainer, { height: itemHeight }]}>
         <View style={styles.separatorLine} />
         <View style={styles.separatorContent}>
-            <Text style={styles.separatorCheck}>✅</Text> 
+            <Image source={assets.verified_icon} style={styles.separatorCheckIcon} resizeMode="contain" />
             <Text style={styles.separatorTitle}>Ești la zi!</Text>
             <Text style={styles.separatorSubtitle}>Ai văzut toate anunțurile noi din ultimele 30 de zile.</Text>
             <Text style={styles.separatorSmall}>Mai jos sunt anunțurile anterioare.</Text>
@@ -112,7 +113,7 @@ const EndOfResults = ({ onBackToFeed, itemHeight }) => (
     </View>
 );
 
-const SummarySlide = ({ item, formatPrice, formatKm, itemHeight }) => (
+const SummarySlide = ({ item, formatPrice, formatKm, itemHeight, onDescriptionPress }) => (
     <View style={[styles.summarySlide, { height: itemHeight, padding: summaryScaled.slidePadding, paddingTop: summaryScaled.slidePaddingTop }]}>
         <Text style={[styles.summaryTitle, { fontSize: summaryScaled.titleFont }]}>
             {item.brand.name} {item.model.name}
@@ -185,17 +186,17 @@ const SummarySlide = ({ item, formatPrice, formatKm, itemHeight }) => (
         </View>
 
         <Text style={[styles.descriptionLabel, { fontSize: summaryScaled.descLabelFont }]}>Descriere:</Text>
-        <View style={[styles.descriptionContainer, { height: summaryScaled.descContainerHeight, padding: summaryScaled.descPad, marginBottom: summaryScaled.descMargin }]}>
-            <ScrollView nestedScrollEnabled={true}
-                onStartShouldSetResponder={() => true}
-                onMoveShouldSetResponder={() => true}
-                onResponderTerminationRequest={() => false}
+        <Pressable 
+            style={[styles.descriptionContainer, { height: summaryScaled.descContainerHeight, padding: summaryScaled.descPad, marginBottom: summaryScaled.descMargin }]}
+            onPress={onDescriptionPress}
+        >
+            <Text 
+                style={[styles.summaryDescription, { fontSize: summaryScaled.descFont, lineHeight: summaryScaled.descLineHeight }]}
+                numberOfLines={6}
             >
-                <Text style={[styles.summaryDescription, { fontSize: summaryScaled.descFont, lineHeight: summaryScaled.descLineHeight }]}>
-                    {item.description || "Fără descriere adăugată."}
-                </Text>
-            </ScrollView>
-        </View>
+                {item.description || "Fără descriere adăugată."}
+            </Text>
+        </Pressable>
 
         <View style={[styles.summaryLocation, { paddingTop: summaryScaled.locationPadTop }]}>
             <Text style={[styles.locationText1, { fontSize: summaryScaled.locationFont }]}>📍 {item.location.city}, {item.location.county}</Text>
@@ -316,6 +317,8 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     const [toastVisible, setToastVisible] = useState(false);
 
     const [isVisible, setIsVisible] = useState(false);
+
+    const [descriptionVisible, setDescriptionVisible] = useState(false);
 
     useEffect(() => {
         const eventName = `visible_index_changed_${screenId}`;
@@ -487,12 +490,16 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
 
     const renderSlide = ({ item: mediaItem, index }) => {
         if (mediaItem.isSummary) {
-            return <SummarySlide item={item} formatPrice={formatPrice} formatKm={formatKm} itemHeight={itemHeight} />;
+            return <SummarySlide item={item} formatPrice={formatPrice} formatKm={formatKm} itemHeight={itemHeight} onDescriptionPress={() => setDescriptionVisible(true)} />;
         }
         const dbScale = mediaItem.zoom_level || 1;
         const isPaused = !isFocused || !isVisible || currentIndex !== index;
         return (
-            <Pressable style={[styles.mediaContainer, { height: itemHeight }]} onPress={handleDoubleTap} activeOpacity={1}>
+            <Pressable 
+                style={[styles.mediaContainer, { height: itemHeight }]} 
+                onPress={handleDoubleTap}
+                pointerEvents={mediaItem.isSummary ? 'box-none' : 'auto'}
+            >
                 <MediaSlide 
                     mediaItem={mediaItem}
                     isZooming={isZooming}
@@ -612,6 +619,30 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
 
             <CommentsSheet visible={commentsVisible} onClose={() => setCommentsVisible(false)} saleId={item._id} onCommentAdded={handleCommentAdded} postAuthorId={item.user_id._id} targetCommentId={targetCommentId} />
             <ReportModal visible={reportVisible} onClose={() => setReportVisible(false)} reportType="post" reportId={item._id} />
+            <Modal
+                visible={descriptionVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setDescriptionVisible(false)}
+            >
+                <Pressable style={styles.descModalOverlay} onPress={() => setDescriptionVisible(false)}>
+                    <Pressable style={styles.descModalCard} onPress={() => {}}>
+                        <View style={styles.descModalHeader}>
+                            <View style={styles.descModalHeaderText}>
+                                <Text style={styles.descModalTitle}>{item.brand.name} {item.model.name}</Text>
+                                <Text style={styles.descModalPrice}>{formatPrice(item.price)} € {item.negotiable ? '· Negociabil' : '· Preț Fix'}</Text>
+                            </View>
+                            <Pressable style={styles.descModalClose} onPress={() => setDescriptionVisible(false)}>
+                                <Text style={styles.descModalCloseText}>✕</Text>
+                            </Pressable>
+                        </View>
+                        <View style={styles.descModalDivider} />
+                        <ScrollView style={styles.descModalScroll} showsVerticalScrollIndicator={true} contentContainerStyle={styles.descModalScrollContent}>
+                            <Text style={styles.descModalText}>{item.description || "Fără descriere adăugată."}</Text>
+                        </ScrollView>
+                    </Pressable>
+                </Pressable>
+            </Modal>
             <ToastNotification visible={toastVisible} message="Comentariile sunt dezactivate." />
         </View>
     );
@@ -677,6 +708,19 @@ const styles = StyleSheet.create({
     matrioskaWrapper: { width: width, height: ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
     toastContainer: { position: 'absolute', top: height / 2 - 20, alignSelf: 'center', backgroundColor: 'rgba(128, 0, 0, 0.95)', paddingVertical: 12, paddingHorizontal: 25, borderRadius: 25, zIndex: 200, elevation: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4 },
     toastText: { color: 'white', fontWeight: 'bold', fontSize: 14, textAlign: 'center' },
+    separatorCheckIcon: { width: width/8, height: width/8, marginBottom: 20 },
+    descModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    descModalCard: { width: '94%', height: '70%', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, paddingTop: 20 },
+    descModalHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 },
+    descModalHeaderText: { flex: 1, marginRight: 12 },
+    descModalTitle: { fontSize: 22, fontWeight: '800', color: '#081539', marginBottom: 4 },
+    descModalPrice: { fontSize: 16, fontWeight: '600', color: '#800000' },
+    descModalClose: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#800000', justifyContent: 'center', alignItems: 'center', marginTop: 2 },
+    descModalCloseText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
+    descModalDivider: { height: 1, backgroundColor: '#E8E8E8', marginBottom: 14 },
+    descModalScroll: { flex: 1, backgroundColor: '#FAFAFA', borderRadius: 10, borderWidth: 1, borderColor: '#F0F0F0' },
+    descModalScrollContent: { padding: 14 },
+    descModalText: { fontSize: 17, color: '#333', lineHeight: 26 },
 });
 
 export default PostItem;

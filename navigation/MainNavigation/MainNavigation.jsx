@@ -29,6 +29,9 @@ import ContactScreen from '../../screens/Main/ContactScreen.jsx';
 import PrivacyScreen from '../../screens/Main/PrivacyScreen.jsx';
 import LegalScreen from '../../screens/Main/LegalScreen.jsx';
 
+import SinglePostScreen from '../../screens/Main/SinglePostScreen.jsx';
+import SearchListScreen from '../../screens/Main/SearchListScreen.jsx';
+
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -44,6 +47,8 @@ function HomeStackNavigation() {
             <Stack.Screen name="MainScreen" component={MainScreen} />
             <Stack.Screen name="SearchResultScreen" component={SearchResultScreen} />
             <Stack.Screen name="SearchProfileResult" component={SearchProfileResult} />
+            <Stack.Screen name="SearchListScreen" component={SearchListScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="SinglePostScreen" component={SinglePostScreen} options={{ headerShown: false }} />
             <Stack.Screen name="UserProfileFeed" component={UserProfileFeed} />
             <Stack.Screen name="LikedPostsFeed" component={LikedPostsFeed} />
         </Stack.Navigator>

@@ -26,10 +26,12 @@ import edit_icon from './media/edit_icon.png';
 import view_icon from './media/view_icon.png';
 import car_scrubber from './media/car_scrubber.png';
 import logo from './media/logo.jpeg';
+import verified_icon from './media/verified_icon.png';
 
 export const assets = {
     url,
     app_version,
+    verified_icon,
     grid_clock_icon,
     logo,
     car_scrubber,

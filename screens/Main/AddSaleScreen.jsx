@@ -854,14 +854,14 @@ export default function AddSaleScreen({ navigation }) {
                             />
                         </View>
 
-                        <Text style={styles.label}>Descriere Anunț</Text>
+                        <Text style={styles.label}>Descriere Anunț (800 caractere)</Text>
                         <TextInput
                             style={styles.textArea}
                             placeholder="Spune-ne mai multe despre mașina ta..."
                             placeholderTextColor={COLORS.placeholder}
                             multiline={true}
                             numberOfLines={4}
-                            maxLength={700}
+                            maxLength={800}
                             value={description}
                             onChangeText={setDescription}
                         />

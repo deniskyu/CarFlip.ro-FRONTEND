@@ -29,6 +29,7 @@ export default function FilterModal({ visible, onClose, navigation }) {
     const [activeTab, setActiveTab] = useState('cars'); 
 
     const [onlyUnseen, setOnlyUnseen] = useState(false);
+    const [displayMode, setDisplayMode] = useState('swipe');
 
     const [brands, setBrands] = useState([]);
     const [models, setModels] = useState([]);
@@ -163,6 +164,7 @@ export default function FilterModal({ visible, onClose, navigation }) {
             setSelectedBrand(null);
             setSelectedModel(null);
             setSelectedFuel(null);
+            setDisplayMode('swipe');
             setMinPrice('');
             setMaxPrice('');
             setMinYear('');
@@ -309,7 +311,7 @@ export default function FilterModal({ visible, onClose, navigation }) {
 
         console.log("Sending Filters:", filters);
         onClose();
-        navigation.navigate('SearchResultScreen', { filters });
+        navigation.navigate(displayMode === 'swipe' ? 'SearchResultScreen' : 'SearchListScreen', { filters });
     };
 
     const getText = (val, placeholder) => {
@@ -349,6 +351,23 @@ export default function FilterModal({ visible, onClose, navigation }) {
                      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{flex: 1}}>
                         <ScrollView contentContainerStyle={styles.form} showsVerticalScrollIndicator={false}>
 
+                            <Text style={styles.label}>Mod de afișare</Text>
+                            <View style={styles.row}>
+                                <Pressable 
+                                    style={[styles.modeButton, displayMode === 'swipe' && styles.modeButtonActive]} 
+                                    onPress={() => setDisplayMode('swipe')}
+                                >
+                                    <Text style={[styles.modeButtonText, displayMode === 'swipe' && styles.modeButtonTextActive]}>Swipe</Text>
+                                </Pressable>
+                                <Pressable 
+                                    style={[styles.modeButton, displayMode === 'list' && styles.modeButtonActive]} 
+                                    onPress={() => setDisplayMode('list')}
+                                >
+                                    <Text style={[styles.modeButtonText, displayMode === 'list' && styles.modeButtonTextActive]}>Listă</Text>
+                                </Pressable>
+                            </View>
+
+                            
                             <Pressable 
                                 style={[styles.checkboxContainer, {marginBottom: 12}]} 
                                 onPress={() => setOnlyUnseen(!onlyUnseen)}
@@ -691,5 +710,18 @@ const styles = StyleSheet.create({
     closeTextModal: { color: COLORS.primary, fontWeight: 'bold' },
     searchInput: { backgroundColor: '#F5F5F5', height: 45, borderRadius: 10, paddingHorizontal: 15, marginBottom: 15 },
     listItem: { paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE', flexDirection: 'row', alignItems: 'center' },
-    listItemText: { fontSize: 16 }
+    listItemText: { fontSize: 16 },
+    modeButton: {
+    flex: 0.48, height: 46, backgroundColor: '#F9F9F9', borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 10, justifyContent: 'center', alignItems: 'center'
+    },
+    modeButtonActive: {
+        backgroundColor: COLORS.primary, borderColor: COLORS.primary
+    },
+    modeButtonText: {
+        fontSize: 14, fontWeight: '600', color: COLORS.text
+    },
+    modeButtonTextActive: {
+        color: COLORS.white
+    },
 });
