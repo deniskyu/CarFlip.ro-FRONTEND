@@ -32,11 +32,11 @@ const COLORS = {
 
 const csc = UI_SCALE;
 const cardScaled = {
-    titleFont: 15 * csc,
+    titleFont: 14 * csc,
     tagFont: 11 * csc,
     tagPadH: Math.round(6 * csc),
     tagPadV: Math.round(3 * csc),
-    priceFont: 17 * csc,
+    priceFont: 16 * csc,
     locationFont: 11 * csc,
 };
 
@@ -240,8 +240,8 @@ export default function ActivePostsTab({ headerComponent }) {
 
                 <View style={styles.infoContainer}>
                     <View style={styles.cardTopRow}>
-                        <Text style={[styles.cardTitle, { fontSize: cardScaled.titleFont }]} numberOfLines={1}>
-                            {item.brand?.name} {item.model?.name}
+                        <Text style={[styles.cardTitle, { fontSize: cardScaled.titleFont }]} numberOfLines={2}>
+                            {item.title || `${item.brand?.name} ${item.model?.name}`}
                         </Text>
                         <Pressable style={styles.optionsButton} onPress={() => openOptions(item)} hitSlop={10}>
                             <Image source={assets.vertical_dots} style={styles.dotsIcon} />
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         marginBottom: 10,
         borderRadius: 12,
-        height: 110,
+        height: 116,
         overflow: 'hidden',
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },

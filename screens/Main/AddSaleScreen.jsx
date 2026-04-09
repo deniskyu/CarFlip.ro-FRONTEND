@@ -126,6 +126,7 @@ export default function AddSaleScreen({ navigation }) {
     const [selectedDismantle, setSelectedDismantle] = useState(false);
     const [steeringWheel, setSteeringWheel] = useState('left');
     const [negotiable, setNegotiable] = useState(false);
+    const [title, setTitle] = useState('');
 
     const [disableComments, setDisableComments] = useState(false);
 
@@ -405,6 +406,7 @@ export default function AddSaleScreen({ navigation }) {
         setDisableComments(false);
         setPhoneNumber('');
         setDescription('');
+        setTitle('');
     }, []);
 
     useEffect(() => {
@@ -470,7 +472,8 @@ export default function AddSaleScreen({ navigation }) {
             !selectedBrand || !selectedModel || !selectedFuel || !selectedCapacity ||
             !price || !mileage || !hasPhoto || !phoneNumber || !selectedYear ||
             !selectedCounty || !selectedCity || !selectedBody || !selectedColor ||
-            !selectedTransmission || !selectedDrivetrain || !selectedPollution || !description.trim()
+            !selectedTransmission || !selectedDrivetrain || !selectedPollution || !description.trim() ||
+            !title.trim()
         ) {
             Alert.alert(
                 "Eroare", 
@@ -481,6 +484,7 @@ export default function AddSaleScreen({ navigation }) {
 
         const draftData = {
             media: media,
+            title: title.trim(),
             brand: { id: selectedBrand.id, name: selectedBrand.name },
             model: { id: selectedModel.id, name: selectedModel.name },
             engine: { capacity: selectedCapacity.name, fuel_type: selectedFuel.name },
@@ -616,6 +620,18 @@ export default function AddSaleScreen({ navigation }) {
                     </View>
 
                     <View style={styles.formContainer}>
+
+                        <Text style={styles.label}>Titlu Anunț (max 25 caractere)</Text>
+                        <View style={styles.inputSelector}>
+                            <TextInput 
+                                style={styles.inputText}
+                                placeholder="Ex: BMW 320d M-Pachet 2020"
+                                placeholderTextColor={COLORS.placeholder}
+                                value={title}
+                                onChangeText={setTitle}
+                                maxLength={25}
+                            />
+                        </View>
                         
                         <Text style={styles.label}>Marca</Text>
                         <Pressable style={styles.inputSelector} onPress={() => openModal('brand')}>

@@ -163,6 +163,7 @@ export default function PreviewSaleScreen({ navigation }) {
             const metadataArray = [];
 
             const fields = {
+                title: draftSale.title || '',
                 brand_id: String(draftSale.brand.id),
                 brand_name: draftSale.brand.name,
                 model_id: String(draftSale.model.id),

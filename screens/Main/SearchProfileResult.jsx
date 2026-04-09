@@ -37,11 +37,11 @@ const COLORS = {
 
 const csc = UI_SCALE;
 const cardScaled = {
-    titleFont: 15 * csc,
+    titleFont: 14 * csc,
     tagFont: 11 * csc,
     tagPadH: Math.round(6 * csc),
     tagPadV: Math.round(3 * csc),
-    priceFont: 17 * csc,
+    priceFont: 16 * csc,
     locationFont: 11 * csc,
 };
 
@@ -304,8 +304,8 @@ export default function SearchProfileResult() {
                 </View>
 
                 <View style={styles.infoContainer}>
-                    <Text style={[styles.cardTitle, { fontSize: cardScaled.titleFont }]} numberOfLines={1}>
-                        {item.brand.name} {item.model.name}
+                    <Text style={[styles.cardTitle, { fontSize: cardScaled.titleFont }]} numberOfLines={2}>
+                        {item.title || `${item.brand.name} ${item.model.name}`}
                     </Text>
 
                     <View style={styles.tagsContainer}>
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         marginTop: 10,
         borderRadius: 12,
-        height: 110,
+        height: 116,
         overflow: 'hidden',
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },

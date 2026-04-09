@@ -51,6 +51,7 @@ export default function EditSaleScreen({ route, navigation }) {
     const [mileage, setMileage] = useState(new Intl.NumberFormat('de-DE').format(post.mileage || 0));
     const [vin, setVin] = useState(post.vin || '');
     const [negotiable, setNegotiable] = useState(post.negotiable || false);
+    const [title, setTitle] = useState(post.title || '');
     
     const [selectedCounty, setSelectedCounty] = useState(null);
     const [selectedCity, setSelectedCity] = useState(null);
@@ -267,7 +268,8 @@ export default function EditSaleScreen({ route, navigation }) {
             isEditMode: true,
             editPostId: post._id,
             newLocalMedia: newLocalMedia,
-            oldMediaPublicIds: post.media.map(m => m.public_id).filter(Boolean)
+            oldMediaPublicIds: post.media.map(m => m.public_id).filter(Boolean),
+            title: title.trim(),
         };
 
         setDraftSale(draftData);
@@ -384,6 +386,18 @@ export default function EditSaleScreen({ route, navigation }) {
                     )}
 
                     <View style={styles.formContainer}>
+
+                        <Text style={styles.label}>Titlu Anunț (max 25 caractere)</Text>
+                        <View style={styles.inputSelector}>
+                            <TextInput 
+                                style={styles.inputText}
+                                placeholder="Ex: BMW 320d M-Pachet 2020"
+                                placeholderTextColor={COLORS.placeholder}
+                                value={title}
+                                onChangeText={setTitle}
+                                maxLength={25}
+                            />
+                        </View>
 
                         <Text style={styles.label}>Capacitate Motor</Text>
                         <Pressable style={styles.inputSelector} onPress={() => openModal('capacity')}>

@@ -54,7 +54,7 @@ const scaled = {
 
 const ssc = SUMMARY_SCALE;
 const summaryScaled = {
-    titleFont: 26.5 * ssc,
+    titleFont: 26 * ssc,
     priceFont: 22 * ssc,
     negotiableFont: 14 * ssc,
     priceMargin: Math.round(16 * ssc),
@@ -116,7 +116,7 @@ const EndOfResults = ({ onBackToFeed, itemHeight }) => (
 const SummarySlide = ({ item, formatPrice, formatKm, itemHeight, onDescriptionPress }) => (
     <View style={[styles.summarySlide, { height: itemHeight, padding: summaryScaled.slidePadding, paddingTop: summaryScaled.slidePaddingTop }]}>
         <Text style={[styles.summaryTitle, { fontSize: summaryScaled.titleFont }]}>
-            {item.brand.name} {item.model.name}
+            {item.title || `${item.brand.name} ${item.model.name}`}
         </Text>
         <Text style={[styles.summaryPrice, { fontSize: summaryScaled.priceFont, marginBottom: summaryScaled.priceMargin }]}>
             {formatPrice(item.price)} € <Text style={[styles.negotiableText, { fontSize: summaryScaled.negotiableFont }]}>{item.negotiable ? '(Negociabil)' : '(Preț Fix)'}</Text>
@@ -607,7 +607,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                     )}
                     <Text style={[styles.locationText2, { fontSize: scaled.locationFont }]}>• {item.location?.city}</Text>
                 </View>
-                <Text style={[styles.brandTitle, { fontSize: scaled.brandFont }]}>{item.brand.name} {item.model.name}</Text>
+                <Text style={[styles.brandTitle, { fontSize: scaled.brandFont }]} numberOfLines={1}>{item.title || `${item.brand.name} ${item.model.name}`}</Text>
                 <Text style={[styles.overlayPrice, { fontSize: scaled.priceFont }]}>{formatPrice(item.price)} €</Text>
                 <View style={[styles.tagsRow, { marginBottom: scaled.tagsRowMargin }]}>
                     <View style={[styles.glassTag, { paddingVertical: scaled.tagPadV, paddingHorizontal: scaled.tagPadH }]}><Text style={[styles.tagText, { fontSize: scaled.tagFont }]}>{item.production_year}</Text></View>
@@ -629,7 +629,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                     <Pressable style={styles.descModalCard} onPress={() => {}}>
                         <View style={styles.descModalHeader}>
                             <View style={styles.descModalHeaderText}>
-                                <Text style={styles.descModalTitle}>{item.brand.name} {item.model.name}</Text>
+                                <Text style={styles.descModalTitle} numberOfLines={1}>{item.title || `${item.brand.name} ${item.model.name}`}</Text>
                                 <Text style={styles.descModalPrice}>{formatPrice(item.price)} € {item.negotiable ? '· Negociabil' : '· Preț Fix'}</Text>
                             </View>
                             <Pressable style={styles.descModalClose} onPress={() => setDescriptionVisible(false)}>

@@ -32,7 +32,7 @@ const scaled = {
 
 const ssc = SUMMARY_SCALE;
 const summaryScaled = {
-    titleFont: 26.5 * ssc,
+    titleFont: 26 * ssc,
     priceFont: 22 * ssc,
     negotiableFont: 14 * ssc,
     priceMargin: Math.round(16 * ssc),
@@ -56,7 +56,7 @@ const summaryScaled = {
 const SummarySlide = ({ item, formatPrice, formatKm, itemHeight }) => (
     <View style={[styles.summarySlide, { height: itemHeight, padding: summaryScaled.slidePadding, paddingTop: summaryScaled.slidePaddingTop }]}>
         <Text style={[styles.summaryTitle, { fontSize: summaryScaled.titleFont }]}>
-            {item.brand.name} {item.model.name}
+            {item.title || `${item.brand.name} ${item.model.name}`}
         </Text>
         <Text style={[styles.summaryPrice, { fontSize: summaryScaled.priceFont, marginBottom: summaryScaled.priceMargin }]}>
             {formatPrice(item.price)} € <Text style={{fontSize: summaryScaled.negotiableFont, color: '#888', fontWeight: 'normal'}}>{item.negotiable ? '(Negociabil)' : '(Preț Fix)'}</Text>
@@ -306,8 +306,8 @@ const PreviewItem = React.memo(({ item, isVisible = true, onSlideChange, isEditi
                     <Text style={[styles.userNameText, { fontSize: scaled.userNameFont }]}>@Tu (Previzualizare)</Text>
                     <Text style={[styles.locationText2, { fontSize: scaled.locationFont }]}>• {item.location?.city}</Text>
                 </View>
-                <Text style={[styles.brandTitle, { fontSize: scaled.brandFont }]}>
-                    {item.brand.name} {item.model.name}
+                <Text style={[styles.brandTitle, { fontSize: scaled.brandFont }]} numberOfLines={1}>
+                    {item.title || `${item.brand.name} ${item.model.name}`}
                 </Text>
                 <Text style={[styles.overlayPrice, { fontSize: scaled.priceFont }]}>{formatPrice(item.price)} €</Text>
                 <View style={[styles.tagsRow, { marginBottom: scaled.tagsRowMargin }]}>

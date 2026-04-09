@@ -126,6 +126,7 @@ export default function PreviewEditSaleScreen({ navigation }) {
                 const metadataArray = [];
     
                 const fields = {
+                    title: draftSale.title || '',
                     engine_capacity: draftSale.engine_capacity || draftSale.engine?.capacity || '',
                     price: String(draftSale.price),
                     mileage: String(draftSale.mileage),
@@ -198,6 +199,7 @@ export default function PreviewEditSaleScreen({ navigation }) {
                 setLoadingText("Salvăm modificările...");
     
                 const editPayload = {
+                    title: draftSale.title,
                     engine_capacity: draftSale.engine_capacity,
                     price: draftSale.price,
                     mileage: draftSale.mileage,
