@@ -11,13 +11,21 @@ import { assets } from '../assets.js';
 import { navigationRef } from '../helpers/NavigationService.js';
 
 const linking = {
-    prefixes: ['carflip://'],
+    prefixes: [
+        'carflip://',
+        'https://car-flip.com',
+        'https://www.car-flip.com',
+    ],
     config: {
         screens: {
             HomeTab: {
                 screens: {
-                    MainScreen: 'post/:saleId',
-                    SearchProfileResult: 'profile/:userId',
+                    MainScreen: {
+                        path: 'post/:saleId',
+                    },
+                    SearchProfileResult: {
+                        path: 'profile/:userId',
+                    },
                 }
             }
         }
@@ -65,7 +73,7 @@ export default function IndexNavigation() {
             <View style={{ flex: 1 }}>
                 <NavigationContainer
                     ref={navigationRef}
-                    linking={linking}
+                    linking={isLogged ? linking : undefined}
                     onReady={() => {
                         console.log("🏁 [Navigation] Container is READY!");
                         if (setIsNavReady) setIsNavReady(true);

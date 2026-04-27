@@ -53,6 +53,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     return false
   }
   // -----------------------------------------
+      func application(
+        _ application: UIApplication,
+        continue userActivity: NSUserActivity,
+        restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+    ) -> Bool {
+        if let linkingManager = NSClassFromString("RCTLinkingManager") as? NSObject.Type {
+            let selector = NSSelectorFromString("application:continueUserActivity:restorationHandler:")
+            if linkingManager.responds(to: selector) {
+                typealias LinkingMethod = @convention(c) (AnyObject, Selector, UIApplication, NSUserActivity, @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool
+                let imp = linkingManager.method(for: selector)
+                let method = unsafeBitCast(imp, to: LinkingMethod.self)
+                return method(linkingManager, selector, application, userActivity, restorationHandler)
+            }
+        }
+        return false
+    }
 }
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {

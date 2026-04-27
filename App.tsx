@@ -10,11 +10,41 @@ import InAppNotification from './screens/Main/components/InAppNotification.jsx';
 
 import { authEvents } from './helpers/authEvents.js';
 import { notificationRef } from './helpers/notificationHelper.js'; 
-import { Text } from 'react-native';
+import { Text, TextInput } from 'react-native';
 
 
-(Text as any).defaultProps = (Text as any).defaultProps || {};
-(Text as any).defaultProps.maxFontSizeMultiplier = 1.25;
+
+interface ComponentWithRender {
+    render?: (props: any, ref: any) => React.ReactElement;
+}
+
+const originalTextRender = (Text as unknown as ComponentWithRender).render;
+if (originalTextRender) {
+    (Text as unknown as ComponentWithRender).render = function render(props, ref) {
+        return originalTextRender.apply(this, [
+            { 
+                ...props, 
+                allowFontScaling: true,
+                maxFontSizeMultiplier: 1.15
+            }, 
+            ref
+        ]);
+    };
+}
+
+const originalTextInputRender = (TextInput as unknown as ComponentWithRender).render;
+if (originalTextInputRender) {
+    (TextInput as unknown as ComponentWithRender).render = function render(props, ref) {
+        return originalTextInputRender.apply(this, [
+            { 
+                ...props, 
+                allowFontScaling: true, 
+                maxFontSizeMultiplier: 1.15
+            }, 
+            ref
+        ]);
+    };
+}
 
 export default function App(){
 

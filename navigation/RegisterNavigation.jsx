@@ -20,7 +20,7 @@ function PublicTabWrapper() {
                 headerShown: false,
                 tabBarShowLabel: false,
                 tabBarStyle: {
-                    backgroundColor: '#800000',
+                    backgroundColor: '#13161A',
                     borderTopWidth: 0,
                     paddingBottom: 0,
                     marginBottom: 0,
@@ -39,7 +39,7 @@ function PublicTabWrapper() {
                                 width: 26,
                                 height: 26,
                                 resizeMode: 'contain',
-                                tintColor: '#FFFFFF',
+                                tintColor: '#fb9999',
                             }}
                         />
                     ),

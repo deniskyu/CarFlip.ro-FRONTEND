@@ -97,7 +97,7 @@ function ChatStackNavigation() {
         <Stack.Navigator 
             screenOptions={{ 
                 headerShown: false,
-                animation: 'slide_from_right'
+                animation: 'none'
             }}
         >
             <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
@@ -180,7 +180,7 @@ export default function MainNavigation() {
                 headerShown: false,
                 tabBarShowLabel: false,
                 tabBarStyle: {
-                    backgroundColor: '#800000',
+                    backgroundColor: '#13161A',
                     borderTopWidth: 0,
                     paddingBottom: 0,
                     marginBottom: 0,
@@ -204,7 +204,7 @@ export default function MainNavigation() {
                                             width: iconSize,
                                             height: iconSize,
                                             resizeMode: 'contain',
-                                            tintColor: focused ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)'
+                                            tintColor: focused ? '#fb9999' : 'rgba(255, 255, 255, 0.5)'
                                         }}
                                     />
                                     {unreadCount > 0 && (
@@ -237,7 +237,7 @@ export default function MainNavigation() {
                             iconSource = assets.messages_icon;
                             return (
                                 <View>
-                                    <Image source={iconSource} style={{ width: iconSize, height: iconSize, resizeMode: 'contain', tintColor: focused ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)' }} />
+                                    <Image source={iconSource} style={{ width: iconSize, height: iconSize, resizeMode: 'contain', tintColor: focused ? '#fb9999' : 'rgba(255, 255, 255, 0.5)' }} />
                                     {unreadChatCount > 0 && (
                                         <View style={{ position: 'absolute', top: -4, right: -6, backgroundColor: '#FF3B30', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4, borderWidth: 1.5, borderColor: '#800000' }}>
                                             <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>
@@ -259,7 +259,7 @@ export default function MainNavigation() {
                                 width: iconSize,
                                 height: iconSize,
                                 resizeMode: 'contain',
-                                tintColor: focused ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)'
+                                tintColor: focused ? '#fb9999' : 'rgba(255, 255, 255, 0.5)'
                             }}
                         />
                     );
@@ -314,7 +314,7 @@ export default function MainNavigation() {
                         tabBarStyle: routeName === 'ChatScreen'
                             ? { display: 'none' }
                             : {
-                                backgroundColor: '#800000',
+                                backgroundColor: '#13161A',
                                 borderTopWidth: 0,
                                 paddingBottom: 0,
                                 marginBottom: 0,
