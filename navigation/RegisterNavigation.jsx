@@ -39,7 +39,7 @@ function PublicTabWrapper() {
                                 width: 26,
                                 height: 26,
                                 resizeMode: 'contain',
-                                tintColor: '#fb9999',
+                                tintColor: '#800000',
                             }}
                         />
                     ),

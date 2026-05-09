@@ -29,7 +29,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const COLORS = {
     primary: '#800000',
-    secondary: '#081539',
+    secondary: '#13161A',
     background: '#F5F5F5',
     white: '#FFFFFF',
     text: '#333333',

@@ -241,7 +241,7 @@ export default function ProfileScreen() {
     return (
 
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} />
+            <StatusBar barStyle="light-content" backgroundColor="#13161A" />
 
             {StaticHeader}
 
@@ -350,11 +350,11 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.secondary,
+        backgroundColor: '#13161A',
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0, 
     },
     profileHeader: {
-        backgroundColor: COLORS.secondary,
+        backgroundColor: '#13161A',
         alignItems: 'center',
         paddingTop: Platform.OS === 'ios' ? 20 : 10,
         paddingBottom: 0,
