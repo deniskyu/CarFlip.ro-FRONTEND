@@ -162,8 +162,8 @@ export default function EditSaleScreen({ route, navigation }) {
                             Alert.alert("Info", "Poți avea maxim 1 videoclip.");
                             continue;
                         }
-                        if (file.duration && file.duration > 25) {
-                            Alert.alert("Video prea lung", "Videoclipul trebuie să aibă maxim 25 secunde.");
+                        if (file.duration && file.duration > 30) {
+                            Alert.alert("Video prea lung", "Videoclipul trebuie să aibă maxim 30 secunde.");
                             continue;
                         }
                         videoCount++;
@@ -387,7 +387,7 @@ export default function EditSaleScreen({ route, navigation }) {
 
                     <View style={styles.formContainer}>
 
-                        <Text style={styles.label}>Titlu Anunț (max 25 caractere)</Text>
+                        <Text style={styles.label}>Titlu Anunț (max 35 caractere)</Text>
                         <View style={styles.inputSelector}>
                             <TextInput 
                                 style={styles.inputText}
@@ -395,7 +395,7 @@ export default function EditSaleScreen({ route, navigation }) {
                                 placeholderTextColor={COLORS.placeholder}
                                 value={title}
                                 onChangeText={setTitle}
-                                maxLength={25}
+                                maxLength={35}
                             />
                         </View>
 
@@ -542,14 +542,14 @@ export default function EditSaleScreen({ route, navigation }) {
                             />
                         </View>
 
-                        <Text style={styles.label}>Descriere Anunț (800 caractere)</Text>
+                        <Text style={styles.label}>Descriere Anunț (1000 caractere)</Text>
                         <TextInput
                             style={styles.textArea}
                             placeholder="Spune-ne mai multe despre mașina ta..."
                             placeholderTextColor={COLORS.placeholder}
                             multiline={true}
                             numberOfLines={4}
-                            maxLength={800}
+                            maxLength={1000}
                             value={description}
                             onChangeText={setDescription}
                         />
