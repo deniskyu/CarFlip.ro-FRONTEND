@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback, useContext } from 'react';
 import { 
     View, 
     Text, 
@@ -13,7 +13,10 @@ import {
     Alert,
     Animated,
     Share,
-    Modal
+    Modal,
+    TextInput,
+    ActivityIndicator,
+    KeyboardAvoidingView,
 } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import { assets } from '../../../assets.js';
@@ -24,6 +27,7 @@ import CommentsSheet from './CommentsSheet.jsx';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import ReportModal from './ReportModal.jsx';
 import { emitter } from '../../../helpers/eventBus.js';
+import { Context } from '../../../context/Context.js';
 
 const { width, height } = Dimensions.get('window');
 
@@ -50,6 +54,10 @@ const scaled = {
     tagPadV: Math.round(4 * sc),
     tagPadH: Math.round(8 * sc),
     tagsRowMargin: Math.round(18 * sc),
+    msgBtnPadV: Math.round(10 * sc),  
+    msgBtnPadH: Math.round(20 * sc),
+    msgBtnFont: 14* sc,
+    msgBtnRadius: Math.round(7 * sc), 
 };
 
 const ssc = SUMMARY_SCALE;
@@ -286,11 +294,14 @@ const ToastNotification = ({ message, visible }) => {
 const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = false, targetCommentId = null, pfpIconVisible = true, screenId = 'main', itemHeight = ITEM_HEIGHT,  guestMode = false }) => {
     const navigation = useNavigation();
     const isFocused = useIsFocused();
+    const { username: currentUsername } = useContext(Context);
 
     if (item.isSeparator) return <FeedSeparator itemHeight={itemHeight} />;
     if (item.isEnd) return <EndOfResults onBackToFeed={onBackToFeed} itemHeight={itemHeight} />;
     if (item.isNoResults) return <NoResultsSlide onBack={onBackToFeed} itemHeight={itemHeight} />;
     if (!item.user_id || !item.user_id._id) return null;
+
+    const isOwnPost = currentUsername && item.user_name === currentUsername;
 
     const requireAuth = () => {
         if (guestMode) {
@@ -303,6 +314,12 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     const slidesData = useMemo(() => 
         [...item.media, { isSummary: true, _id: 'summary_card' }], 
     [item.media]);
+
+    const previewImageUrl = useMemo(() => {
+        if (!item.media || item.media.length === 0) return null;
+        const firstImg = item.media.find(m => m.type === 'image');
+        return firstImg ? firstImg.url : item.media[0].url;
+    }, [item.media]);
 
     const flatListRef = useRef(null);
     const dragStartOffset = useRef(0);
@@ -320,6 +337,10 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
 
     const [descriptionVisible, setDescriptionVisible] = useState(false);
 
+    const [messageModalVisible, setMessageModalVisible] = useState(false);
+    const [messageText, setMessageText] = useState('');
+    const [messageSending, setMessageSending] = useState(false);
+
     useEffect(() => {
         const eventName = `visible_index_changed_${screenId}`;
         const handler = (visibleIndex) => setIsVisible(visibleIndex === index);
@@ -332,6 +353,8 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
         setCommentsVisible(false);
         setReportVisible(false);
         setIsZooming(false);
+        setMessageModalVisible(false);
+        setMessageText('');
         if (flatListRef.current) {
             flatListRef.current.scrollToOffset({ offset: 0, animated: false });
         }
@@ -433,6 +456,41 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
         if (requireAuth()) return;
         navigation.navigate('SearchProfileResult', { userId });
     }
+
+    const handleOpenMessageModal = useCallback(() => {
+        if (requireAuth()) return;
+        setMessageModalVisible(true);
+    }, [guestMode]);
+
+    const handleSendSaleMessage = useCallback(async () => {
+        if (messageSending) return;
+        setMessageSending(true);
+        try {
+            const res = await axiosAuthGuard.post('/api/chat/send-sale-message', {
+                targetUserId: item.user_id._id,
+                saleId: item._id,
+                text: messageText.trim() || null
+            });
+            if (res.data.success) {
+                setMessageModalVisible(false);
+                setMessageText('');
+                navigation.navigate('ChatTab', {
+                    screen: 'ChatScreen',
+                    params: {
+                        conversationId: res.data.data.conversationId,
+                        participantName: res.data.data.participant.username,
+                        participantIcon: res.data.data.participant.icon,
+                        participantId: item.user_id._id
+                    }
+                });
+            }
+        } catch (err) {
+            const msg = err?.response?.data?.message || 'Nu s-a putut trimite mesajul.';
+            Alert.alert('Eroare', msg);
+        } finally {
+            setMessageSending(false);
+        }
+    }, [item._id, item.user_id._id, messageText, messageSending, navigation]);
 
     const onViewableItemsChanged = useRef(({ viewableItems }) => {
         if (viewableItems && viewableItems.length > 0) {
@@ -547,6 +605,25 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                 <Image source={assets.red_like_icon} style={styles.bigHeartImage} resizeMode="contain" fadeDuration={0} />
             </Animated.View>
 
+            {!isOwnPost && (
+                <Pressable
+                    style={[
+                        styles.msgButton,
+                        {
+                            paddingVertical: scaled.msgBtnPadV,
+                            paddingHorizontal: scaled.msgBtnPadH,
+                            borderRadius: scaled.msgBtnRadius,
+                            top: Platform.OS === 'ios' ? 120 : 108,
+                            opacity: shouldHideUI ? 0 : 1,
+                        }
+                    ]}
+                    pointerEvents={shouldHideUI ? 'none' : 'auto'}
+                    onPress={handleOpenMessageModal}
+                >
+                    <Text style={[styles.msgButtonText, { fontSize: scaled.msgBtnFont }]}>Mesaj ✉</Text>
+                </Pressable>
+            )}
+
             <View style={[styles.rightActions, { bottom: scaled.rightActionsBottom, opacity: shouldHideUI ? 0 : 1 }]} pointerEvents={shouldHideUI ? 'none' : 'box-none'}>
                 {pfpIconVisible && (
                     <Pressable onPress={() => handleProfilePress(item.user_id._id)}>
@@ -643,6 +720,71 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                     </Pressable>
                 </Pressable>
             </Modal>
+
+            <Modal
+                visible={messageModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => { setMessageModalVisible(false); setMessageText(''); }}
+            >
+            <KeyboardAvoidingView
+                style={styles.msgModalOverlay}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+                <Pressable style={{ flex: 1 }} onPress={() => { setMessageModalVisible(false); setMessageText(''); }}>
+                    <View style={styles.msgModalCentered}>
+                        <Pressable style={styles.msgModalCard} onPress={() => {}}>
+                        <View style={styles.msgModalHeader}>
+                            <Image
+                                source={previewImageUrl ? { uri: previewImageUrl } : assets.default_profile}
+                                style={styles.msgModalThumb}
+                            />
+                            <View style={styles.msgModalInfo}>
+                                <Text style={styles.msgModalTitle} numberOfLines={1}>{item.title || `${item.brand.name} ${item.model.name}`}</Text>
+                                <Text style={styles.msgModalPrice}>{formatPrice(item.price)} €</Text>
+                                <Text style={styles.msgModalSeller} numberOfLines={1}>@{item.user_name}</Text>
+                            </View>
+                            <Pressable style={styles.msgModalCloseBtn} onPress={() => { setMessageModalVisible(false); setMessageText(''); }}>
+                                <Text style={styles.msgModalCloseBtnText}>✕</Text>
+                            </Pressable>
+                        </View>
+                        <View style={styles.msgModalDivider} />
+                        <Text style={styles.msgModalLabel}>Mesaj:</Text>
+                        <TextInput
+                            style={styles.msgModalInput}
+                            placeholder="Ex: Salut, mai este disponibil?"
+                            placeholderTextColor="#999"
+                            multiline
+                            maxLength={500}
+                            value={messageText}
+                            onChangeText={setMessageText}
+                        />
+                        <Text style={styles.msgModalCharCount}>{messageText.length}/500</Text>
+                        <View style={styles.msgModalActions}>
+                            <Pressable
+                                style={styles.msgModalCancelBtn}
+                                onPress={() => { setMessageModalVisible(false); setMessageText(''); }}
+                                disabled={messageSending}
+                            >
+                                <Text style={styles.msgModalCancelText}>Anulează</Text>
+                            </Pressable>
+                            <Pressable
+                                style={[styles.msgModalSendBtn, messageSending && { opacity: 0.6 }]}
+                                onPress={handleSendSaleMessage}
+                                disabled={messageSending}
+                            >
+                                {messageSending
+                                    ? <ActivityIndicator size="small" color="#FFFFFF" />
+                                    : <Text style={styles.msgModalSendText}>Trimite</Text>
+                                }
+                            </Pressable>
+                        </View>
+                    </Pressable>
+                </View>
+                    </Pressable>
+                </KeyboardAvoidingView>
+            </Modal>
+
             <ToastNotification visible={toastVisible} message="Comentariile sunt dezactivate." />
         </View>
     );
@@ -721,6 +863,28 @@ const styles = StyleSheet.create({
     descModalScroll: { flex: 1, backgroundColor: '#FAFAFA', borderRadius: 10, borderWidth: 1, borderColor: '#F0F0F0' },
     descModalScrollContent: { padding: 14 },
     descModalText: { fontSize: 17, color: '#333', lineHeight: 26 },
+    msgButton: { position: 'absolute', left: 15, zIndex: 10, backgroundColor: '#800000', flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 4, elevation: 5 },
+    msgButtonText: { color: '#FFFFFF', fontWeight: '700', letterSpacing: 0.3 },
+    msgModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
+    msgModalCard: { width: '90%', maxWidth: 400, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20 },
+    msgModalHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+    msgModalThumb: { width: 56, height: 56, borderRadius: 8, backgroundColor: '#E0E0E0', marginRight: 12 },
+    msgModalInfo: { flex: 1, marginRight: 8 },
+    msgModalTitle: { fontSize: 16, fontWeight: '800', color: '#081539', marginBottom: 2 },
+    msgModalPrice: { fontSize: 15, fontWeight: '700', color: '#800000', marginBottom: 2 },
+    msgModalSeller: { fontSize: 12, color: '#999', fontWeight: '500' },
+    msgModalCloseBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#800000', justifyContent: 'center', alignItems: 'center' },
+    msgModalCloseBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' },
+    msgModalDivider: { height: 1, backgroundColor: '#E8E8E8', marginBottom: 14 },
+    msgModalLabel: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
+    msgModalInput: { backgroundColor: '#F5F5F5', borderRadius: 10, padding: 12, height: 90, textAlignVertical: 'top', fontSize: 14, color: '#333', borderWidth: 1, borderColor: '#E0E0E0', marginBottom: 4 },
+    msgModalCharCount: { fontSize: 11, color: '#999', textAlign: 'right', marginBottom: 16 },
+    msgModalActions: { flexDirection: 'row', gap: 10 },
+    msgModalCancelBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center' },
+    msgModalCancelText: { fontSize: 15, fontWeight: '600', color: '#333' },
+    msgModalSendBtn: { flex: 2, paddingVertical: 13, borderRadius: 12, backgroundColor: '#081539', alignItems: 'center', justifyContent: 'center' },
+    msgModalSendText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+    msgModalCentered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
 
 export default PostItem;

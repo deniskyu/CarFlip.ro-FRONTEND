@@ -95,7 +95,7 @@ export default function ContactScreen() {
 
                 <View style={styles.footer}>
                     <Text style={styles.footerBrand}>CAR FLIP</Text>
-                    <Text style={styles.footerTagline}>Drumul tău spre mașina perfectă.</Text>
+                    <Text style={styles.footerTagline}>Drumul tău spre mașina dorită.</Text>
                 </View>
 
             </ScrollView>

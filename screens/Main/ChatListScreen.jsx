@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    SafeAreaView,
     FlatList,
     Pressable,
     TextInput,
@@ -19,10 +18,11 @@ import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import { formatConversationTime } from '../../helpers/chatHelper.js';
 import { emitter } from '../../helpers/eventBus.js';
 import { Context } from '../../context/Context.js';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const COLORS = {
     primary: '#800000',
-    secondary: '#081539',
+    secondary: '#13161A',
     background: '#F5F5F5',
     white: '#FFFFFF',
     text: '#333333',
@@ -285,134 +285,175 @@ export default function ChatListScreen({ navigation }) {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} />
+        <>
+            <StatusBar
+                barStyle="light-content"
+                backgroundColor={COLORS.secondary}
+            />
 
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Mesaje</Text>
-            </View>
+            {/* Safe area pentru status bar / notch pe iOS */}
+            <SafeAreaView
+                edges={['top']}
+                style={{ backgroundColor: COLORS.secondary }}
+            />
 
-            <View style={styles.searchContainer}>
-                <View style={styles.searchBar}>
-                    <Text style={styles.searchIcon}>🔍</Text>
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Caută utilizatori..."
-                        placeholderTextColor={COLORS.placeholder}
-                        value={searchQuery}
-                        onChangeText={handleSearch}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        returnKeyType="search"
-                    />
-                    {searchQuery.length > 0 && (
-                        <Pressable onPress={clearSearch} hitSlop={10}>
-                            <Text style={styles.clearButton}>✕</Text>
-                        </Pressable>
-                    )}
-                </View>
-            </View>
-
-            {isSearching && (
-                <View style={styles.searchResultsContainer}>
-                    {searchLoading ? (
-                        <ActivityIndicator
-                            color={COLORS.primary}
-                            style={{ marginTop: 20 }}
-                        />
-                    ) : searchResults.length === 0 ? (
-                        <Text style={styles.noResultsText}>
-                            Niciun utilizator găsit
-                        </Text>
-                    ) : (
-                        <FlatList
-                            data={searchResults}
-                            keyExtractor={item => item._id}
-                            renderItem={renderSearchResult}
-                            keyboardShouldPersistTaps="handled"
-                            keyboardDismissMode="on-drag"
-                            ItemSeparatorComponent={() => <View style={styles.separator} />}
-                        />
-                    )}
-                </View>
-            )}
-
-            {!isSearching && (
-                <>
-                    {loading ? (
-                        <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={COLORS.primary} />
-                        </View>
-                    ) : (
-                        <FlatList
-                            data={conversations}
-                            keyExtractor={item => item._id}
-                            renderItem={renderConversation}
-                            ListEmptyComponent={renderEmpty}
-                            onRefresh={() => {
-                                setRefreshing(true);
-                                fetchConversations();
-                            }}
-                            refreshing={refreshing}
-                            ItemSeparatorComponent={() => <View style={styles.separator} />}
-                            keyboardShouldPersistTaps="handled"
-                            contentContainerStyle={
-                                conversations.length === 0 && { flex: 1 }
-                            }
-                        />
-                    )}
-                </>
-            )}
-
-            <Modal
-                visible={menuVisible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setMenuVisible(false)}
+            {/* Restul aplicației */}
+            <SafeAreaView
+                style={styles.container}
+                edges={['left', 'right', 'bottom']}
             >
-                <Pressable
-                    style={styles.modalOverlay}
-                    onPress={() => setMenuVisible(false)}
-                >
-                    <View style={styles.menuContainer}>
-                        <View style={styles.menuHeader}>
-                            <Image
-                                source={{ uri: selectedConv?.participant?.icon }}
-                                style={styles.menuAvatar}
-                            />
-                            <Text style={styles.menuUsername}>
-                                {selectedConv?.participant?.username}
-                            </Text>
-                        </View>
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Mesaje</Text>
+                </View>
 
-                        <View style={styles.menuDivider} />
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchBar}>
+                        <Text style={styles.searchIcon}>🔍</Text>
 
-                        <Pressable
-                            style={({ pressed }) => [
-                                styles.menuItem,
-                                pressed && { backgroundColor: '#FFF5F5' }
-                            ]}
-                            onPress={handleReport}
-                        >
-                            <Text style={styles.menuItemIconReport}>⚠️</Text>
-                            <Text style={styles.menuItemTextReport}>
-                                Raportează utilizatorul
-                            </Text>
-                        </Pressable>
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Caută utilizatori..."
+                            placeholderTextColor={COLORS.placeholder}
+                            value={searchQuery}
+                            onChangeText={handleSearch}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            returnKeyType="search"
+                        />
 
-                        <Pressable
-                            style={({ pressed }) => [
-                                styles.menuItemCancel,
-                                pressed && { backgroundColor: '#F0F0F0' }
-                            ]}
-                            onPress={() => setMenuVisible(false)}
-                        >
-                            <Text style={styles.menuItemCancelText}>Anulează</Text>
-                        </Pressable>
+                        {searchQuery.length > 0 && (
+                            <Pressable
+                                onPress={clearSearch}
+                                hitSlop={10}
+                            >
+                                <Text style={styles.clearButton}>✕</Text>
+                            </Pressable>
+                        )}
                     </View>
-                </Pressable>
-            </Modal>
-        </SafeAreaView>
+                </View>
+
+                {isSearching && (
+                    <View style={styles.searchResultsContainer}>
+                        {searchLoading ? (
+                            <ActivityIndicator
+                                color={COLORS.primary}
+                                style={{ marginTop: 20 }}
+                            />
+                        ) : searchResults.length === 0 ? (
+                            <Text style={styles.noResultsText}>
+                                Niciun utilizator găsit
+                            </Text>
+                        ) : (
+                            <FlatList
+                                data={searchResults}
+                                keyExtractor={item => item._id}
+                                renderItem={renderSearchResult}
+                                keyboardShouldPersistTaps="handled"
+                                keyboardDismissMode="on-drag"
+                                ItemSeparatorComponent={() => (
+                                    <View style={styles.separator} />
+                                )}
+                            />
+                        )}
+                    </View>
+                )}
+
+                {!isSearching && (
+                    <>
+                        {loading ? (
+                            <View style={styles.loadingContainer}>
+                                <ActivityIndicator
+                                    size="large"
+                                    color={COLORS.primary}
+                                />
+                            </View>
+                        ) : (
+                            <FlatList
+                                data={conversations}
+                                keyExtractor={item => item._id}
+                                renderItem={renderConversation}
+                                ListEmptyComponent={renderEmpty}
+                                onRefresh={() => {
+                                    setRefreshing(true);
+                                    fetchConversations();
+                                }}
+                                refreshing={refreshing}
+                                ItemSeparatorComponent={() => (
+                                    <View style={styles.separator} />
+                                )}
+                                keyboardShouldPersistTaps="handled"
+                                contentContainerStyle={
+                                    conversations.length === 0
+                                        ? { flex: 1 }
+                                        : undefined
+                                }
+                            />
+                        )}
+                    </>
+                )}
+
+                <Modal
+                    visible={menuVisible}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={() => setMenuVisible(false)}
+                >
+                    <Pressable
+                        style={styles.modalOverlay}
+                        onPress={() => setMenuVisible(false)}
+                    >
+                        <View style={styles.menuContainer}>
+                            <View style={styles.menuHeader}>
+                                <Image
+                                    source={{
+                                        uri: selectedConv?.participant?.icon
+                                    }}
+                                    style={styles.menuAvatar}
+                                />
+
+                                <Text style={styles.menuUsername}>
+                                    {selectedConv?.participant?.username}
+                                </Text>
+                            </View>
+
+                            <View style={styles.menuDivider} />
+
+                            <Pressable
+                                style={({ pressed }) => [
+                                    styles.menuItem,
+                                    pressed && {
+                                        backgroundColor: '#FFF5F5'
+                                    }
+                                ]}
+                                onPress={handleReport}
+                            >
+                                <Text style={styles.menuItemIconReport}>
+                                    ⚠️
+                                </Text>
+
+                                <Text style={styles.menuItemTextReport}>
+                                    Raportează utilizatorul
+                                </Text>
+                            </Pressable>
+
+                            <Pressable
+                                style={({ pressed }) => [
+                                    styles.menuItemCancel,
+                                    pressed && {
+                                        backgroundColor: '#F0F0F0'
+                                    }
+                                ]}
+                                onPress={() => setMenuVisible(false)}
+                            >
+                                <Text style={styles.menuItemCancelText}>
+                                    Anulează
+                                </Text>
+                            </Pressable>
+                        </View>
+                    </Pressable>
+                </Modal>
+            </SafeAreaView>
+        </>
     );
 }
 
@@ -425,7 +466,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.secondary,
         paddingHorizontal: 20,
         paddingVertical: 16,
-        paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 16 : 16,
+        paddingTop: 16,
     },
     headerTitle: {
         fontSize: 22,

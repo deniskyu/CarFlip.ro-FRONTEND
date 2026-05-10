@@ -536,7 +536,7 @@ export default function AddSaleScreen({ navigation }) {
                    <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Imagini & Video ({media.length}/10)</Text>
                         <Text style={styles.sectionSubtitle}>
-                            Maxim 10 fișiere (max 1 video, max 25s). Imaginile nu pot depăși 15 MB, iar videoclipurile 50 MB.
+                            Maxim 10 fișiere (max 1 video, max 30s). Imaginile nu pot depăși 15 MB, iar videoclipurile 50 MB.
                         </Text>
                         <Text style={[styles.sectionSubtitle, {marginBottom: 4}]}>
                             O imagine este obligatorie, și va fi cea de copertă in profil. Procesarea anunțului va dura undeva la câteva minute.

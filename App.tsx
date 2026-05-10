@@ -25,7 +25,7 @@ if (originalTextRender) {
             { 
                 ...props, 
                 allowFontScaling: true,
-                maxFontSizeMultiplier: 1.15
+                maxFontSizeMultiplier: 1.05
             }, 
             ref
         ]);
@@ -39,7 +39,7 @@ if (originalTextInputRender) {
             { 
                 ...props, 
                 allowFontScaling: true, 
-                maxFontSizeMultiplier: 1.15
+                maxFontSizeMultiplier: 1.05
             }, 
             ref
         ]);
