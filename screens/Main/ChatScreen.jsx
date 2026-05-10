@@ -214,7 +214,7 @@ export default function ChatScreen({ route, navigation }) {
             setMessages(prev =>
                 prev.map(m =>
                     m._id === data.messageId
-                        ? { ...m, type: 'text', text: 'Acest mesaj a fost șters', image_url: null, image_public_id: null, is_deleted: true }
+                        ? { ...m, type: 'text', text: 'Acest mesaj a fost șters', image_url: null, image_public_id: null, sale_preview: null, is_deleted: true }
                         : m
                 )
             );
@@ -360,7 +360,7 @@ export default function ChatScreen({ route, navigation }) {
         setMessages(prev =>
             prev.map(m =>
                 m._id === selectedMessageForDelete._id
-                    ? { ...m, type: 'text', text: 'Acest mesaj a fost șters', image_url: null, image_public_id: null, is_deleted: true }
+                    ? { ...m, type: 'text', text: 'Acest mesaj a fost șters', image_url: null, image_public_id: null, sale_preview: null, is_deleted: true }
                     : m
             )
         );
@@ -450,6 +450,85 @@ export default function ChatScreen({ route, navigation }) {
                                 <Text style={styles.messageTime}>
                                     {formatMessageTime(item.createdAt)}
                                 </Text>
+                            </View>
+                        )}
+                    </View>
+                </View>
+            );
+        }
+
+        if (item.type === 'sale_link' && item.sale_preview) {
+            return (
+                <View style={[
+                    styles.messageWrapper,
+                    isOwn ? styles.messageWrapperOwn : styles.messageWrapperOther
+                ]}>
+                    {!isOwn && (
+                        <Image
+                            source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar}
+                            style={styles.messageAvatar}
+                        />
+                    )}
+                    <View style={styles.messageBubbleContainer}>
+                        <Pressable
+                            onPress={() => {
+                                navigation.navigate('HomeTab', {
+                                    screen: 'MainScreen',
+                                    params: { saleId: item.sale_preview.sale_id }
+                                });
+                            }}
+                            onLongPress={() => handleLongPressMessage(item, isOwn)}
+                            delayLongPress={500}
+                            style={[
+                                styles.saleLinkCard,
+                                isOwn ? styles.saleLinkCardOwn : styles.saleLinkCardOther
+                            ]}
+                        >
+                            <View style={styles.saleLinkThumb}>
+                                <Text style={styles.saleLinkThumbFallback}>🚗</Text>
+                                {item.sale_preview.image_url && (
+                                    <Image
+                                        source={{ uri: item.sale_preview.image_url }}
+                                        style={styles.saleLinkThumbImage}
+                                    />
+                                )}
+                            </View>
+                            <View style={styles.saleLinkInfo}>
+                                <Text style={[styles.saleLinkTitle, isOwn && { color: '#FFFFFF' }]} numberOfLines={1}>
+                                    {item.sale_preview.title || 'Anunț'}
+                                </Text>
+                                <Text style={[styles.saleLinkPrice, isOwn && { color: '#FFD4D4' }]}>
+                                    {new Intl.NumberFormat('de-DE').format(item.sale_preview.price || 0)} €
+                                </Text>
+                            </View>
+                        </Pressable>
+                        {item.text ? (
+                            <View style={[
+                                styles.messageBubble,
+                                isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
+                                { marginTop: 4, alignSelf: isOwn ? 'flex-end' : 'flex-start' }
+                            ]}>
+                                <Text style={[
+                                    styles.messageText,
+                                    isOwn ? styles.messageTextOwn : styles.messageTextOther
+                                ]}>
+                                    {item.text}
+                                </Text>
+                            </View>
+                        ) : null}
+                        {showTime && (
+                            <View style={[
+                                styles.messageMetaRow,
+                                isOwn ? { alignItems: 'flex-end' } : { alignItems: 'flex-start' }
+                            ]}>
+                                <Text style={styles.messageTime}>
+                                    {formatMessageTime(item.createdAt)}
+                                </Text>
+                                {isOwn && (
+                                    <Text style={styles.messageReadStatus}>
+                                        {item.is_read ? ' ✓✓' : ' ✓'}
+                                    </Text>
+                                )}
                             </View>
                         )}
                     </View>
@@ -590,7 +669,7 @@ export default function ChatScreen({ route, navigation }) {
             </View>
 
             <KeyboardAvoidingView
-                style={{ flex: 1 }}
+                style={{ flex: 1, backgroundColor: COLORS.background }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
                 keyboardVerticalOffset={0}
             >
@@ -821,7 +900,7 @@ export default function ChatScreen({ route, navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.secondary,
     },
     header: {
         backgroundColor: COLORS.secondary,
@@ -1208,5 +1287,59 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '700',
         color: COLORS.white,
+    },
+    saleLinkCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 14,
+        padding: 10,
+        minWidth: 220,
+    },
+    saleLinkCardOwn: {
+        backgroundColor: '#6B0000',
+        borderBottomRightRadius: 4,
+    },
+    saleLinkCardOther: {
+        backgroundColor: COLORS.white,
+        borderBottomLeftRadius: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 3,
+        elevation: 1,
+    },
+    saleLinkThumb: {
+        width: 64,
+        height: 64,
+        borderRadius: 8,
+        backgroundColor: COLORS.disabled,
+        marginRight: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    saleLinkInfo: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    saleLinkTitle: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#081539',
+        marginBottom: 3,
+    },
+    saleLinkPrice: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: '#800000',
+    },
+    saleLinkThumbFallback: {
+        fontSize: 28,
+        position: 'absolute',
+    },
+    saleLinkThumbImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 8,
     },
 });

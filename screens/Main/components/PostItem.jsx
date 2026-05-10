@@ -620,7 +620,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                     pointerEvents={shouldHideUI ? 'none' : 'auto'}
                     onPress={handleOpenMessageModal}
                 >
-                    <Text style={[styles.msgButtonText, { fontSize: scaled.msgBtnFont }]}>Mesaj ✉</Text>
+                    <Text style={[styles.msgButtonText, { fontSize: scaled.msgBtnFont }]}>Mesaj 💬</Text>
                 </Pressable>
             )}
 

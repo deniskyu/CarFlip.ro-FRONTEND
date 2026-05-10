@@ -14,37 +14,17 @@ import { Text, TextInput } from 'react-native';
 
 
 
-interface ComponentWithRender {
-    render?: (props: any, ref: any) => React.ReactElement;
-}
+// @ts-ignore
+Text.defaultProps = Text.defaultProps || {};
+// @ts-ignore
+Text.defaultProps.allowFontScaling = false;
 
-const originalTextRender = (Text as unknown as ComponentWithRender).render;
-if (originalTextRender) {
-    (Text as unknown as ComponentWithRender).render = function render(props, ref) {
-        return originalTextRender.apply(this, [
-            { 
-                ...props, 
-                allowFontScaling: true,
-                maxFontSizeMultiplier: 1.05
-            }, 
-            ref
-        ]);
-    };
-}
+// @ts-ignore
+TextInput.defaultProps = TextInput.defaultProps || {};
+// @ts-ignore
+TextInput.defaultProps.allowFontScaling = false;
 
-const originalTextInputRender = (TextInput as unknown as ComponentWithRender).render;
-if (originalTextInputRender) {
-    (TextInput as unknown as ComponentWithRender).render = function render(props, ref) {
-        return originalTextInputRender.apply(this, [
-            { 
-                ...props, 
-                allowFontScaling: true, 
-                maxFontSizeMultiplier: 1.05
-            }, 
-            ref
-        ]);
-    };
-}
+
 
 export default function App(){
 

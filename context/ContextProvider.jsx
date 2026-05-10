@@ -100,15 +100,15 @@ export default function ContextProvider({children}){
 
             socket.on('new_message', (message) => {
                 emitter.emit('socket_new_message', message);
-            
-                const isInThisConversation = activeChatConversationRef.current === message.conversation_id;
 
-                if (!isInThisConversation) {
+                const isInThisConversation = activeChatConversationRef.current === message.conversation_id;
+                const isOwnMessage = message.sender_id?.username === username;
+
+                if (!isInThisConversation && !isOwnMessage) {
                     setUnreadChatCount(prev => prev + 1);
-                    
                     showInAppNotification(
                         message.sender_id?.username || 'Mesaj nou',
-                        message.type === 'image' ? '📷 Ți-a trimis o poză' : message.text,
+                        message.type === 'image' ? '📷 Ți-a trimis o poză' : message.type === 'sale_link' ? `🚗 ${message.sale_preview?.title || 'Anunț'}` : message.text,
                         () => {
                             navigate('ChatTab', {
                                 screen: 'ChatScreen',
