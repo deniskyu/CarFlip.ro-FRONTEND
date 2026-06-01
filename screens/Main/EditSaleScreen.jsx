@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     SafeAreaView, 
     ScrollView, 
     Pressable, 
-    TextInput, 
     Modal, 
     FlatList, 
     Alert, 
@@ -15,6 +13,7 @@ import {
     ActivityIndicator,
     Image
 } from 'react-native';
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Context } from '../../context/Context.js';

@@ -5,11 +5,12 @@ import {
     StatusBar,
     Platform,
     Pressable,
-    Text,
     Dimensions,
     PixelRatio,
     Keyboard,
 } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PostItem from './components/PostItem.jsx';
 import { emitter } from '../../helpers/eventBus.js';

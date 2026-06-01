@@ -2,11 +2,13 @@ import React, { useContext } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 import { createNativeStackNavigator } from '@react-navigation/native-stack'; 
-import { Image, Platform, View, Text } from 'react-native';
+import { Image, Platform, View } from 'react-native';
 import { assets } from '../../assets.js';
 import { Context } from '../../context/Context.js';
 import { emitter } from '../../helpers/eventBus.js';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 
 import MainScreen from '../../screens/Main/MainScreen.jsx';
 import ProfileScreen from '../../screens/Main/ProfileScreen.jsx';

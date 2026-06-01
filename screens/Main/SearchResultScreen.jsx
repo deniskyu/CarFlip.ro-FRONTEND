@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     FlatList,
     Pressable, 
@@ -13,6 +12,8 @@ import {
     Keyboard,
     PixelRatio,
 } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import PostItem from './components/PostItem.jsx';
@@ -72,7 +73,8 @@ export default function SearchResultScreen() {
 
     const { flatListRef, activeIndexRef, scrollProps } = useCustomScroll({ 
         itemHeight: itemHeight, 
-        dataLength: results ? results.length : 0 
+        dataLength: results ? results.length : 0,
+        screenId: 'search'
     });
 
     const syncSeenPosts = async () => {

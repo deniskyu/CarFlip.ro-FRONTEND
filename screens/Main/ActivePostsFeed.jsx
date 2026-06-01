@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     FlatList, 
     Pressable, 
@@ -20,6 +19,8 @@ import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import { useCustomScroll } from "../../helpers/useCustomScroll.js";
 import { Layout } from "../../helpers/layout.js";
 import FastImage from '@d11/react-native-fast-image';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 
 const { width, height } = Dimensions.get('window');
 
@@ -64,7 +65,8 @@ export default function ActivePostsFeed() {
     const { flatListRef, activeIndexRef, scrollProps } = useCustomScroll({ 
         itemHeight: itemHeight, 
         dataLength: localPosts ? localPosts.length : 0,
-        initialIndex: initialIndex || 0
+        initialIndex: initialIndex || 0,
+        screenId: 'active'
     });
 
     const onViewableItemsChanged = useRef(({ viewableItems }) => {

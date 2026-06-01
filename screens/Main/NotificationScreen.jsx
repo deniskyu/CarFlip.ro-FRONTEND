@@ -1,7 +1,6 @@
 import React, { useState, useContext, useCallback, useEffect, useRef } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     Pressable, 
     FlatList, 
@@ -14,6 +13,8 @@ import {
     SectionList,
     Alert
 } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import { Context } from '../../context/Context.js';

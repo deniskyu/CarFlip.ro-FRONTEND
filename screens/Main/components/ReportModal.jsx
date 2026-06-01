@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     Pressable, 
-    TextInput, 
     ActivityIndicator, 
     Keyboard, 
     TouchableWithoutFeedback,
@@ -13,6 +11,8 @@ import {
     Platform 
 } from 'react-native';
 import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
+
+import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const ReportModal = ({ visible, onClose, reportType, reportId }) => {
     const [reason, setReason] = useState('');

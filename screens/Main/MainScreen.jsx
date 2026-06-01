@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { 
     View, 
-    Text, 
     StyleSheet, 
     FlatList,
     Dimensions, 
@@ -14,6 +13,8 @@ import {
     Keyboard,
     Image,
 } from "react-native";
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axiosAuthGuard from "../../helpers/axiosAuthGuard.js";
 import SearchBar from "./components/SearchBar.jsx";
@@ -101,7 +102,8 @@ export default function MainScreen({ navigation }) {
 
     const { flatListRef, activeIndexRef, scrollProps } = useCustomScroll({ 
         itemHeight: itemHeight,
-        dataLength: sales ? sales.length : 0 
+        dataLength: sales ? sales.length : 0,
+        screenId: 'main'
     });
 
     const syncSeenPosts = async () => {

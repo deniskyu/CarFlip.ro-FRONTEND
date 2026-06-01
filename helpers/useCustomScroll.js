@@ -1,32 +1,34 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { Platform } from 'react-native';
+import { emitter } from './eventBus.js';
 
-export const useCustomScroll = ({ itemHeight, dataLength, initialIndex = 0 }) => {
+export const useCustomScroll = ({ itemHeight, dataLength, initialIndex = 0, screenId }) => {
     const flatListRef = useRef(null);
     const activeIndexRef = useRef(initialIndex);
     const [isVerticalScrollEnabled, setIsVerticalScrollEnabled] = useState(true);
-
+    const [isZoomLocked, setIsZoomLocked] = useState(false);
     const pendingOverscrollRef = useRef(false);
+
+    useEffect(() => {
+        if (!screenId) return;
+        const handler = (locked) => setIsZoomLocked(!!locked);
+        emitter.on(`feed_zoom_${screenId}`, handler);
+        return () => emitter.off(`feed_zoom_${screenId}`, handler);
+    }, [screenId]);
 
     const handleScrollEndDrag = useCallback((event) => {
         if (!dataLength || dataLength === 0) return;
-
         const offsetY = event.nativeEvent.contentOffset.y;
         const velocityY = event.nativeEvent.velocity?.y || 0;
-
         let targetIndex = Math.round(offsetY / itemHeight);
         if (velocityY > 0.5) {
             targetIndex = Math.ceil(offsetY / itemHeight);
         } else if (velocityY < -0.5) {
             targetIndex = Math.floor(offsetY / itemHeight);
         }
-
-
         if (targetIndex >= dataLength) {
             pendingOverscrollRef.current = true; 
         }
-
-
         if (Platform.OS === 'ios') {
             /*targetIndex = Math.max(0, Math.min(targetIndex, dataLength - 1));
             if (flatListRef.current) {
@@ -39,12 +41,10 @@ export const useCustomScroll = ({ itemHeight, dataLength, initialIndex = 0 }) =>
             targetIndex = Math.max(0, Math.min(targetIndex, dataLength - 1));
             activeIndexRef.current = targetIndex;
         }
-
         setIsVerticalScrollEnabled(false);
         setTimeout(() => {
             setIsVerticalScrollEnabled(true);
         }, 400);
-
     }, [itemHeight, dataLength]);
 
     useEffect(() => {
@@ -76,9 +76,8 @@ export const useCustomScroll = ({ itemHeight, dataLength, initialIndex = 0 }) =>
         snapToAlignment: Platform.OS === 'android' ? "start" : undefined,
         decelerationRate: Platform.OS === 'android' ? "fast" : "fast",
         disableScrollViewPanResponder: Platform.OS === 'android',
-        scrollEnabled: isVerticalScrollEnabled,
+        scrollEnabled: isVerticalScrollEnabled && !isZoomLocked,
         onScrollEndDrag: handleScrollEndDrag,
     };
-
     return { flatListRef, activeIndexRef, scrollProps, updateActiveIndex };
 };

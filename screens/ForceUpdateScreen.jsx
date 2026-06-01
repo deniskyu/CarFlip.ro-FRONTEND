@@ -1,5 +1,7 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, Platform, Linking, Image } from 'react-native';
+import { View, Pressable, StyleSheet, Platform, Linking, Image } from 'react-native';
+
+import {Text, TextInput} from '../helpers/AppText.jsx';
 import { assets } from '../assets.js';
 
 export default function ForceUpdateScreen() {

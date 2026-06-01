@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
-    View, Text, StyleSheet, Modal, Pressable, ScrollView, 
-    TextInput, ActivityIndicator, FlatList, Image, SafeAreaView, Platform, KeyboardAvoidingView,
+    View, StyleSheet, Modal, Pressable, ScrollView, 
+    ActivityIndicator, FlatList, Image, SafeAreaView, Platform, KeyboardAvoidingView,
     Alert 
 } from 'react-native';
 import axios from 'axios';
@@ -12,6 +12,8 @@ import {
 } from '../staticData.js';
 import { assets } from '../../../assets.js';
 import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
+
+import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const COLORS = {
     primary: '#800000',

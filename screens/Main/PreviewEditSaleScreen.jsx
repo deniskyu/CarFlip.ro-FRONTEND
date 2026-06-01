@@ -1,7 +1,6 @@
 import React, { useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     Pressable, 
     Image, 
@@ -12,6 +11,8 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { showMessage } from 'react-native-flash-message';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 
 import { Context } from '../../context/Context.js';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';

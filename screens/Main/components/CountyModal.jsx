@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     Modal,
     Pressable,
@@ -11,6 +10,8 @@ import {
 import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
 import { showMessage } from 'react-native-flash-message';
 import { LOCATIONS } from '../staticData.js';
+
+import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const COUNTY_NAMES = LOCATIONS.map((loc) => loc.judet).filter(Boolean);
 

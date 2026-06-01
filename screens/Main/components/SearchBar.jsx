@@ -1,13 +1,14 @@
 import React from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     Pressable, 
     Image, 
     Platform 
 } from 'react-native';
 import { assets } from '../../../assets.js'; 
+
+import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 export default function SearchBar({ onPress }) {
     return (

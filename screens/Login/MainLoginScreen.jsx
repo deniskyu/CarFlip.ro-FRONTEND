@@ -1,4 +1,6 @@
-import { SafeAreaView, Platform, Dimensions, Pressable, View, Text, StyleSheet, StatusBar, Image } from 'react-native';
+import { SafeAreaView, Platform, Dimensions, Pressable, View, StyleSheet, StatusBar, Image } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { assets } from '../../assets.js';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

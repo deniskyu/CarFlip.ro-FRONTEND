@@ -1,7 +1,6 @@
 import React, { useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     Pressable, 
     Image, 
@@ -9,6 +8,8 @@ import {
     Platform,
     StatusBar
 } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import Slider from '@react-native-community/slider';
 import { showMessage } from 'react-native-flash-message';
 import Animated, { 

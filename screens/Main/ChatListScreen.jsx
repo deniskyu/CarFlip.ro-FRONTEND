@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     FlatList,
     Pressable,
-    TextInput,
     Image,
     ActivityIndicator,
     Alert,
@@ -13,6 +11,8 @@ import {
     Platform,
     StatusBar,
 } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { useFocusEffect } from '@react-navigation/native';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import { formatConversationTime } from '../../helpers/chatHelper.js';

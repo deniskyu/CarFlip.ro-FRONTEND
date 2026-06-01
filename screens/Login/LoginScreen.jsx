@@ -1,4 +1,5 @@
-import {ActivityIndicator, Dimensions, StatusBar, StyleSheet, Text, TextInput, View, Pressable, Image, Platform, Keyboard} from 'react-native';
+import {ActivityIndicator, Dimensions, StatusBar, StyleSheet, View, Pressable, Image, Platform, Keyboard} from 'react-native';
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import {useContext, useState} from 'react';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'; 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

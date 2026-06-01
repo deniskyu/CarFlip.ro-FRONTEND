@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { 
     View, 
-    Text, 
     StyleSheet, 
     FlatList,
     Dimensions, 
@@ -13,6 +12,8 @@ import {
     Keyboard,
     Modal
 } from "react-native";
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import PostItem from './components/PostItem.jsx';
@@ -85,7 +86,8 @@ export default function PublicMainScreen() {
 
     const { flatListRef, activeIndexRef, scrollProps } = useCustomScroll({ 
         itemHeight: itemHeight,
-        dataLength: sales ? sales.length : 0 
+        dataLength: sales ? sales.length : 0,
+        screenId: 'public'
     });
 
     const onViewableItemsChanged = useRef(({ viewableItems }) => {

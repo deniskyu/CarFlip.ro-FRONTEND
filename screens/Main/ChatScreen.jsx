@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     FlatList,
     Pressable,
-    TextInput,
     Image,
     ActivityIndicator,
     Alert,
@@ -14,6 +12,8 @@ import {
     Platform,
     StatusBar,
 } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import ImageViewer from 'react-native-image-zoom-viewer';

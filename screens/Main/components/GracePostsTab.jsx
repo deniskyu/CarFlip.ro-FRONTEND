@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     Pressable,
     Image,
@@ -10,7 +9,6 @@ import {
     FlatList,
     RefreshControl,
     Alert,
-    TextInput,
     KeyboardAvoidingView,
     Platform
 } from 'react-native';
@@ -19,6 +17,8 @@ import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
 import { showMessage } from 'react-native-flash-message';
 import { emitter } from '../../../helpers/eventBus.js';
 import { UI_SCALE } from '../../../helpers/layout.js';
+
+import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const COLORS = {
     primary: '#800000',

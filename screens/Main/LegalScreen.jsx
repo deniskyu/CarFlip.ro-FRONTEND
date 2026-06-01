@@ -1,7 +1,9 @@
-import { Pressable, StyleSheet, View, Text, StatusBar, ScrollView, Image } from 'react-native';
+import { Pressable, StyleSheet, View, StatusBar, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { assets } from '../../assets.js';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 
 const LAST_UPDATED = '24 martie 2026';
 

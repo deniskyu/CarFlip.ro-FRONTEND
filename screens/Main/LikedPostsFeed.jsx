@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     FlatList, 
     Pressable, 
@@ -13,6 +12,8 @@ import {
     Keyboard,
     PixelRatio,
 } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PostItem from './components/PostItem.jsx';
 import { emitter } from '../../helpers/eventBus.js';
@@ -65,7 +66,8 @@ export default function LikedPostsFeed() {
     const { flatListRef, activeIndexRef, scrollProps } = useCustomScroll({ 
         itemHeight: itemHeight, 
         dataLength: localPosts ? localPosts.length : 0,
-        initialIndex: initialIndex || 0
+        initialIndex: initialIndex || 0,
+        screenId: 'liked'
     });
 
     const onViewableItemsChanged = useRef(({ viewableItems }) => {

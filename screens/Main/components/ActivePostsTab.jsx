@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     Pressable,
     Image,
@@ -18,6 +17,8 @@ import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
 import { showMessage } from 'react-native-flash-message';
 import { emitter } from '../../../helpers/eventBus.js';
 import { UI_SCALE } from '../../../helpers/layout.js';
+
+import {Text, Textinput} from '../../../helpers/AppText.jsx';
 
 const COLORS = {
     primary: '#800000',

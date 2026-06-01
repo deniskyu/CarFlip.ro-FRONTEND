@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     FlatList, 
     Pressable, 
@@ -12,7 +11,6 @@ import {
     Animated,
     Modal,
     PanResponder,
-    TextInput,
     KeyboardAvoidingView,
     ActivityIndicator,
     Keyboard,
@@ -22,6 +20,8 @@ import { useNavigation } from '@react-navigation/native';
 import { assets } from '../../../assets.js';
 import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
 import ReportModal from './ReportModal.jsx';
+
+import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const { height, width } = Dimensions.get('window');
 

@@ -1,7 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     FlatList, 
     Dimensions, 
@@ -12,6 +11,8 @@ import { useSharedValue } from 'react-native-reanimated';
 import ZoomableMedia from './ZoomableImage.jsx'; 
 import CarScrubber from './CarScrubber.jsx';
 import { ITEM_HEIGHT, UI_SCALE, SUMMARY_SCALE } from '../../../helpers/layout.js';
+
+import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const { width, height } = Dimensions.get('window');
 
@@ -355,7 +356,7 @@ const PreviewItem = React.memo(({ item, isVisible = true, onSlideChange, isEditi
                 maxToRenderPerBatch={2}
                 removeClippedSubviews={true} 
                 overScrollMode="never"
-                scrollEnabled={!isEditing} 
+                scrollEnabled={!isEditing && !isZooming} 
             />
 
             <View 

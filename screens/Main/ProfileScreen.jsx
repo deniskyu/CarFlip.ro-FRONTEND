@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     Pressable,
     Image,
     Modal,
-    TextInput,
     StatusBar,
     Platform,
     Alert,
@@ -16,6 +14,8 @@ import {
     SafeAreaView,
     Share
 } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { assets } from '../../assets.js';

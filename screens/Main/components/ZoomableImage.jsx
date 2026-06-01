@@ -34,6 +34,10 @@ export default function ZoomableMedia({
     const scale = useSharedValue(1);
     const originX = useSharedValue(0);
     const originY = useSharedValue(0);
+    const translateX = useSharedValue(0);
+    const translateY = useSharedValue(0);
+    const panStartX = useSharedValue(0);
+    const panStartY = useSharedValue(0);
     
     const [isLoading, setIsLoading] = useState(true);
     const [userPaused, setUserPaused] = useState(false);
@@ -70,6 +74,33 @@ export default function ZoomableMedia({
             scale.value = withTiming(1, { duration: 300 }, (finished) => {
                 if (finished && onZoomChange) runOnJS(onZoomChange)(false);
             });
+            translateX.value = withTiming(0, { duration: 300 });
+            translateY.value = withTiming(0, { duration: 300 });
+        });
+
+    const pan = Gesture.Pan()
+        .minPointers(2)
+        .maxPointers(2)
+        .onStart(() => {
+            panStartX.value = translateX.value;
+            panStartY.value = translateY.value;
+        })
+        .onUpdate((event) => {
+            const currentScale = scale.value;
+            const focalX = originX.value * (1 - currentScale);
+            const focalY = originY.value * (1 - currentScale);
+            const maxX = Math.max(0, (width * currentScale - width) / 2);
+            const maxY = Math.max(0, (containerHeight * currentScale - containerHeight) / 2);
+            const desiredX = focalX + panStartX.value + event.translationX;
+            const desiredY = focalY + panStartY.value + event.translationY;
+            const clampedX = Math.min(Math.max(desiredX, -maxX), maxX);
+            const clampedY = Math.min(Math.max(desiredY, -maxY), maxY);
+            translateX.value = clampedX - focalX;
+            translateY.value = clampedY - focalY;
+        })
+        .onEnd(() => {
+            translateX.value = withTiming(0, { duration: 300 });
+            translateY.value = withTiming(0, { duration: 300 });
         });
 
     const singleTap = Gesture.Tap()
@@ -84,12 +115,13 @@ export default function ZoomableMedia({
             if (onDoubleTap) runOnJS(onDoubleTap)();
         });
 
-    const gestures = Gesture.Simultaneous(pinch, Gesture.Exclusive(doubleTap, singleTap));
+    const zoom = Gesture.Simultaneous(pinch, pan);
+    const gestures = Gesture.Exclusive(zoom, doubleTap, singleTap);
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [
-            { translateX: originX.value * (1 - scale.value) },
-            { translateY: originY.value * (1 - scale.value) },
+            { translateX: originX.value * (1 - scale.value) + translateX.value },
+            { translateY: originY.value * (1 - scale.value) + translateY.value },
             { scale: scale.value },
         ],
         zIndex: scale.value > 1 ? 9999 : 0, 
@@ -242,7 +274,8 @@ const styles = StyleSheet.create({
     redLightIcon: {
         width: 36,
         height: 36,
-        opacity: 0.7, // 0 = invizibil, 1 = complet vizibil
+        opacity: 0.55, // 0 = invizibil, 1 = complet vizibil
+        marginBottom: 2,
     },
     /*playIcon: {
         width: 0, height: 0,

@@ -1,13 +1,14 @@
 import React, { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     Animated, 
     Pressable, 
     Platform, 
     Dimensions 
 } from 'react-native';
+
+import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const { width } = Dimensions.get('window');
 const TOP_PADDING = Platform.OS === 'ios' ? 60 : 40;

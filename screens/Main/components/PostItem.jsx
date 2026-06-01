@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback, useContext } from 'react';
 import { 
     View, 
-    Text, 
+    //Text, 
     StyleSheet, 
     FlatList, 
     Pressable, 
@@ -14,10 +14,11 @@ import {
     Animated,
     Share,
     Modal,
-    TextInput,
+    //TextInput,
     ActivityIndicator,
     KeyboardAvoidingView,
 } from 'react-native';
+import {Text, TextInput} from '../../../helpers/AppText.jsx';
 import { useSharedValue } from 'react-native-reanimated';
 import { assets } from '../../../assets.js';
 import ZoomableMedia from './ZoomableImage.jsx';
@@ -602,6 +603,12 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
         }
     }, [isVisible, shouldHideUI, screenId]);
 
+    useEffect(() => {
+        if (isVisible) {
+            emitter.emit(`feed_zoom_${screenId}`, isZooming);
+        }
+    }, [isVisible, isZooming, screenId]);
+
     return (
         <View style={[styles.postContainer, { height: itemHeight }]}>
             <FlatList
@@ -625,6 +632,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                 maxToRenderPerBatch={3}
                 removeClippedSubviews={true} 
                 overScrollMode="never"
+                scrollEnabled={!isZooming}
             />
 
             <Animated.View 

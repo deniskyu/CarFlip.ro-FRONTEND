@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { 
     View, 
-    Text, 
     StyleSheet, 
     Image, 
     Pressable, 
@@ -15,6 +14,8 @@ import {
     Alert,
     Share
 } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import { assets } from '../../assets.js';

@@ -1,4 +1,6 @@
-import { Pressable, StyleSheet, View, Text, StatusBar, ScrollView, Linking } from 'react-native';
+import { Pressable, StyleSheet, View, StatusBar, ScrollView, Linking } from 'react-native';
+
+import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
