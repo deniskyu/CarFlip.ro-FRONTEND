@@ -27,11 +27,15 @@ import view_icon from './media/view_icon.png';
 import car_scrubber from './media/car_scrubber.png';
 import logo from './media/logo.jpeg';
 import verified_icon from './media/verified_icon.png';
+import map_icon from './media/map_icon.png';
+import red_light from './media/red_light.png';
 
 export const assets = {
     url,
+    map_icon,
     app_version,
     verified_icon,
+    red_light,
     grid_clock_icon,
     logo,
     car_scrubber,

@@ -121,16 +121,22 @@ const SummarySlide = ({ item, formatPrice, formatKm, itemHeight }) => (
     </View>
 );
 
-const PreviewMediaSlide = ({ mediaItem, index, currentIndex, isVisible, isZooming, isEditing, handleZoomChange, itemHeight }) => {
+const PreviewMediaSlide = ({ mediaItem, index, currentIndex, isVisible, isZooming, isEditing, handleZoomChange, itemHeight, onAutoScaleComputed }) => {
     const videoRef = useRef(null);
     const [duration, setDuration] = useState(0);
     const [isScrubbing, setIsScrubbing] = useState(false);
+    const [videoNaturalDims, setVideoNaturalDims] = useState(null);
+    const [imageNaturalDims, setImageNaturalDims] = useState(null);
+    const hasAutoInitialized = useRef(false);
     const videoProgress = useSharedValue(0);
 
     useEffect(() => {
         videoProgress.value = 0;
         setDuration(0);
         setIsScrubbing(false);
+        setVideoNaturalDims(null);
+        setImageNaturalDims(null);
+        hasAutoInitialized.current = false;
     }, [mediaItem.uri]);
 
     const onSeekStart = useCallback(() => setIsScrubbing(true), []);
@@ -142,7 +148,60 @@ const PreviewMediaSlide = ({ mediaItem, index, currentIndex, isVisible, isZoomin
         setIsScrubbing(false);
     }, [duration]);
 
-    const currentScale = mediaItem.zoom_level || 1;
+    const handleVideoNaturalSize = useCallback(({ width: vw, height: vh }) => {
+        if (Number.isFinite(vw) && Number.isFinite(vh) && vw > 0 && vh > 0) {
+            setVideoNaturalDims({ width: vw, height: vh });
+        }
+    }, []);
+
+    const handleImageNaturalSize = useCallback(({ width: iw, height: ih }) => {
+        if (Number.isFinite(iw) && Number.isFinite(ih) && iw > 0 && ih > 0) {
+            setImageNaturalDims({ width: iw, height: ih });
+            if (!hasAutoInitialized.current && !mediaItem.zoom_initialized && onAutoScaleComputed) {
+                const ratioW = width / iw;
+                const ratioH = itemHeight / ih;
+                const minRatio = Math.min(ratioW, ratioH);
+                const maxRatio = Math.max(ratioW, ratioH);
+                if (minRatio > 0 && Number.isFinite(minRatio) && Number.isFinite(maxRatio)) {
+                    const coverScale = maxRatio / minRatio;
+                    if (Number.isFinite(coverScale)) {
+                        const autoScale = coverScale <= 1.75 ? coverScale : 1;
+                        hasAutoInitialized.current = true;
+                        onAutoScaleComputed(index, autoScale);
+                    }
+                }
+            }
+        }
+    }, [mediaItem.zoom_initialized, onAutoScaleComputed, index, itemHeight]);
+
+    let currentScale;
+    let isFullCover = false;
+    if (mediaItem.type?.includes('video')) {
+        if (videoNaturalDims && videoNaturalDims.width > 0 && videoNaturalDims.height > 0) {
+            const ratioW = width / videoNaturalDims.width;
+            const ratioH = itemHeight / videoNaturalDims.height;
+            const minRatio = Math.min(ratioW, ratioH);
+            const maxRatio = Math.max(ratioW, ratioH);
+            const coverScale = minRatio > 0 ? maxRatio / minRatio : 1;
+            currentScale = (Number.isFinite(coverScale) && coverScale <= 1.75) ? coverScale : 1;
+        } else {
+            currentScale = 1;
+        }
+    } else {
+        currentScale = mediaItem.zoom_level || 1;
+        if (imageNaturalDims && imageNaturalDims.width > 0 && imageNaturalDims.height > 0) {
+            const ratioW = width / imageNaturalDims.width;
+            const ratioH = itemHeight / imageNaturalDims.height;
+            const minRatio = Math.min(ratioW, ratioH);
+            const maxRatio = Math.max(ratioW, ratioH);
+            if (minRatio > 0 && Number.isFinite(minRatio) && Number.isFinite(maxRatio)) {
+                const coverScale = maxRatio / minRatio;
+                if (Number.isFinite(coverScale) && Number.isFinite(currentScale) && currentScale >= coverScale) {
+                    isFullCover = true;
+                }
+            }
+        }
+    }
     const isCurrentActiveEditing = isEditing && currentIndex === index;
     const isPaused = !isVisible || currentIndex !== index;
     const isVideo = mediaItem.type?.includes('video');
@@ -166,6 +225,8 @@ const PreviewMediaSlide = ({ mediaItem, index, currentIndex, isVisible, isZoomin
                     onZoomChange={handleZoomChange}
                     videoRef={videoRef}
                     onVideoLoad={(d) => setDuration(d)}
+                    onVideoNaturalSize={handleVideoNaturalSize}
+                    onImageNaturalSize={handleImageNaturalSize}
                     onVideoProgress={(time) => { 
                         if (duration > 0 && Number.isFinite(time)) {
                             videoProgress.value = time / duration; 
@@ -173,6 +234,7 @@ const PreviewMediaSlide = ({ mediaItem, index, currentIndex, isVisible, isZoomin
                             videoProgress.value = 0;
                         }
                     }}
+                    isFullCover={isFullCover}
                     isScrubbing={isScrubbing}
                 />
             </View>
@@ -183,7 +245,7 @@ const PreviewMediaSlide = ({ mediaItem, index, currentIndex, isVisible, isZoomin
     );
 };
 
-const PreviewItem = React.memo(({ item, isVisible = true, onSlideChange, isEditing = false, itemHeight = ITEM_HEIGHT }) => {
+const PreviewItem = React.memo(({ item, isVisible = true, onSlideChange, isEditing = false, itemHeight = ITEM_HEIGHT, onAutoScaleComputed }) => {
     const slidesData = useMemo(() => 
         [...item.media, { isSummary: true, _id: 'summary_card' }], 
     [item.media]);
@@ -263,6 +325,7 @@ const PreviewItem = React.memo(({ item, isVisible = true, onSlideChange, isEditi
                 isEditing={isEditing}
                 handleZoomChange={handleZoomChange}
                 itemHeight={itemHeight}
+                onAutoScaleComputed={onAutoScaleComputed}
             />
         );
     };
@@ -325,7 +388,7 @@ const styles = StyleSheet.create({
     mediaOuterContainer: { width: width, height: ITEM_HEIGHT, backgroundColor: '#000', overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
     mediaInnerContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     editingBorder: { borderWidth: 2, borderColor: '#800000' },
-    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '23%', backgroundColor: 'rgba(0, 0, 0, 0.13)' },
+    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.75%', backgroundColor: 'rgba(0, 0, 0, 0.13)' },
     summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },
     summaryTitle: { fontSize: 26.5, fontWeight: '900', color: '#800000', marginBottom: 2, marginTop: 10 },
     summaryPrice: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 16 },

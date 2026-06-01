@@ -213,7 +213,7 @@ const SummarySlide = ({ item, formatPrice, formatKm, itemHeight, onDescriptionPr
     </View>
 );
 
-const MediaSlide = ({ mediaItem, isZooming, handleZoomChange, isPaused, dbScale, itemHeight }) => {
+const MediaSlide = ({ mediaItem, isZooming, handleZoomChange, isPaused, dbScale, itemHeight, onDoubleTap, isFullCover }) => {
     const videoRef = useRef(null);
     const [duration, setDuration] = useState(0);
     const [isScrubbing, setIsScrubbing] = useState(false);
@@ -255,6 +255,8 @@ const MediaSlide = ({ mediaItem, isZooming, handleZoomChange, isPaused, dbScale,
                             videoProgress.value = 0;
                         }
                     }}
+                    onDoubleTap={onDoubleTap}
+                    isFullCover={isFullCover}
                     isScrubbing={isScrubbing}
                 />
             </View>
@@ -426,15 +428,9 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     }, [liked, likesCount, item._id]);
 
     const handleDoubleTap = useCallback(() => {
-        const now = Date.now();
-        const DOUBLE_PRESS_DELAY = 300;
-        if (lastTap.current && (now - lastTap.current) < DOUBLE_PRESS_DELAY) {
-            if (requireAuth()) return;
-            triggerHeartAnimation();
-            if (!liked) handleLikeToggle();
-        } else {
-            lastTap.current = now;
-        }
+        if (requireAuth()) return;
+        triggerHeartAnimation();
+        if (!liked) handleLikeToggle();
     }, [liked, triggerHeartAnimation, handleLikeToggle]);
 
     const handleCall = () => {
@@ -499,8 +495,9 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
             const toPreload = [];
             for (let i = 1; i <= 2; i++) {
                 const idx = curr + i;
-                if (idx < slidesData.length && slidesData[idx].url && !slidesData[idx].isSummary) {
-                    toPreload.push({ uri: slidesData[idx].url });
+                const slide = slidesData[idx];
+                if (idx < slidesData.length && slide && slide.url && !slide.isSummary && slide.type === 'image') {
+                    toPreload.push({ uri: slide.url });
                 }
             }
             if (toPreload.length > 0) FastImage.preload(toPreload);
@@ -550,12 +547,36 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
         if (mediaItem.isSummary) {
             return <SummarySlide item={item} formatPrice={formatPrice} formatKm={formatKm} itemHeight={itemHeight} onDescriptionPress={() => setDescriptionVisible(true)} />;
         }
-        const dbScale = mediaItem.zoom_level || 1;
+        let dbScale;
+        let isFullCover = false;
+        if (mediaItem.type === 'video') {
+            if (mediaItem.width && mediaItem.height) {
+                const ratioW = width / mediaItem.width;
+                const ratioH = itemHeight / mediaItem.height;
+                const coverScale = Math.max(ratioW, ratioH) / Math.min(ratioW, ratioH);
+                dbScale = coverScale <= 1.75 ? coverScale : 1;
+            } else {
+                dbScale = 1;
+            }
+        } else {
+            dbScale = mediaItem.zoom_level || 1;
+            if (mediaItem.width && mediaItem.height) {
+                const ratioW = width / mediaItem.width;
+                const ratioH = itemHeight / mediaItem.height;
+                const minRatio = Math.min(ratioW, ratioH);
+                const maxRatio = Math.max(ratioW, ratioH);
+                if (minRatio > 0 && Number.isFinite(minRatio) && Number.isFinite(maxRatio)) {
+                    const coverScale = maxRatio / minRatio;
+                    if (Number.isFinite(coverScale) && Number.isFinite(dbScale) && dbScale >= coverScale) {
+                        isFullCover = true;
+                    }
+                }
+            }
+        }
         const isPaused = !isFocused || !isVisible || currentIndex !== index;
         return (
             <Pressable 
                 style={[styles.mediaContainer, { height: itemHeight }]} 
-                onPress={handleDoubleTap}
                 pointerEvents={mediaItem.isSummary ? 'box-none' : 'auto'}
             >
                 <MediaSlide 
@@ -565,6 +586,8 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                     isPaused={isPaused}
                     dbScale={dbScale}
                     itemHeight={itemHeight}
+                    onDoubleTap={handleDoubleTap}
+                    isFullCover={isFullCover}
                 />
                 {!isZooming && <View style={styles.gradientOverlay} pointerEvents="none" />}
             </Pressable>
@@ -572,6 +595,12 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     };
 
     const shouldHideUI = isZooming || currentIndex === slidesData.length - 1;
+
+    useEffect(() => {
+        if (isVisible) {
+            emitter.emit(`feed_ui_hidden_${screenId}`, shouldHideUI);
+        }
+    }, [isVisible, shouldHideUI, screenId]);
 
     return (
         <View style={[styles.postContainer, { height: itemHeight }]}>
@@ -802,7 +831,7 @@ const styles = StyleSheet.create({
     separatorSubtitle: { color: '#aaa', fontSize: 16, textAlign: 'center', marginBottom: 20, lineHeight: 24 },
     separatorSmall: { color: '#666', fontSize: 14, fontStyle: 'italic' },
     mediaContainer: { width: width, height: ITEM_HEIGHT, backgroundColor: 'white', overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
-    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '23%', backgroundColor: 'rgba(0, 0, 0, 0.13)' },
+    gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.75%', backgroundColor: 'rgba(0, 0, 0, 0.13)' },
     bigHeartContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 20, elevation: 20, backgroundColor: 'transparent' },
     bigHeartImage: { width: 100, height: 100, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3.84 },
     summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },

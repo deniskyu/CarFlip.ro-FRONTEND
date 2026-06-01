@@ -9,20 +9,17 @@ import ContextProvider from './context/ContextProvider.jsx';
 import InAppNotification from './screens/Main/components/InAppNotification.jsx';
 
 import { authEvents } from './helpers/authEvents.js';
-import { notificationRef } from './helpers/notificationHelper.js'; 
-import { Text, TextInput } from 'react-native';
+import { notificationRef } from './helpers/notificationHelper.js';
 
 
+import { Text, TextInput, Platform } from 'react-native';
 
-// @ts-ignore
-Text.defaultProps = Text.defaultProps || {};
-// @ts-ignore
-Text.defaultProps.allowFontScaling = false;
-
-// @ts-ignore
-TextInput.defaultProps = TextInput.defaultProps || {};
-// @ts-ignore
-TextInput.defaultProps.allowFontScaling = false;
+// Patch pentru React 19 / RN 0.83
+(Text as any).render = ((originalRender) => {
+    return function(props: any, ref: any) {
+        return originalRender({ allowFontScaling: false, maxFontSizeMultiplier: 1, ...props }, ref);
+    };
+})((Text as any).render);
 
 
 

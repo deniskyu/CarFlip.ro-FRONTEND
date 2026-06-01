@@ -131,25 +131,18 @@ export default function SearchResultScreen() {
         };
     }, []);
 
-    const pageRef = useRef(1);
-
     const handleLoadMore = () => {
         if (!hasMore || loadingMore || isLoadingMoreRef.current || isResettingRef.current) return;
         isLoadingMoreRef.current = true;
         setLoadingMore(true);
-        
-        if (!excludeSeenActive) {
-            pageRef.current += 1;
-        }
-        fetchResults(pageRef.current, false);
+        fetchResults(false);
     };
     
     useEffect(() => {
-        pageRef.current = 1;
         allLoadedIds.current.clear();
         setResults([]);
         setHasMore(true);
-        fetchResults(1, true);
+        fetchResults(true);
     }, [filters]);
 
     useEffect(() => {
@@ -168,7 +161,7 @@ export default function SearchResultScreen() {
         return () => emitter.off('like_update', onLikeUpdate);
     }, []);
 
-    const fetchResults = async (pageNum, isRefresh = false) => {
+    const fetchResults = async (isRefresh = false) => {
         try {
             if (isRefresh) setLoading(true);
             
@@ -182,19 +175,19 @@ export default function SearchResultScreen() {
                     limit: PAGE_LIMIT
                 });
             } else {
-                response = await axiosAuthGuard.get('/api/sales/search', { 
-                    params: { ...filters, page: pageNum, limit: PAGE_LIMIT }
+                response = await axiosAuthGuard.post('/api/sales/search', {
+                    ...filters,
+                    exclude_ids: Array.from(allLoadedIds.current),
+                    limit: PAGE_LIMIT
                 });
             }
 
             if (response.data.success) {
                 const newItems = response.data.data || [];
 
-                if (excludeSeenActive) {
-                    newItems.forEach(item => {
-                        if (item._id) allLoadedIds.current.add(item._id);
-                    });
-                }
+                newItems.forEach(item => {
+                    if (item._id) allLoadedIds.current.add(item._id);
+                });
                 
                 if (isRefresh) {
                     if (newItems.length === 0) {
@@ -274,10 +267,7 @@ export default function SearchResultScreen() {
                     if (!isLoadingMoreRef.current) {
                         isLoadingMoreRef.current = true;
                         setLoadingMore(true);
-                        if (!excludeSeenActive) {
-                            pageRef.current += 1;
-                        }
-                        fetchResults(pageRef.current, false);
+                        fetchResults(false);
                     }
                 }, 150);
             }

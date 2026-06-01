@@ -367,7 +367,13 @@ export default function SearchProfileResult() {
                 <StatusBar barStyle="dark-content" backgroundColor="white" />
                 <Pressable 
                     style={[styles.backButton, { backgroundColor: '#f0f0f0' }]} 
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('HomeTab', { screen: 'MainScreen' });
+                        }
+                    }}
                     hitSlop={20}
                 >
                     <Image source={assets.back_arrow} style={[styles.topIcon, { tintColor: '#333' }]} />
@@ -392,7 +398,13 @@ export default function SearchProfileResult() {
             
             <Pressable 
                 style={styles.backButton} 
-                onPress={() => navigation.goBack()}
+                onPress={() => {
+                    if (navigation.canGoBack()) {
+                        navigation.goBack();
+                    } else {
+                        navigation.navigate('HomeTab', { screen: 'MainScreen' });
+                    }
+                }}
                 hitSlop={20}
             >
                 <Image source={assets.back_arrow} style={styles.topIcon} />

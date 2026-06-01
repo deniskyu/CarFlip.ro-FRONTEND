@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Dimensions, View, ActivityIndicator, Platform } from 'react-native';
+import { StyleSheet, Dimensions, View, ActivityIndicator, Platform, Image } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { 
     useSharedValue, 
@@ -10,6 +10,7 @@ import Animated, {
 import { useIsFocused } from '@react-navigation/native';
 import Video from 'react-native-video';
 import FastImage from '@d11/react-native-fast-image';
+import { assets } from '../../../assets';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,6 +23,10 @@ export default function ZoomableMedia({
     videoRef,
     onVideoLoad,
     onVideoProgress,
+    onVideoNaturalSize,
+    onImageNaturalSize,
+    onDoubleTap,
+    isFullCover = false,
     isScrubbing = false
 }) {
     const containerHeight = itemHeight || height;
@@ -67,13 +72,19 @@ export default function ZoomableMedia({
             });
         });
 
-    const tap = Gesture.Tap()
+    const singleTap = Gesture.Tap()
         .numberOfTaps(1)
         .onEnd(() => {
             if (type === 'video') runOnJS(togglePause)();
         });
 
-    const gestures = Gesture.Simultaneous(pinch, tap);
+    const doubleTap = Gesture.Tap()
+        .numberOfTaps(2)
+        .onEnd(() => {
+            if (onDoubleTap) runOnJS(onDoubleTap)();
+        });
+
+    const gestures = Gesture.Simultaneous(pinch, Gesture.Exclusive(doubleTap, singleTap));
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [
@@ -86,12 +97,31 @@ export default function ZoomableMedia({
 
     const handleVideoLoad = (data) => {
         setIsLoading(false);
-        if (onVideoLoad) onVideoLoad(data.duration);
+        if (onVideoLoad) onVideoLoad(data?.duration);
+        if (onVideoNaturalSize) {
+            const ns = data?.naturalSize;
+            const w = Number(ns?.width);
+            const h = Number(ns?.height);
+            if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
+                onVideoNaturalSize({ width: w, height: h });
+            }
+        }
     };
 
     const handleVideoProgress = (data) => {
         if (onVideoProgress && !isScrubbing) {
             onVideoProgress(data.currentTime);
+        }
+    };
+
+    const handleImageLoad = (e) => {
+        if (onImageNaturalSize) {
+            const ns = e?.nativeEvent;
+            const w = Number(ns?.width);
+            const h = Number(ns?.height);
+            if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
+                onImageNaturalSize({ width: w, height: h });
+            }
         }
     };
 
@@ -132,7 +162,11 @@ export default function ZoomableMedia({
                         {!isLoading && userPaused && !isScrubbing && (
                             <View style={styles.centerOverlay}>
                                 <View style={styles.playIconContainer}>
-                                    <View style={styles.playIcon} />
+                                    <Image
+                                        source={assets.red_light}
+                                        style={styles.redLightIcon}
+                                        resizeMode="contain"
+                                    />
                                 </View>
                             </View>
                         )}
@@ -146,18 +180,23 @@ export default function ZoomableMedia({
         <GestureDetector gesture={gestures}>
              <View style={[styles.container, { height: containerHeight, width: width }]}>
                 
-                <FastImage
-                    source={{ uri: uri, priority: FastImage.priority.low }}
-                    style={StyleSheet.absoluteFillObject}
-                    resizeMode={FastImage.resizeMode.cover}
-                />
-                <View style={styles.darkOverlay} />
+                {!isFullCover && (
+                    <>
+                        <FastImage
+                            source={{ uri: uri, priority: FastImage.priority.low }}
+                            style={StyleSheet.absoluteFillObject}
+                            resizeMode={FastImage.resizeMode.cover}
+                        />
+                        <View style={styles.darkOverlay} />
+                    </>
+                )}
 
                 <Animated.View style={[styles.mediaWrapper, { height: containerHeight, width: width }, animatedStyle]}>
                     <FastImage
                         source={{ uri: uri, priority: FastImage.priority.normal }}
                         style={styles.innerImage}
                         resizeMode={FastImage.resizeMode.contain}
+                        onLoad={handleImageLoad}
                     />
                 </Animated.View>
             </View>
@@ -198,12 +237,17 @@ const styles = StyleSheet.create({
     playIconContainer: {
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
         width: 70, height: 70, borderRadius: 35,
-        justifyContent: 'center', alignItems: 'center', paddingLeft: 5,
+        justifyContent: 'center', alignItems: 'center', /*paddingLeft: 5,*/
     },
-    playIcon: {
+    redLightIcon: {
+        width: 36,
+        height: 36,
+        opacity: 0.7, // 0 = invizibil, 1 = complet vizibil
+    },
+    /*playIcon: {
         width: 0, height: 0,
         backgroundColor: 'transparent', borderStyle: 'solid',
         borderLeftWidth: 25, borderRightWidth: 0, borderBottomWidth: 15, borderTopWidth: 15,
         borderLeftColor: 'white', borderRightColor: 'transparent', borderBottomColor: 'transparent', borderTopColor: 'transparent',
-    }
+    }*/
 });

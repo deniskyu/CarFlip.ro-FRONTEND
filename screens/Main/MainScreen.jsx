@@ -12,21 +12,26 @@ import {
     Platform,
     PixelRatio,
     Keyboard,
+    Image,
 } from "react-native";
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axiosAuthGuard from "../../helpers/axiosAuthGuard.js";
 import SearchBar from "./components/SearchBar.jsx";
 import FilterModal from "./components/FilterModal.jsx";
+import CountyModal from "./components/CountyModal.jsx";
 import PostItem from "./components/PostItem.jsx";
 import { emitter } from "../../helpers/eventBus.js";
 import FastImage from '@d11/react-native-fast-image';
 import { useCustomScroll } from "../../helpers/useCustomScroll.js"; 
 import { showMessage } from "react-native-flash-message";
-import { Layout, calibrateItemHeight } from "../../helpers/layout.js";
+import { Layout, calibrateItemHeight, UI_SCALE } from "../../helpers/layout.js";
+import { assets } from "../../assets.js";
 
 const { width, height } = Dimensions.get('window');
 
 const MAX_ITEMS = 50;
+
+const MAP_ICON_SIZE = Math.round(30 * UI_SCALE);
 
 export default function MainScreen({ navigation }) {
     const route = useRoute(); 
@@ -71,10 +76,15 @@ export default function MainScreen({ navigation }) {
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [currentVisibleIndex, setCurrentVisibleIndex] = useState(0);
 
+    const [mapButtonHidden, setMapButtonHidden] = useState(false);
+    const [countyModalVisible, setCountyModalVisible] = useState(false);
+    const [preferredCounty, setPreferredCounty] = useState(null);
+
     const seenQueue = useRef(new Set()); 
     const historyLoopRef = useRef(0);
     const nextCursorRef = useRef(null);
     const feedModeRef = useRef('new');
+    const feedGenerationRef = useRef(0);
 
     const salesRef = useRef(sales);
     salesRef.current = sales;
@@ -129,7 +139,11 @@ export default function MainScreen({ navigation }) {
         }
     }).current;
         
-    const fetchFeed = async (isRefresh = false, currentCursor = null, currentMode = 'new', overrideSaleId = null) => {
+const fetchFeed = async (isRefresh = false, currentCursor = null, currentMode = 'new', overrideSaleId = null) => {
+        if (isRefresh) {
+            feedGenerationRef.current += 1;
+        }
+        const myGeneration = feedGenerationRef.current;
         try {
             let priorityPost = null;
             
@@ -157,6 +171,8 @@ export default function MainScreen({ navigation }) {
             const response = await axiosAuthGuard.get(url);
             
             if (response.data.success) {
+                if (feedGenerationRef.current !== myGeneration) return;
+
                 let newPosts = response.data.data;
                 let newCursor = response.data.nextCursor;
                 const endOfNew = response.data.endOfNewPosts;
@@ -169,9 +185,6 @@ export default function MainScreen({ navigation }) {
                     await syncSeenPosts();
                     const separator = { _id: `separator-${Date.now()}-${Math.random()}`, isSeparator: true };
                     
-                    setFeedMode('history');
-                    historyLoopRef.current = 0;
-                    
                     const historyResponse = await axiosAuthGuard.get(`/api/sales/feed?limit=5&mode=history`);
                     let historyPosts = historyResponse.data.data || [];
                     newCursor = historyResponse.data.nextCursor; 
@@ -181,6 +194,11 @@ export default function MainScreen({ navigation }) {
                         isHistory: true,
                         loopIndex: 0 
                     }));
+
+                    if (feedGenerationRef.current !== myGeneration) return;
+
+                    setFeedMode('history');
+                    historyLoopRef.current = 0;
 
                     if (isRefresh) {
                         historyLoopRef.current = 0;
@@ -295,6 +313,21 @@ export default function MainScreen({ navigation }) {
     }, []);
 
     useEffect(() => {
+        let active = true;
+        (async () => {
+            try {
+                const res = await axiosAuthGuard.get('/api/user/data');
+                if (active && res.data && res.data.success) {
+                    setPreferredCounty(res.data.preferredCounty || null);
+                }
+            } catch (error) {
+                console.log("County fetch failed");
+            }
+        })();
+        return () => { active = false; };
+    }, []);
+
+    useEffect(() => {
         if (route.params?.saleId) {
             const newSaleId = route.params.saleId;
             const newCommentId = route.params?.commentId || null;
@@ -345,6 +378,12 @@ export default function MainScreen({ navigation }) {
     }, []);
 
     useEffect(() => {
+        const onFeedUiHidden = (hidden) => setMapButtonHidden(!!hidden);
+        emitter.on('feed_ui_hidden_main', onFeedUiHidden);
+        return () => emitter.off('feed_ui_hidden_main', onFeedUiHidden);
+    }, []);
+
+    useEffect(() => {
         const onForceRefresh = () => {
             if (flatListRef.current) {
                 flatListRef.current.scrollToOffset({ offset: 0, animated: true });
@@ -365,6 +404,14 @@ export default function MainScreen({ navigation }) {
         setFeedMode('new'); 
         setTargetCommentId(null);
         fetchFeed(true, null, 'new');
+    };
+
+    const handleCountyChanged = (newCounty) => {
+        setPreferredCounty(newCounty);
+        if (flatListRef.current) {
+            flatListRef.current.scrollToOffset({ offset: 0, animated: false });
+        }
+        handleRefresh();
     };
 
     const handleLoadMore = async () => {
@@ -472,10 +519,38 @@ export default function MainScreen({ navigation }) {
                 </View>
             )}
 
+            <Pressable
+                style={[
+                    styles.mapButton,
+                    {
+                        top: Platform.OS === 'ios' ? 120 : 108,
+                        opacity: mapButtonHidden ? 0 : 1,
+                    }
+                ]}
+                pointerEvents={mapButtonHidden ? 'none' : 'auto'}
+                hitSlop={10}
+                onPress={() => setCountyModalVisible(true)}
+            >
+                <View style={[styles.mapIconContainer, styles.iconShadow, { width: MAP_ICON_SIZE, height: MAP_ICON_SIZE }]}>
+                    <Image
+                        source={assets.map_icon}
+                        style={[styles.mapIcon, { width: MAP_ICON_SIZE, height: MAP_ICON_SIZE }]}
+                        fadeDuration={0}
+                    />
+                </View>
+            </Pressable>
+
             <FilterModal 
                 visible={filterModalVisible} 
                 onClose={() => setFilterModalVisible(false)}
                 navigation={navigation}
+            />
+
+            <CountyModal
+                visible={countyModalVisible}
+                onClose={() => setCountyModalVisible(false)}
+                currentCounty={preferredCounty}
+                onCountyChanged={handleCountyChanged}
             />
         </View>
     );
@@ -516,5 +591,25 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 999,
+    },
+    mapButton: {
+        position: 'absolute',
+        right: 15,
+        zIndex: 50,
+    },
+    mapIconContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    iconShadow: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.4,
+        shadowRadius: 2.5,
+        elevation: 3,
+    },
+    mapIcon: {
+        tintColor: '#800000',
+        resizeMode: 'contain',
     },
 });

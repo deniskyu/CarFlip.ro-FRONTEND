@@ -530,7 +530,7 @@ export default function AddSaleScreen({ navigation }) {
                     contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    keyboardDismissMode="none"
+                    keyboardDismissMode="on-drag"
                 >
                     
                    <View style={styles.section}>

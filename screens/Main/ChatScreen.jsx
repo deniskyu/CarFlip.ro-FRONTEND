@@ -26,6 +26,8 @@ import { Context } from '../../context/Context.js';
 import { assets } from '../../assets.js';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
+import TypingIndicator from './components/TypingIndicator.jsx';
+
 
 const COLORS = {
     primary: '#800000',
@@ -605,16 +607,9 @@ export default function ChatScreen({ route, navigation }) {
 
     const renderTypingIndicator = () => {
         if (!isTyping) return null;
-        return (
-            <View style={styles.typingContainer}>
-                <Image source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar} style={styles.messageAvatar} />
-                <View style={styles.typingBubble}>
-                    <Text style={styles.typingText}>• • •</Text>
-                </View>
-            </View>
-        );
+        return <TypingIndicator avatarUri={resolvedParticipantIcon} />;
     };
-
+    
     if (resolvingParticipant && !resolvedParticipantId) {
         return (
             <SafeAreaView style={styles.container}>

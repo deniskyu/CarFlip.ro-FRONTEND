@@ -25,6 +25,7 @@ import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import { getCreds, setCreds } from '../../helpers/keychainFunctions.js';
 import { emitter } from '../../helpers/eventBus.js';
 import { assets } from '../../assets.js';
+import { ITEM_HEIGHT } from '../../helpers/layout.js';
 import PreviewItem from './components/PreviewItem.jsx';
 
 const { url } = assets;
@@ -127,6 +128,7 @@ export default function PreviewSaleScreen({ navigation }) {
 
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
+    const [containerHeight, setContainerHeight] = useState(null);
     
     const [publishing, setPublishing] = useState(false);
     const publishingRef = useRef(false);
@@ -136,10 +138,25 @@ export default function PreviewSaleScreen({ navigation }) {
         const updatedMedia = [...draftSale.media];
         updatedMedia[currentSlideIndex] = {
             ...updatedMedia[currentSlideIndex],
-            zoom_level: value
+            zoom_level: value,
+            zoom_initialized: true
         };
         setDraftSale({ ...draftSale, media: updatedMedia });
     }, [draftSale, currentSlideIndex, setDraftSale]);
+
+    const handleAutoScaleComputed = useCallback((index, scale) => {
+        setDraftSale(prev => {
+            if (!prev?.media?.[index]) return prev;
+            if (prev.media[index].zoom_initialized) return prev;
+            const updatedMedia = [...prev.media];
+            updatedMedia[index] = {
+                ...updatedMedia[index],
+                zoom_level: scale,
+                zoom_initialized: true
+            };
+            return { ...prev, media: updatedMedia };
+        });
+    }, [setDraftSale]);
 
     useEffect(() => {
         if (!draftSale || !draftSale.media) {
@@ -147,10 +164,26 @@ export default function PreviewSaleScreen({ navigation }) {
         }
     }, [draftSale]);
 
+    useEffect(() => {
+        if (isEditing && draftSale?.media?.[currentSlideIndex]?.type?.includes('video')) {
+            setIsEditing(false);
+        }
+    }, [currentSlideIndex, isEditing, draftSale]);
+
+    const handleContainerLayout = useCallback((e) => {
+        const h = e.nativeEvent.layout.height;
+        if (Number.isFinite(h) && h > 0 && h !== containerHeight) {
+            setContainerHeight(h);
+        }
+    }, [containerHeight]);
+
     if (!draftSale || !draftSale.media) return null;
 
     const isSummarySlide = currentSlideIndex >= draftSale.media.length;
+    const isCurrentVideo = !isSummarySlide && draftSale.media[currentSlideIndex]?.type?.includes('video');
     const currentZoomValue = (!isSummarySlide && draftSale.media[currentSlideIndex]?.zoom_level) || 1;
+
+    const effectiveItemHeight = containerHeight || ITEM_HEIGHT;
 
     const handlePublish = async () => {
         if (publishingRef.current) return;
@@ -254,7 +287,7 @@ export default function PreviewSaleScreen({ navigation }) {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={styles.container} onLayout={handleContainerLayout}>
             <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
 
             <View style={styles.header}>
@@ -263,7 +296,7 @@ export default function PreviewSaleScreen({ navigation }) {
                 </Pressable>
 
                 <View style={styles.rightHeaderActions}>
-                    {!isEditing && !isSummarySlide && (
+                    {!isEditing && !isSummarySlide && !isCurrentVideo && (
                         <Pressable onPress={() => setIsEditing(true)} style={styles.iconButton}>
                             <Image source={assets.edit_icon} style={styles.editIcon} resizeMode="contain" />
                         </Pressable>
@@ -286,9 +319,11 @@ export default function PreviewSaleScreen({ navigation }) {
                 isVisible={true} 
                 onSlideChange={(index) => setCurrentSlideIndex(index)} 
                 isEditing={isEditing}
+                itemHeight={effectiveItemHeight}
+                onAutoScaleComputed={handleAutoScaleComputed}
             />
 
-            {isEditing && (
+            {isEditing && !isCurrentVideo && (
                 <View style={styles.verticalSliderWrapper} pointerEvents="box-none">
                     <View style={styles.sliderBackground}>
                         <Text style={styles.sliderLabel}>+</Text>

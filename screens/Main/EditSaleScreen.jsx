@@ -246,7 +246,9 @@ export default function EditSaleScreen({ route, navigation }) {
                 type: file.type || 'image/jpeg',
                 zoom_level: 1,
                 public_id: null,
-                url: null
+                url: null,
+                width: file.width,
+                height: file.height
             }))
             : safeMedia;
 
@@ -298,7 +300,7 @@ export default function EditSaleScreen({ route, navigation }) {
                     contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    keyboardDismissMode="none"
+                    keyboardDismissMode="on-drag"
                     scrollEnabled={scrollEnabled}
                 >
                     

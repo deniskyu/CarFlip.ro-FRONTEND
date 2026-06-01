@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         height: TRACK_HEIGHT,
-        backgroundColor: '#081539', 
+        backgroundColor: '#800000', 
         borderTopRightRadius: TRACK_HEIGHT / 2,
         borderBottomRightRadius: TRACK_HEIGHT / 2,
     },
