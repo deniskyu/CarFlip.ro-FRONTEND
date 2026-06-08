@@ -1,5 +1,5 @@
 const url = 'https://car-flip.com';
-const app_version = 1;
+const app_version = 2;
 
 import back_arrow from './media/back_arrow.png';
 import comments_icon from './media/comments_icon.png';

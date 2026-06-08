@@ -109,6 +109,7 @@ export default function AddSaleScreen({ navigation }) {
     const [selectedModel, setSelectedModel] = useState(null);
     const [selectedFuel, setSelectedFuel] = useState(null);
     const [selectedCapacity, setSelectedCapacity] = useState(null);
+    const [horsepower, setHorsepower] = useState('');
     const [mileage, setMileage] = useState('');
     const [price, setPrice] = useState('');
     const [selectedYear, setSelectedYear] = useState(null);
@@ -203,8 +204,8 @@ export default function AddSaleScreen({ navigation }) {
     const handlePickMedia = async () => {
         if (isPickingRef.current) return;
         
-        if (media.length >= 10) {
-            Alert.alert("Limită atinsă", "Poți încărca maxim 10 fișiere.");
+        if (media.length >= 13) {
+            Alert.alert("Limită atinsă", "Poți încărca maxim 13 fișiere.");
             return;
         }
     
@@ -213,8 +214,11 @@ export default function AddSaleScreen({ navigation }) {
     
         const options = {
             mediaType: 'mixed',
-            selectionLimit: 10 - media.length,
+            selectionLimit: 13 - media.length,
             videoQuality: 'high',
+            maxWidth: 1920,
+            maxHeight: 1920,
+            quality: 0.8,
         };
     
         try {
@@ -228,8 +232,8 @@ export default function AddSaleScreen({ navigation }) {
                 const newFiles = result.assets;
                 let currentMedia = [...media];
 
-                const MAX_IMAGE_SIZE = 15 * 1024 * 1024; // 15 mb
-                const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 mb
+                const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
+                const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 
                 let videoCount = currentMedia.filter(f => f.type && f.type.includes('video')).length;
                 
@@ -246,17 +250,17 @@ export default function AddSaleScreen({ navigation }) {
                         continue;
                     }                
                     if (file.type && file.type.includes('video')) {
-                        if (videoCount > 1) {
+                        if (videoCount >= 1) {
                             Alert.alert("Info", "Poți avea maxim 1 videoclip.");
                             continue;
                         }
-                        if (file.duration && file.duration > 30) {
-                            Alert.alert("Video prea lung", "Videoclipul trebuie să aibă maxim 30 secunde.");
+                        if (file.duration && file.duration > 45) {
+                            Alert.alert("Video prea lung", "Videoclipul trebuie să aibă maxim 45 secunde.");
                             continue;
                         }
                         videoCount++;
                     }
-                    if (currentMedia.length < 10) {
+                    if (currentMedia.length < 13) {
                         const normalized = await normalizeMediaUri(file);
                         if (normalized) {
                             currentMedia.push(normalized);
@@ -387,6 +391,7 @@ export default function AddSaleScreen({ navigation }) {
         setSelectedModel(null);
         setSelectedFuel(null);
         setSelectedCapacity(null);
+        setHorsepower('');
         setMileage('');
         setPrice('');
         setSelectedYear(null);
@@ -488,6 +493,7 @@ export default function AddSaleScreen({ navigation }) {
             brand: { id: selectedBrand.id, name: selectedBrand.name },
             model: { id: selectedModel.id, name: selectedModel.name },
             engine: { capacity: selectedCapacity.name, fuel_type: selectedFuel.name },
+            horsepower: horsepower,
             price: price.replace(/\./g, ''),
             negotiable: negotiable,
             mileage: mileage.replace(/\./g, ''),
@@ -534,9 +540,9 @@ export default function AddSaleScreen({ navigation }) {
                 >
                     
                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Imagini & Video ({media.length}/10)</Text>
+                        <Text style={styles.sectionTitle}>Imagini & Video ({media.length}/13)</Text>
                         <Text style={styles.sectionSubtitle}>
-                            Maxim 10 fișiere (max 1 video, max 30s). Imaginile nu pot depăși 15 MB, iar videoclipurile 50 MB.
+                            Maxim 13 fișiere (max 1 video, max 45s). Imaginile nu pot depăși 15 MB, iar videoclipurile 50 MB.
                         </Text>
                         <Text style={[styles.sectionSubtitle, {marginBottom: 4}]}>
                             O imagine este obligatorie, și va fi cea de copertă in profil. Procesarea anunțului va dura undeva la câteva minute.
@@ -670,6 +676,20 @@ export default function AddSaleScreen({ navigation }) {
                             </Text>
                             <Text style={styles.chevron}>▼</Text>
                         </Pressable>
+
+                        <Text style={styles.label}>Cai Putere (opțional)</Text>
+                        <View style={styles.inputSelector}>
+                            <TextInput 
+                                style={styles.inputText}
+                                placeholder="Ex: 150"
+                                placeholderTextColor={COLORS.placeholder}
+                                keyboardType="numeric"
+                                value={horsepower}
+                                onChangeText={(text) => setHorsepower(text.replace(/[^0-9]/g, ''))}
+                                maxLength={4}
+                            />
+                            <Text style={styles.suffix}>CP</Text>
+                        </View>
 
                         <Text style={styles.label}>Preț</Text>
                         <View style={styles.inputSelector}>
@@ -951,6 +971,7 @@ export default function AddSaleScreen({ navigation }) {
                     </View>
                 </View>
             </Modal>
+
         </SafeAreaView>
     );
 }
@@ -1357,5 +1378,22 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: COLORS.secondary,
         fontWeight: '500',
+    },
+    prepOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: '#fefefe',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 2000,
+    },
+    prepText: {
+        marginTop: 14,
+        fontSize: 16,
+        color: COLORS.primary,
+        fontWeight: '600',
     },
 });

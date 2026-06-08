@@ -165,11 +165,11 @@ export default function LikedPostsTab() {
             const res = await axiosAuthGuard.post('/api/sales/like', { sale_id: postIdToUnlike });
             if (!res.data.success) {
                 fetchPosts(true); 
-                showMessage({ message: "Eroare la ștergere, am reîncărcat lista.", type: "danger" });
+                showMessage({ message: "Eroare", description: "Eroare la ștergere, am reîncărcat lista.", type: "danger" });
             }
         } catch (error) {
             fetchPosts(true);
-            showMessage({ message: "Eroare de conexiune.", type: "danger" });
+            showMessage({ message: "Eroare", description: "Eroare de conexiune.", type: "danger" });
         }
     };
 

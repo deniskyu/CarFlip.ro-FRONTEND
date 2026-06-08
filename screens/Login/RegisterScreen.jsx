@@ -8,10 +8,11 @@ import { Context } from '../../context/Context.js';
 import axios from 'axios';
 import { showMessage } from 'react-native-flash-message';
 import { assets } from '../../assets.js';
+import { getFcmToken } from '../../helpers/notificationHelper.js';
 
 export default function RegisterScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { url } = useContext(Context);
+  const { url, logInContext } = useContext(Context);
   
   const [errors, setErrors] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,34 +73,46 @@ export default function RegisterScreen({ navigation }) {
   };
 
   const handleVerifyOtp = async () => {
-    if (otp.length < 6) {
-        setOtpError("Codul trebuie să aibă 6 cifre.");
-        return;
-    }
-    
-    Keyboard.dismiss();
-    setOtpLoading(true);
-    setOtpError('');
+      if (otp.length < 6) {
+          setOtpError("Codul trebuie să aibă 6 cifre.");
+          return;
+      }
 
-    try {
-        const response = await axios.post(`${url}/api/user/verify-otp`, {
-            email: data.email,
-            otp: otp
-        });
+      Keyboard.dismiss();
+      setOtpLoading(true);
+      setOtpError('');
 
-        if (response.data.success) {
-            showMessage({ message: "Succes!", description: "Contul a fost activat cu succes.", type: "success" });
-            setVerifyMail(false);
-            navigation.navigate('LoginScreen');
-        } else{
-          setOtpError(response.data.message);
-        }
-    } catch (er) {
-        // Prindem mesajele cu numărul de încercări rămase, erori de expirare, etc.
-        const errorMessage = er.response?.data?.message || "A apărut o eroare la verificarea codului.";
-        setOtpError(errorMessage);
-    }
-    setOtpLoading(false);
+      try {
+          const fcmToken = await getFcmToken();
+
+          const response = await axios.post(`${url}/api/user/verify-otp`, {
+              email: data.email,
+              otp: otp,
+              fcmToken: fcmToken,
+          });
+
+          if (response.data.success) {
+              const { newAccessToken, newRefreshToken, username } = response.data;
+
+              showMessage({
+                  message: "Succes!",
+                  description: "Contul a fost activat. Bun venit!",
+                  type: "success",
+                  icon: "success",
+              });
+
+              // logInContext salvează tokenii + setează isLogged = true.
+              // IndexNavigation comută automat pe MainNavigation → userul intră direct.
+              await logInContext(newAccessToken, newRefreshToken, username);
+          } else {
+              setOtpError(response.data.message);
+          }
+      } catch (er) {
+          const errorMessage = er.response?.data?.message || "A apărut o eroare la verificarea codului.";
+          setOtpError(errorMessage);
+      }
+
+      setOtpLoading(false);
   };
 
   return (
@@ -154,6 +167,8 @@ export default function RegisterScreen({ navigation }) {
               autoCapitalize="none"
               placeholder="Introdu adresa de email"
               placeholderTextColor="#A0A0A0"
+              textContentType="username"
+              autoComplete="email"  
             />
           </View>
 
@@ -168,6 +183,8 @@ export default function RegisterScreen({ navigation }) {
                 maxLength={32}
                 placeholder="Creează o parolă"
                 placeholderTextColor="#A0A0A0"
+                textContentType="newPassword"
+                autoComplete="password-new"
               />
               <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
                 <Image source={assets.view_icon} style={[styles.eyeIcon, showPassword && { opacity: 0.5 }]} />
@@ -186,6 +203,8 @@ export default function RegisterScreen({ navigation }) {
                 maxLength={32}
                 placeholder="Confirmă parola"
                 placeholderTextColor="#A0A0A0"
+                textContentType="newPassword"
+                autoComplete="password-new"
               />
               <Pressable onPress={() => setShowVerifyPassword(!showVerifyPassword)} style={styles.eyeIconContainer}>
                 <Image source={assets.view_icon} style={[styles.eyeIcon, showVerifyPassword && { opacity: 0.5 }]} />

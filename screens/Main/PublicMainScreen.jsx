@@ -27,6 +27,29 @@ const { width, height } = Dimensions.get('window');
 
 const MAX_ITEMS = 50;
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const getWithRetry = async (url, { retries = 2, baseDelay = 1500, timeout = 8000 } = {}) => {
+    let lastErr;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const res = await axios.get(url, { timeout });
+            if (res?.data && typeof res.data === 'object' && 'success' in res.data) return res;
+            throw new Error('Invalid response');
+        } catch (err) {
+            lastErr = err;
+            if (attempt >= retries) break;
+            let wait = baseDelay * (attempt + 1);
+            if (err?.response?.status === 429) {
+                const ra = parseInt(err.response.headers?.['retry-after'], 10);
+                wait = Number.isFinite(ra) ? ra * 1000 : Math.max(wait, 3000);
+            }
+            await sleep(wait);
+        }
+    }
+    throw lastErr;
+};
+
 export default function PublicMainScreen() {
     const navigation = useNavigation();
     const [welcomeVisible, setWelcomeVisible] = useState(true);
@@ -55,6 +78,7 @@ export default function PublicMainScreen() {
     const [sales, setSales] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [loadError, setLoadError] = useState(false);
     
     const [nextCursor, setNextCursor] = useState(null);
     const [feedMode, setFeedMode] = useState('new');
@@ -111,12 +135,14 @@ export default function PublicMainScreen() {
         
     const fetchFeed = async (isRefresh = false, currentCursor = null, currentMode = 'new') => {
         try {
+            setLoadError(false);
+
             let url = `${assets.url}/api/sales/public-feed?limit=5&mode=${currentMode}`;
             if (currentCursor) {
                 url += `&cursor=${currentCursor}`;
             }
 
-            const response = await axios.get(url);
+            const response = await getWithRetry(url);
             
             if (response.data.success) {
                 let newPosts = response.data.data;
@@ -129,7 +155,7 @@ export default function PublicMainScreen() {
                     setFeedMode('history');
                     historyLoopRef.current = 0;
                     
-                    const historyResponse = await axios.get(`${assets.url}/api/sales/public-feed?limit=5&mode=history`);
+                    const historyResponse = await getWithRetry(`${assets.url}/api/sales/public-feed?limit=5&mode=history`);
                     let historyPosts = historyResponse.data.data || [];
                     newCursor = historyResponse.data.nextCursor;
 
@@ -206,6 +232,7 @@ export default function PublicMainScreen() {
             }
         } catch (error) {
             console.log("Public Feed Error:", error);
+            setLoadError(true);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -310,7 +337,7 @@ export default function PublicMainScreen() {
         );
     }
 
-    if (!loading && (!sales || sales.length === 0)) {
+    if (!loading && loadError && (!sales || sales.length === 0)) {
         return (
             <View style={styles.center}>
                 <StatusBar barStyle="light-content" />
@@ -318,6 +345,15 @@ export default function PublicMainScreen() {
                 <Pressable style={styles.retryButton} onPress={() => handleRefresh()}>
                     <Text style={styles.retryText}>Reîncearcă</Text>
                 </Pressable>
+            </View>
+        );
+    }
+
+    if (!loading && !loadError && (!sales || sales.length === 0)) {
+        return (
+            <View style={styles.center}>
+                <StatusBar barStyle="light-content" />
+                <Text style={styles.errorText}>Momentan nu există anunțuri.</Text>
             </View>
         );
     }

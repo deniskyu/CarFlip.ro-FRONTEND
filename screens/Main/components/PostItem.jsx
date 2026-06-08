@@ -63,7 +63,7 @@ const scaled = {
 
 const ssc = SUMMARY_SCALE;
 const summaryScaled = {
-    titleFont: 26 * ssc,
+    titleFont: 25 * ssc,
     priceFont: 22 * ssc,
     negotiableFont: 14 * ssc,
     priceMargin: Math.round(16 * ssc),
@@ -72,7 +72,7 @@ const summaryScaled = {
     tagFont: 13 * ssc,
     tagsMargin: Math.round(10 * ssc),
     descLabelFont: 16 * ssc,
-    descContainerHeight: Math.round(164 * ssc),
+    descContainerHeight: Math.round(162 * ssc),
     descFont: 15 * ssc,
     descLineHeight: Math.round(22 * ssc),
     descPad: Math.round(10 * ssc),
@@ -144,6 +144,11 @@ const SummarySlide = ({ item, formatPrice, formatKm, itemHeight, onDescriptionPr
             <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
                 <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{item.engine.capacity}</Text>
             </View>
+            {item.horsepower ? (
+                <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                    <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{item.horsepower} CP</Text>
+                </View>
+            ) : null}
             <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
                 <Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.transmission)}</Text>
             </View>
@@ -548,31 +553,35 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
         if (mediaItem.isSummary) {
             return <SummarySlide item={item} formatPrice={formatPrice} formatKm={formatKm} itemHeight={itemHeight} onDescriptionPress={() => setDescriptionVisible(true)} />;
         }
-        let dbScale;
+        let dbScale = 1;
         let isFullCover = false;
-        if (mediaItem.type === 'video') {
-            if (mediaItem.width && mediaItem.height) {
-                const ratioW = width / mediaItem.width;
-                const ratioH = itemHeight / mediaItem.height;
-                const coverScale = Math.max(ratioW, ratioH) / Math.min(ratioW, ratioH);
-                dbScale = coverScale <= 1.75 ? coverScale : 1;
-            } else {
-                dbScale = 1;
-            }
-        } else {
-            dbScale = mediaItem.zoom_level || 1;
-            if (mediaItem.width && mediaItem.height) {
-                const ratioW = width / mediaItem.width;
-                const ratioH = itemHeight / mediaItem.height;
-                const minRatio = Math.min(ratioW, ratioH);
-                const maxRatio = Math.max(ratioW, ratioH);
-                if (minRatio > 0 && Number.isFinite(minRatio) && Number.isFinite(maxRatio)) {
-                    const coverScale = maxRatio / minRatio;
-                    if (Number.isFinite(coverScale) && Number.isFinite(dbScale) && dbScale >= coverScale) {
-                        isFullCover = true;
+        if (mediaItem.width && mediaItem.height) {
+            const ratioW = width / mediaItem.width;
+            const ratioH = itemHeight / mediaItem.height;
+            const minRatio = Math.min(ratioW, ratioH);
+            const maxRatio = Math.max(ratioW, ratioH);
+            if (minRatio > 0 && Number.isFinite(minRatio) && Number.isFinite(maxRatio)) {
+                const coverScale = maxRatio / minRatio;
+                const widthFillScale = ratioW / minRatio;
+                if (Number.isFinite(coverScale) && Number.isFinite(widthFillScale)) {
+                    if (mediaItem.type === 'video') {
+                        const videoTallness = mediaItem.height / mediaItem.width;
+                        const target = videoTallness >= 1.34 ? coverScale : 1;
+                        dbScale = Math.max(target, widthFillScale);
+                    } else {
+                        const frac = (typeof mediaItem.cover_fraction === 'number' && Number.isFinite(mediaItem.cover_fraction))
+                            ? mediaItem.cover_fraction
+                            : ((typeof mediaItem.zoom_level === 'number' && mediaItem.zoom_level > 1.01) ? 1 : 0);
+                        const target = 1 + frac * (coverScale - 1);
+                        dbScale = Math.max(target, widthFillScale);
+                        if (dbScale >= coverScale - 0.0001) {
+                            isFullCover = true;
+                        }
                     }
                 }
             }
+        } else if (mediaItem.type !== 'video') {
+            dbScale = mediaItem.zoom_level || 1;
         }
         const isPaused = !isFocused || !isVisible || currentIndex !== index;
         return (
@@ -739,8 +748,12 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                 animationType="fade"
                 onRequestClose={() => setDescriptionVisible(false)}
             >
-                <Pressable style={styles.descModalOverlay} onPress={() => setDescriptionVisible(false)}>
-                    <Pressable style={styles.descModalCard} onPress={() => {}}>
+                <View style={styles.descModalOverlay}>
+                    {/* Backdrop separat, absolut — prinde tap-urile din afara cardului */}
+                    <Pressable style={StyleSheet.absoluteFill} onPress={() => setDescriptionVisible(false)} />
+
+                    {/* Card = View simplu, NU Pressable → nu mai concurează cu ScrollView */}
+                    <View style={styles.descModalCard}>
                         <View style={styles.descModalHeader}>
                             <View style={styles.descModalHeaderText}>
                                 <Text style={styles.descModalTitle} numberOfLines={1}>{item.title || `${item.brand.name} ${item.model.name}`}</Text>
@@ -751,11 +764,17 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                             </Pressable>
                         </View>
                         <View style={styles.descModalDivider} />
-                        <ScrollView style={styles.descModalScroll} showsVerticalScrollIndicator={true} contentContainerStyle={styles.descModalScrollContent}>
+                        <ScrollView
+                            style={styles.descModalScroll}
+                            contentContainerStyle={styles.descModalScrollContent}
+                            showsVerticalScrollIndicator={true}
+                            nestedScrollEnabled={true}
+                            keyboardShouldPersistTaps="handled"
+                        >
                             <Text style={styles.descModalText}>{item.description || "Fără descriere adăugată."}</Text>
                         </ScrollView>
-                    </Pressable>
-                </Pressable>
+                    </View>
+                </View>
             </Modal>
 
             <Modal

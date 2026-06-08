@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
-import { launchImageLibrary } from 'react-native-image-picker';
+import ImageCropPicker from 'react-native-image-crop-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { assets } from '../../assets.js';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
@@ -35,6 +35,8 @@ const COLORS = {
     grayBg: '#F5F5F5',
 };
 
+const DEFAULT_AVATAR = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+
 export default function ProfileScreen() {
     const navigation = useNavigation();
     const route = useRoute();
@@ -44,6 +46,9 @@ export default function ProfileScreen() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    const [actionSheetVisible, setActionSheetVisible] = useState(false);
 
     const [activeTab, setActiveTab] = useState('active');
 
@@ -56,7 +61,7 @@ export default function ProfileScreen() {
 
     const [userData, setUserData] = useState({
         username: "",
-        icon: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+        icon: DEFAULT_AVATAR,
         bio: "",
         phone_number: "",
         id: "",
@@ -67,6 +72,8 @@ export default function ProfileScreen() {
 
     const [imagePreview, setImagePreview] = useState(null);
     const [imageModalVisible, setImageModalVisible] = useState(false);
+
+    const isDefaultAvatar = userData.icon === DEFAULT_AVATAR;
 
     useEffect(() => {
         fetchProfileData();
@@ -103,12 +110,31 @@ export default function ProfileScreen() {
     };
 
     const handlePickImage = async () => {
-        const options = { mediaType: 'photo', quality: 0.7, selectionLimit: 1, maxWidth: 800, maxHeight: 800 };
-        const result = await launchImageLibrary(options);
-        if (result.didCancel || result.errorCode) return;
-        if (result.assets && result.assets.length > 0) {
-            setImagePreview(result.assets[0].uri);
-            setImageModalVisible(true);
+        try {
+            const image = await ImageCropPicker.openPicker({
+                width: 800,
+                height: 800,
+                cropping: true,
+                cropperCircleOverlay: true,
+                mediaType: 'photo',
+                forceJpg: true,
+                compressImageQuality: 0.8,
+                cropperToolbarTitle: 'Decupează poza',
+                cropperActiveWidgetColor: '#800000',
+                cropperStatusBarColor: '#13161A',
+                cropperToolbarColor: '#13161A',
+                cropperToolbarWidgetColor: '#FFFFFF',
+            });
+
+            if (image && image.path) {
+                const normalizedPath = image.path.startsWith('file://') ? image.path : 'file://' + image.path;
+                setImagePreview(normalizedPath);
+                setImageModalVisible(true);
+            }
+        } catch (error) {
+            if (error && error.code !== 'E_PICKER_CANCELLED') {
+                Alert.alert("Eroare", "Nu s-a putut selecta imaginea.");
+            }
         }
     };
 
@@ -131,13 +157,41 @@ export default function ProfileScreen() {
                 setUserData(prev => ({ ...prev, icon: response.data.newUrl }));
                 setImageModalVisible(false);
                 setImagePreview(null);
-                showMessage({ message: "Poză de profil actualizată!", type: "success" });
+                showMessage({ message: "Succes", description: "Poză de profil actualizată!", type: "success" });
             }
         } catch (error) {
             Alert.alert("Eroare", "Nu s-a putut încărca imaginea.");
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleDeleteAvatar = () => {
+        Alert.alert(
+            "Șterge poza",
+            "Sigur vrei să ștergi poza de profil?",
+            [
+                { text: "Anulează", style: "cancel" },
+                {
+                    text: "Șterge",
+                    style: "destructive",
+                    onPress: async () => {
+                        setDeleting(true);
+                        try {
+                            const response = await axiosAuthGuard.delete('/api/user/avatar');
+                            if (response.data.success) {
+                                setUserData(prev => ({ ...prev, icon: response.data.newUrl }));
+                                showMessage({ message: "Succes", description: "Poza de profil a fost ștearsă.", type: "success" });
+                            }
+                        } catch (error) {
+                            Alert.alert("Eroare", "Nu s-a putut șterge poza.");
+                        } finally {
+                            setDeleting(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const openEditModal = () => {
@@ -156,7 +210,7 @@ export default function ProfileScreen() {
             if (response.data.success) {
                 setUserData(prev => ({ ...prev, bio: editForm.bio, phone_number: editForm.phone_number }));
                 setEditModalVisible(false);
-                showMessage({ message: "Profil actualizat!", type: "success" });
+                showMessage({ message: "Succes", description: "Profil actualizat!", type: "success" });
             }
         } catch (error) {
             Alert.alert("Eroare", "Eroare la actualizare.");
@@ -175,11 +229,17 @@ export default function ProfileScreen() {
                 <Image source={assets.settings_icon} style={styles.topIcon} />
             </Pressable>
 
-            <Pressable onPress={handlePickImage} style={styles.avatarContainer}>
+            <Pressable onPress={() => setActionSheetVisible(true)} style={styles.avatarContainer}>
                 <Image source={{ uri: userData.icon }} style={styles.avatar} />
-                <View style={styles.editAvatarBadge}>
-                    <Text style={{ fontSize: 12 }}>📷</Text>
-                </View>
+                {deleting ? (
+                    <View style={styles.avatarLoadingOverlay}>
+                        <ActivityIndicator color={COLORS.white} />
+                    </View>
+                ) : (
+                    <View style={styles.editAvatarBadge}>
+                        <Text style={{ fontSize: 12 }}>📷</Text>
+                    </View>
+                )}
             </Pressable>
 
             <Text style={styles.username}>@{userData.username}</Text>
@@ -227,7 +287,7 @@ export default function ProfileScreen() {
                 </Pressable>
             </View>
         </View>
-    ), [userData, activeTab]);
+    ), [userData, activeTab, deleting]);
 
     if (loading) {
         return (
@@ -258,6 +318,44 @@ export default function ProfileScreen() {
                     <LikedPostsTab />
                 </View>
             </View>
+
+            <Modal
+                visible={actionSheetVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setActionSheetVisible(false)}
+            >
+                <Pressable style={styles.sheetOverlay} onPress={() => setActionSheetVisible(false)}>
+                    <Pressable style={styles.sheetContainer} onPress={() => {}}>
+                        <View style={styles.sheetHandle} />
+                        <Pressable
+                            style={styles.sheetOption}
+                            onPress={() => {
+                                setActionSheetVisible(false);
+                                setTimeout(() => { handlePickImage(); }, Platform.OS === 'ios' ? 350 : 0);
+                            }}
+                        >
+                            <Text style={styles.sheetOptionText}>Actualizează poza</Text>
+                        </Pressable>
+
+                        {!isDefaultAvatar && (
+                            <Pressable
+                                style={styles.sheetOption}
+                                onPress={() => {
+                                    setActionSheetVisible(false);
+                                    setTimeout(() => { handleDeleteAvatar(); }, Platform.OS === 'ios' ? 350 : 0);
+                                }}
+                            >
+                                <Text style={[styles.sheetOptionText, styles.sheetOptionDanger]}>Șterge poza</Text>
+                            </Pressable>
+                        )}
+
+                        <Pressable style={[styles.sheetOption, styles.sheetCancel]} onPress={() => setActionSheetVisible(false)}>
+                            <Text style={styles.sheetCancelText}>Anulează</Text>
+                        </Pressable>
+                    </Pressable>
+                </Pressable>
+            </Modal>
 
             <Modal visible={imageModalVisible} transparent={true} animationType="fade">
                 <View style={styles.modalOverlay}>
@@ -404,6 +502,17 @@ const styles = StyleSheet.create({
         height: '100%',
         borderRadius: 40
     },
+    avatarLoadingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: 40,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     editAvatarBadge: {
         position: 'absolute',
         bottom: -2,
@@ -474,6 +583,50 @@ const styles = StyleSheet.create({
     tabIconInactive: {
         tintColor: COLORS.white,
         opacity: 0.4,
+    },
+    sheetOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'flex-end',
+    },
+    sheetContainer: {
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingTop: 12,
+        paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+        paddingHorizontal: 16,
+    },
+    sheetHandle: {
+        alignSelf: 'center',
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: '#D1D1D6',
+        marginBottom: 12,
+    },
+    sheetOption: {
+        paddingVertical: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 12,
+    },
+    sheetOptionText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#081539',
+    },
+    sheetOptionDanger: {
+        color: '#800000',
+    },
+    sheetCancel: {
+        marginTop: 8,
+        backgroundColor: '#F5F5F5',
+    },
+    sheetCancelText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#666666',
     },
     modalOverlay: {
         flex: 1,

@@ -33,7 +33,7 @@ const scaled = {
 
 const ssc = SUMMARY_SCALE;
 const summaryScaled = {
-    titleFont: 26 * ssc,
+    titleFont: 25 * ssc,
     priceFont: 22 * ssc,
     negotiableFont: 14 * ssc,
     priceMargin: Math.round(16 * ssc),
@@ -42,7 +42,7 @@ const summaryScaled = {
     tagFont: 13 * ssc,
     tagsMargin: Math.round(10 * ssc),
     descLabelFont: 16 * ssc,
-    descContainerHeight: Math.round(164 * ssc),
+    descContainerHeight: Math.round(162 * ssc),
     descFont: 15 * ssc,
     descLineHeight: Math.round(22 * ssc),
     descPad: Math.round(10 * ssc),
@@ -68,6 +68,7 @@ const SummarySlide = ({ item, formatPrice, formatKm, itemHeight }) => (
             <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}><Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{formatKm(item.mileage)} km</Text></View>
             <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}><Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.engine.fuel_type)}</Text></View>
             <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}><Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{item.engine.capacity}</Text></View>
+            {item.horsepower ? <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}><Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{item.horsepower} CP</Text></View> : null}
             <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}><Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.transmission)}</Text></View>
             <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}><Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.body_type)}</Text></View>
             <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}><Text style={[styles.summaryTagText, { fontSize: summaryScaled.tagFont }]}>{capitalize(item.color)}</Text></View>
@@ -159,53 +160,54 @@ const PreviewMediaSlide = ({ mediaItem, index, currentIndex, isVisible, isZoomin
         if (Number.isFinite(iw) && Number.isFinite(ih) && iw > 0 && ih > 0) {
             setImageNaturalDims({ width: iw, height: ih });
             if (!hasAutoInitialized.current && !mediaItem.zoom_initialized && onAutoScaleComputed) {
-                const ratioW = width / iw;
-                const ratioH = itemHeight / ih;
-                const minRatio = Math.min(ratioW, ratioH);
-                const maxRatio = Math.max(ratioW, ratioH);
-                if (minRatio > 0 && Number.isFinite(minRatio) && Number.isFinite(maxRatio)) {
-                    const coverScale = maxRatio / minRatio;
-                    if (Number.isFinite(coverScale)) {
-                        const autoScale = coverScale <= 1.75 ? coverScale : 1;
-                        hasAutoInitialized.current = true;
-                        onAutoScaleComputed(index, autoScale);
+                const mediaTallness = ih / iw;
+                const defaultFraction = mediaTallness >= 1.34 ? 1 : 0;
+                hasAutoInitialized.current = true;
+                onAutoScaleComputed(index, defaultFraction);
+            }
+        }
+    }, [mediaItem.zoom_initialized, onAutoScaleComputed, index]);
+
+    const isVideo = mediaItem.type?.includes('video');
+
+    const measuredDims = isVideo ? videoNaturalDims : imageNaturalDims;
+    const fallbackDims = (mediaItem.width > 0 && mediaItem.height > 0)
+        ? { width: mediaItem.width, height: mediaItem.height }
+        : null;
+    const dims = measuredDims || fallbackDims;
+
+    let currentScale = 1;
+    let isFullCover = false;
+
+    if (dims && dims.width > 0 && dims.height > 0) {
+        const ratioW = width / dims.width;
+        const ratioH = itemHeight / dims.height;
+        const minRatio = Math.min(ratioW, ratioH);
+        const maxRatio = Math.max(ratioW, ratioH);
+        if (minRatio > 0 && Number.isFinite(minRatio) && Number.isFinite(maxRatio)) {
+            const coverScale = maxRatio / minRatio;
+            const widthFillScale = ratioW / minRatio;
+            if (Number.isFinite(coverScale) && Number.isFinite(widthFillScale)) {
+                if (isVideo) {
+                    const videoTallness = dims.height / dims.width;
+                    const target = videoTallness >= 1.34 ? coverScale : 1;
+                    currentScale = Math.max(target, widthFillScale);
+                } else {
+                    const frac = (typeof mediaItem.cover_fraction === 'number' && Number.isFinite(mediaItem.cover_fraction))
+                        ? mediaItem.cover_fraction
+                        : ((typeof mediaItem.zoom_level === 'number' && mediaItem.zoom_level > 1.01) ? 1 : 0);
+                    const target = 1 + frac * (coverScale - 1);
+                    currentScale = Math.max(target, widthFillScale);
+                    if (currentScale >= coverScale - 0.0001) {
+                        isFullCover = true;
                     }
                 }
             }
         }
-    }, [mediaItem.zoom_initialized, onAutoScaleComputed, index, itemHeight]);
-
-    let currentScale;
-    let isFullCover = false;
-    if (mediaItem.type?.includes('video')) {
-        if (videoNaturalDims && videoNaturalDims.width > 0 && videoNaturalDims.height > 0) {
-            const ratioW = width / videoNaturalDims.width;
-            const ratioH = itemHeight / videoNaturalDims.height;
-            const minRatio = Math.min(ratioW, ratioH);
-            const maxRatio = Math.max(ratioW, ratioH);
-            const coverScale = minRatio > 0 ? maxRatio / minRatio : 1;
-            currentScale = (Number.isFinite(coverScale) && coverScale <= 1.75) ? coverScale : 1;
-        } else {
-            currentScale = 1;
-        }
-    } else {
-        currentScale = mediaItem.zoom_level || 1;
-        if (imageNaturalDims && imageNaturalDims.width > 0 && imageNaturalDims.height > 0) {
-            const ratioW = width / imageNaturalDims.width;
-            const ratioH = itemHeight / imageNaturalDims.height;
-            const minRatio = Math.min(ratioW, ratioH);
-            const maxRatio = Math.max(ratioW, ratioH);
-            if (minRatio > 0 && Number.isFinite(minRatio) && Number.isFinite(maxRatio)) {
-                const coverScale = maxRatio / minRatio;
-                if (Number.isFinite(coverScale) && Number.isFinite(currentScale) && currentScale >= coverScale) {
-                    isFullCover = true;
-                }
-            }
-        }
     }
+
     const isCurrentActiveEditing = isEditing && currentIndex === index;
     const isPaused = !isVisible || currentIndex !== index;
-    const isVideo = mediaItem.type?.includes('video');
 
     return (
         <View style={[

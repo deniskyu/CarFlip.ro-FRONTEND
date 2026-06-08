@@ -118,6 +118,8 @@ export default function LoginScreen({ navigation }){
               keyboardType="email-address"
               placeholder="Introdu adresa de email"
               placeholderTextColor="rgba(255,255,255,0.5)"
+              textContentType="username"
+              autoComplete="email"
             />
           </View>
           
@@ -132,6 +134,8 @@ export default function LoginScreen({ navigation }){
                     maxLength={32}
                     placeholder="Introdu parola"
                     placeholderTextColor="rgba(255,255,255,0.5)"
+                    textContentType="password"
+                    autoComplete="password"
                 />
                 <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconContainer}>
                     <Image source={assets.view_icon} style={[styles.eyeIcon, showPassword && { opacity: 0.5 }]} />

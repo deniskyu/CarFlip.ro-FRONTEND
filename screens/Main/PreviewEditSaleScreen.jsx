@@ -7,7 +7,8 @@ import {
     Alert, 
     Platform,
     StatusBar,
-    ActivityIndicator
+    ActivityIndicator,
+    Dimensions
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { showMessage } from 'react-native-flash-message';
@@ -25,6 +26,7 @@ import RNBlobUtil from 'react-native-blob-util';
 import { getCreds, setCreds } from '../../helpers/keychainFunctions.js';
 
 const { url } = assets;
+const { width: screenWidth } = Dimensions.get('window');
 
    const uploadWithBlobUtil = async (endpoint, fields, files, method = 'POST') => {
     const makeRequest = async (token) => {
@@ -47,7 +49,7 @@ const { url } = assets;
             });
         }
 
-        return RNBlobUtil.fetch(
+        return RNBlobUtil.config({ timeout: 120000 }).fetch(
             method,
             `${url}${endpoint}`,
             {
@@ -58,10 +60,19 @@ const { url } = assets;
         );
     };
 
+    const requestWithRetry = async (token) => {
+        try {
+            return await makeRequest(token);
+        } catch (err) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return await makeRequest(token);
+        }
+    };
+
     const creds = await getCreds();
     let token = creds?.accessToken;
 
-    let response = await makeRequest(token);
+    let response = await requestWithRetry(token);
     let responseData = response.json();
 
     if (response.respInfo.status === 401) {
@@ -72,7 +83,7 @@ const { url } = assets;
         if (refreshResponse.data.success) {
             const { newAccessToken, newRefreshToken } = refreshResponse.data;
             await setCreds({ accessToken: newAccessToken, refreshToken: newRefreshToken });
-            response = await makeRequest(newAccessToken);
+            response = await requestWithRetry(newAccessToken);
             responseData = response.json();
         } else {
             throw new Error('Sesiunea a expirat. Te rugăm să te reconectezi.');
@@ -104,20 +115,20 @@ export default function PreviewEditSaleScreen({ navigation }) {
         const updatedMedia = [...draftSale.media];
         updatedMedia[currentSlideIndex] = {
             ...updatedMedia[currentSlideIndex],
-            zoom_level: value,
+            cover_fraction: value,
             zoom_initialized: true
         };
         setDraftSale({ ...draftSale, media: updatedMedia });
     }, [draftSale, currentSlideIndex, setDraftSale]);
 
-    const handleAutoScaleComputed = useCallback((index, scale) => {
+    const handleAutoScaleComputed = useCallback((index, fraction) => {
         setDraftSale(prev => {
             if (!prev?.media?.[index]) return prev;
             if (prev.media[index].zoom_initialized) return prev;
             const updatedMedia = [...prev.media];
             updatedMedia[index] = {
                 ...updatedMedia[index],
-                zoom_level: scale,
+                cover_fraction: fraction,
                 zoom_initialized: true
             };
             return { ...prev, media: updatedMedia };
@@ -160,9 +171,22 @@ export default function PreviewEditSaleScreen({ navigation }) {
 
     const isSummarySlide = currentSlideIndex >= draftSale.media.length;
     const isCurrentVideo = !isSummarySlide && draftSale.media[currentSlideIndex]?.type?.includes('video');
-    const currentZoomValue = (!isSummarySlide && draftSale.media[currentSlideIndex]?.zoom_level) || 1;
 
     const effectiveItemHeight = containerHeight || ITEM_HEIGHT;
+
+    const currentMedia = !isSummarySlide ? draftSale.media[currentSlideIndex] : null;
+    const currentZoomValue = currentMedia
+        ? ((typeof currentMedia.cover_fraction === 'number' && Number.isFinite(currentMedia.cover_fraction))
+            ? currentMedia.cover_fraction
+            : ((typeof currentMedia.zoom_level === 'number' && currentMedia.zoom_level > 1.01) ? 1 : 0))
+        : 0;
+
+    let sliderMin = 0;
+    if (currentMedia && currentMedia.width > 0 && currentMedia.height > 0) {
+        const screenTallness = effectiveItemHeight / screenWidth;
+        const mediaTallness = currentMedia.height / currentMedia.width;
+        sliderMin = mediaTallness > screenTallness ? 1 : 0;
+    }
 
     const handleApplyEdits = async () => {
         if (publishingRef.current) return;
@@ -180,6 +204,7 @@ export default function PreviewEditSaleScreen({ navigation }) {
                 const fields = {
                     title: draftSale.title || '',
                     engine_capacity: draftSale.engine_capacity || draftSale.engine?.capacity || '',
+                    horsepower: draftSale.horsepower || '',
                     price: String(draftSale.price),
                     mileage: String(draftSale.mileage),
                     vin: draftSale.vin || '',
@@ -197,7 +222,7 @@ export default function PreviewEditSaleScreen({ navigation }) {
 
                 const files = draftSale.newLocalMedia.map((file, i) => {
                     const isVideo = file.type && file.type.includes('video');
-                    metadataArray.push({ zoom_level: draftSale.media[i]?.zoom_level || 1 });
+                    metadataArray.push({ cover_fraction: draftSale.media[i]?.cover_fraction, oriented: file.oriented === true });
                     return {
                         uri: file.uri,
                         type: isVideo ? 'video/mp4' : 'image/jpeg',
@@ -231,7 +256,8 @@ export default function PreviewEditSaleScreen({ navigation }) {
                     showMessage({
                         type: "success",
                         message: "Succes!",
-                        description: "Modificările au fost salvate! Pozele noi se procesează în fundal (1-2 minute)."
+                        description: "Modificările au fost salvate! Pozele noi se procesează în fundal (1-2 minute).",
+                        duration: 3500,
                     });
                     setTimeout(() => setDraftSale(null), 300);
                     publishingRef.current = false;
@@ -253,6 +279,7 @@ export default function PreviewEditSaleScreen({ navigation }) {
                 const editPayload = {
                     title: draftSale.title,
                     engine_capacity: draftSale.engine_capacity,
+                    horsepower: draftSale.horsepower,
                     price: draftSale.price,
                     mileage: draftSale.mileage,
                     vin: draftSale.vin,
@@ -336,7 +363,7 @@ export default function PreviewEditSaleScreen({ navigation }) {
                         <Text style={styles.sliderLabel}>+</Text>
                         <Slider
                             style={styles.rotatedSlider}
-                            minimumValue={1}
+                            minimumValue={sliderMin}
                             maximumValue={2.5} 
                             value={currentZoomValue}
                             onValueChange={handleZoomChange}

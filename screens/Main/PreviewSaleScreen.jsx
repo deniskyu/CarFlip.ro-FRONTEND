@@ -6,7 +6,8 @@ import {
     Image, 
     Alert, 
     Platform,
-    StatusBar
+    StatusBar,
+    Dimensions
 } from 'react-native';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
@@ -30,6 +31,7 @@ import { ITEM_HEIGHT } from '../../helpers/layout.js';
 import PreviewItem from './components/PreviewItem.jsx';
 
 const { url } = assets;
+const { width: screenWidth } = Dimensions.get('window');
 
 const CarLoadingIndicator = () => {
     const translateX = useSharedValue(0);
@@ -82,7 +84,7 @@ const uploadWithBlobUtil = async (endpoint, fields, files, method = 'POST') => {
             });
         }
 
-        return RNBlobUtil.fetch(
+        return RNBlobUtil.config({ timeout: 120000 }).fetch(
             method,
             `${url}${endpoint}`,
             {
@@ -93,10 +95,19 @@ const uploadWithBlobUtil = async (endpoint, fields, files, method = 'POST') => {
         );
     };
 
+    const requestWithRetry = async (token) => {
+        try {
+            return await makeRequest(token);
+        } catch (err) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return await makeRequest(token);
+        }
+    };
+
     const creds = await getCreds();
     let token = creds?.accessToken;
 
-    let response = await makeRequest(token);
+    let response = await requestWithRetry(token);
     console.log('Response status:', response.respInfo.status);
     console.log('Response text:', response.text());
     let responseData = response.json();
@@ -110,7 +121,7 @@ const uploadWithBlobUtil = async (endpoint, fields, files, method = 'POST') => {
             const { newAccessToken, newRefreshToken } = refreshResponse.data;
             await setCreds({ accessToken: newAccessToken, refreshToken: newRefreshToken });
 
-            response = await makeRequest(newAccessToken);
+            response = await requestWithRetry(newAccessToken);
             responseData = response.json();
         } else {
             throw new Error('Sesiunea a expirat. Te rugăm să te reconectezi.');
@@ -139,20 +150,20 @@ export default function PreviewSaleScreen({ navigation }) {
         const updatedMedia = [...draftSale.media];
         updatedMedia[currentSlideIndex] = {
             ...updatedMedia[currentSlideIndex],
-            zoom_level: value,
+            cover_fraction: value,
             zoom_initialized: true
         };
         setDraftSale({ ...draftSale, media: updatedMedia });
     }, [draftSale, currentSlideIndex, setDraftSale]);
 
-    const handleAutoScaleComputed = useCallback((index, scale) => {
+    const handleAutoScaleComputed = useCallback((index, fraction) => {
         setDraftSale(prev => {
             if (!prev?.media?.[index]) return prev;
             if (prev.media[index].zoom_initialized) return prev;
             const updatedMedia = [...prev.media];
             updatedMedia[index] = {
                 ...updatedMedia[index],
-                zoom_level: scale,
+                cover_fraction: fraction,
                 zoom_initialized: true
             };
             return { ...prev, media: updatedMedia };
@@ -182,9 +193,22 @@ export default function PreviewSaleScreen({ navigation }) {
 
     const isSummarySlide = currentSlideIndex >= draftSale.media.length;
     const isCurrentVideo = !isSummarySlide && draftSale.media[currentSlideIndex]?.type?.includes('video');
-    const currentZoomValue = (!isSummarySlide && draftSale.media[currentSlideIndex]?.zoom_level) || 1;
 
     const effectiveItemHeight = containerHeight || ITEM_HEIGHT;
+
+    const currentMedia = !isSummarySlide ? draftSale.media[currentSlideIndex] : null;
+    const currentZoomValue = currentMedia
+        ? ((typeof currentMedia.cover_fraction === 'number' && Number.isFinite(currentMedia.cover_fraction))
+            ? currentMedia.cover_fraction
+            : ((typeof currentMedia.zoom_level === 'number' && currentMedia.zoom_level > 1.01) ? 1 : 0))
+        : 0;
+
+    let sliderMin = 0;
+    if (currentMedia && currentMedia.width > 0 && currentMedia.height > 0) {
+        const screenTallness = effectiveItemHeight / screenWidth;
+        const mediaTallness = currentMedia.height / currentMedia.width;
+        sliderMin = mediaTallness > screenTallness ? 1 : 0;
+    }
 
     const handlePublish = async () => {
         if (publishingRef.current) return;
@@ -204,6 +228,7 @@ export default function PreviewSaleScreen({ navigation }) {
                 model_name: draftSale.model.name,
                 engine_capacity: draftSale.engine.capacity,
                 engine_fuel: draftSale.engine.fuel_type,
+                horsepower: draftSale.horsepower || '',
                 price: String(draftSale.price),
                 negotiable: String(draftSale.negotiable),
                 mileage: String(draftSale.mileage),
@@ -227,7 +252,7 @@ export default function PreviewSaleScreen({ navigation }) {
 
 
                 const files = draftSale.media.map((file, i) => {
-                    metadataArray.push({ zoom_level: file.zoom_level || 1 });
+                    metadataArray.push({ cover_fraction: file.cover_fraction, oriented: file.oriented === true });
                     const isVideo = file.type && file.type.includes('video');
                     return {
                         uri: file.uri,
@@ -268,7 +293,8 @@ export default function PreviewSaleScreen({ navigation }) {
                     showMessage({
                         type: "success",
                         message: "Succes!",
-                        description: data.message
+                        description: data.message,
+                        duration: 3500,
                     });
                     emitter.emit('refresh_active_posts');
                     emitter.emit('reset_sale_form');
@@ -330,7 +356,7 @@ export default function PreviewSaleScreen({ navigation }) {
                         <Text style={styles.sliderLabel}>+</Text>
                         <Slider
                             style={styles.rotatedSlider}
-                            minimumValue={1}
+                            minimumValue={sliderMin}
                             maximumValue={2.5} 
                             value={currentZoomValue}
                             onValueChange={handleZoomChange}

@@ -75,7 +75,7 @@ export default function ForgotPasswordScreen({ navigation }){
         setErrors(er.response.data.message || "Prea multe încercări. Încearcă mai târziu.");
       } else {
           console.log(er);
-          showMessage({type: "danger", message: "A apărut o eroare. Vă rugăm să încercați din nou mai târziu."})
+          showMessage({type: "danger", message: "Eroare", description: "A apărut o eroare. Vă rugăm să încercați din nou mai târziu."})
       }
     }
     setLoading(false);

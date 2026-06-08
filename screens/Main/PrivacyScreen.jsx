@@ -50,7 +50,8 @@ export default function PrivacyScreen() {
             if (response.data.success) {
                 setBlockedUsers(prev => prev.filter(u => u._id !== targetId));
                 showMessage({
-                    message: "Utilizator deblocat",
+                    message: "Succes",
+                    description: "Utilizator deblocat",
                     type: "success",
                     icon: "success",
                     duration: 1500,

@@ -130,14 +130,14 @@ export default function ActivePostsTab({ headerComponent }) {
                             const res = await axiosAuthGuard.delete(`/api/sales/remove/${postIdToDelete}`);
                             
                             if (res.data.success) {
-                                showMessage({ message: "Anunțul a fost șters cu succes!", type: "success" });
+                                showMessage({ message: "Succes", description: "Anunțul a fost șters cu succes!", type: "success" });
                             } else {
                                 fetchPosts(true); 
-                                showMessage({ message: "Eroare la ștergere.", type: "danger" });
+                                showMessage({ message: "Eroare", description: "Eroare la ștergere.", type: "danger" });
                             }
                         } catch (error) {
                             fetchPosts(true);
-                            showMessage({ message: "Eroare de conexiune.", type: "danger" });
+                            showMessage({ message: "Eroare", description: "Eroare de conexiune.", type: "danger" });
                         }
                     }
                 }

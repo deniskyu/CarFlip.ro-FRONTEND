@@ -46,6 +46,7 @@ export default function EditSaleScreen({ route, navigation }) {
 
     const initialCapacity = ENGINE_CAPACITIES.find(c => c.name === post.engine?.capacity) || { name: post.engine?.capacity };
     const [selectedCapacity, setSelectedCapacity] = useState(initialCapacity);
+    const [horsepower, setHorsepower] = useState(post.horsepower ? String(post.horsepower) : '');
     const [price, setPrice] = useState(new Intl.NumberFormat('de-DE').format(post.price || 0));
     const [mileage, setMileage] = useState(new Intl.NumberFormat('de-DE').format(post.mileage || 0));
     const [vin, setVin] = useState(post.vin || '');
@@ -125,8 +126,11 @@ export default function EditSaleScreen({ route, navigation }) {
     
         const options = {
             mediaType: 'mixed',
-            selectionLimit: 10,
+            selectionLimit: 13,
             videoQuality: 'high',
+            maxWidth: 1920,
+            maxHeight: 1920,
+            quality: 0.8,
         };
     
         try {
@@ -157,17 +161,17 @@ export default function EditSaleScreen({ route, navigation }) {
                         continue;
                     }                
                     if (file.type && file.type.includes('video')) {
-                        if (videoCount > 1) {
+                        if (videoCount >= 1) {
                             Alert.alert("Info", "Poți avea maxim 1 videoclip.");
                             continue;
                         }
-                        if (file.duration && file.duration > 30) {
-                            Alert.alert("Video prea lung", "Videoclipul trebuie să aibă maxim 30 secunde.");
+                        if (file.duration && file.duration > 45) {
+                            Alert.alert("Video prea lung", "Videoclipul trebuie să aibă maxim 45 secunde.");
                             continue;
                         }
                         videoCount++;
                     }
-                    if (currentMedia.length < 10) {
+                    if (currentMedia.length < 13) {
                         const normalized = await normalizeMediaUri(file);
                         if (normalized) {
                             currentMedia.push(normalized);
@@ -233,6 +237,14 @@ export default function EditSaleScreen({ route, navigation }) {
             return;
         }
 
+        if (newLocalMedia.length > 0) {
+            const hasPhoto = newLocalMedia.some(f => f.type && f.type.includes('image'));
+            if (!hasPhoto) {
+                Alert.alert("Eroare", "Trebuie să incluzi cel puțin o FOTOGRAFIE (videoclipurile sunt opționale).");
+                return;
+            }
+        }
+
         const safeMedia = post.media.map(item => ({
             ...item,
             uri: item.url || item.uri,
@@ -251,9 +263,13 @@ export default function EditSaleScreen({ route, navigation }) {
             }))
             : safeMedia;
 
+        const newCapacity = selectedCapacity ? selectedCapacity.name : post.engine?.capacity;
+
         const draftData = {
             ...post, 
-            engine_capacity: selectedCapacity ? selectedCapacity.name : post.engine?.capacity,
+            engine: { ...(post.engine || {}), capacity: newCapacity },
+            engine_capacity: newCapacity, 
+            horsepower: horsepower,
             media: previewMedia,
             price: Number(String(price).replace(/\./g, '')),
             mileage: Number(String(mileage).replace(/\./g, '')),
@@ -407,6 +423,20 @@ export default function EditSaleScreen({ route, navigation }) {
                             </Text>
                             <Text style={styles.chevron}>▼</Text>
                         </Pressable>
+
+                        <Text style={styles.label}>Cai Putere (opțional)</Text>
+                        <View style={styles.inputSelector}>
+                            <TextInput 
+                                style={styles.inputText}
+                                placeholder="Ex: 150"
+                                placeholderTextColor={COLORS.placeholder}
+                                keyboardType="numeric"
+                                value={horsepower}
+                                onChangeText={(text) => setHorsepower(text.replace(/[^0-9]/g, ''))}
+                                maxLength={4}
+                            />
+                            <Text style={styles.suffix}>CP</Text>
+                        </View>
 
                         <Text style={styles.label}>Preț</Text>
                         <View style={styles.inputSelector}>
@@ -616,6 +646,7 @@ export default function EditSaleScreen({ route, navigation }) {
                     </View>
                 </View>
             </Modal>
+
         </SafeAreaView>
     );
 }
@@ -955,5 +986,22 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333',
         fontWeight: '500',
+    },
+    prepOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: '#fefefe',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 2000,
+    },
+    prepText: {
+        marginTop: 14,
+        fontSize: 16,
+        color: COLORS.primary,
+        fontWeight: '600',
     }
 });
