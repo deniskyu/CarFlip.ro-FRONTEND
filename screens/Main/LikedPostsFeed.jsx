@@ -30,6 +30,7 @@ export default function LikedPostsFeed() {
     const { posts, initialIndex, fetchConfig } = route.params;
 
     const [itemHeight, setItemHeight] = useState(Layout.ITEM_HEIGHT);
+    const [isMeasured, setIsMeasured] = useState(false); // ← adaugă asta
 
     const keyboardVisible = useRef(false);
 
@@ -46,6 +47,7 @@ export default function LikedPostsFeed() {
         if (rounded !== itemHeight) {
             setItemHeight(rounded);
         }
+        setIsMeasured(true); // ← adaugă asta
     }, [itemHeight]);
 
     const [localPosts, setLocalPosts] = useState(posts || []);
@@ -210,7 +212,7 @@ export default function LikedPostsFeed() {
             </View>
 
             <View style={{ flex: 1 }} onLayout={handleContainerLayout}>
-                <FlatList
+                {isMeasured ? <FlatList
                     ref={flatListRef}
                     data={localPosts}
                     renderItem={renderItem}
@@ -232,7 +234,9 @@ export default function LikedPostsFeed() {
                     onEndReached={loadMorePosts}
                     onEndReachedThreshold={3}
                     ListFooterComponent={ListFooter}
-                />
+                /> : (<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <ActivityIndicator size="large" color="#800000" />
+                    </View>)}
             </View>
         </View>
     );

@@ -30,6 +30,7 @@ export default function ActivePostsFeed() {
     const { posts, initialIndex, fetchConfig } = route.params;
 
     const [itemHeight, setItemHeight] = useState(Layout.ITEM_HEIGHT);
+    const [isMeasured, setIsMeasured] = useState(false);
 
     const keyboardVisible = useRef(false);
 
@@ -46,6 +47,7 @@ export default function ActivePostsFeed() {
         if (rounded !== itemHeight) {
             setItemHeight(rounded);
         }
+        setIsMeasured(true);
     }, [itemHeight]);
 
     const [localPosts, setLocalPosts] = useState(posts || []);
@@ -185,7 +187,7 @@ export default function ActivePostsFeed() {
             </View>
 
             <View style={{ flex: 1 }} onLayout={handleContainerLayout}>
-                <FlatList
+                {isMeasured ? <FlatList
                     ref={flatListRef}
                     data={localPosts}
                     renderItem={renderItem}
@@ -206,7 +208,11 @@ export default function ActivePostsFeed() {
                     windowSize={3}
                     maxToRenderPerBatch={2}
                     removeClippedSubviews={true}
-                />
+                /> : (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <ActivityIndicator size="large" color="#800000" />
+                    </View>
+                )}
             </View>
         </View>
     );

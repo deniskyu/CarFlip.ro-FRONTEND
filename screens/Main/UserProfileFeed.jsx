@@ -31,6 +31,7 @@ export default function UserProfileFeed() {
     const { posts, initialIndex, fetchConfig } = route.params;
 
     const [itemHeight, setItemHeight] = useState(Layout.ITEM_HEIGHT);
+    const [isMeasured, setIsMeasured] = useState(false);
 
     const keyboardVisible = useRef(false);
 
@@ -47,6 +48,7 @@ export default function UserProfileFeed() {
         if (rounded !== itemHeight) {
             setItemHeight(rounded);
         }
+        setIsMeasured(true);
     }, [itemHeight]);
 
     const [localPosts, setLocalPosts] = useState(posts || []);
@@ -229,7 +231,7 @@ export default function UserProfileFeed() {
             </View>
 
             <View style={{ flex: 1 }} onLayout={handleContainerLayout}>
-                <FlatList
+                {isMeasured ? <FlatList
                     ref={flatListRef}
                     data={localPosts}
                     renderItem={renderItem}
@@ -251,7 +253,11 @@ export default function UserProfileFeed() {
                     onEndReached={loadMorePosts}
                     onEndReachedThreshold={3}
                     ListFooterComponent={ListFooter}
-                />
+                /> : (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <ActivityIndicator size="large" color="#800000" />
+                    </View>
+                )}
             </View>
         </View>
     );
