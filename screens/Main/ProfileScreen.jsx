@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useContext, useRef } from 'react';
 import {
     View,
     StyleSheet,
@@ -12,7 +12,8 @@ import {
     KeyboardAvoidingView,
     ScrollView,
     SafeAreaView,
-    Share
+    Share,
+    Linking
 } from 'react-native';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
@@ -73,6 +74,9 @@ export default function ProfileScreen() {
     const [imagePreview, setImagePreview] = useState(null);
     const [imageModalVisible, setImageModalVisible] = useState(false);
 
+    const pendingActionRef = useRef(null);
+    const actionFiredRef = useRef(false);
+
     const isDefaultAvatar = userData.icon === DEFAULT_AVATAR;
 
     useEffect(() => {
@@ -132,9 +136,21 @@ export default function ProfileScreen() {
                 setImageModalVisible(true);
             }
         } catch (error) {
-            if (error && error.code !== 'E_PICKER_CANCELLED') {
-                Alert.alert("Eroare", "Nu s-a putut selecta imaginea.");
+            if (error?.code === 'E_PICKER_CANCELLED') {
+                return;
             }
+            if ((error?.code || '').includes('PERMISSION')) {
+                Alert.alert(
+                    "Acces la poze necesar",
+                    "Ca să-ți pui o poză de profil, trebuie să permiți accesul la poze. Deschide Setările și activează-l.",
+                    [
+                        { text: "Anulează", style: "cancel" },
+                        { text: "Deschide Setările", onPress: () => Linking.openSettings() }
+                    ]
+                );
+                return;
+            }
+            Alert.alert("Eroare", "Nu s-a putut selecta imaginea.");
         }
     };
 
@@ -193,6 +209,23 @@ export default function ProfileScreen() {
             ]
         );
     };
+
+    const fireAvatarAction = () => {
+        if (actionFiredRef.current) return;
+        const action = pendingActionRef.current;
+        if (!action) return;
+        actionFiredRef.current = true;
+        pendingActionRef.current = null;
+        if (action === 'pick') handlePickImage();
+        else if (action === 'delete') handleDeleteAvatar();
+    };
+
+    useEffect(() => {
+        if (!actionSheetVisible && pendingActionRef.current && !actionFiredRef.current) {
+            const t = setTimeout(fireAvatarAction, Platform.OS === 'ios' ? 700 : 250);
+            return () => clearTimeout(t);
+        }
+    }, [actionSheetVisible]);
 
     const openEditModal = () => {
         setEditForm({ bio: userData.bio, phone_number: userData.phone_number });
@@ -324,6 +357,7 @@ export default function ProfileScreen() {
                 transparent={true}
                 animationType="slide"
                 onRequestClose={() => setActionSheetVisible(false)}
+                onDismiss={fireAvatarAction}
             >
                 <Pressable style={styles.sheetOverlay} onPress={() => setActionSheetVisible(false)}>
                     <Pressable style={styles.sheetContainer} onPress={() => {}}>
@@ -331,8 +365,9 @@ export default function ProfileScreen() {
                         <Pressable
                             style={styles.sheetOption}
                             onPress={() => {
+                                pendingActionRef.current = 'pick';
+                                actionFiredRef.current = false;
                                 setActionSheetVisible(false);
-                                setTimeout(() => { handlePickImage(); }, Platform.OS === 'ios' ? 350 : 0);
                             }}
                         >
                             <Text style={styles.sheetOptionText}>Actualizează poza</Text>
@@ -342,8 +377,9 @@ export default function ProfileScreen() {
                             <Pressable
                                 style={styles.sheetOption}
                                 onPress={() => {
+                                    pendingActionRef.current = 'delete';
+                                    actionFiredRef.current = false;
                                     setActionSheetVisible(false);
-                                    setTimeout(() => { handleDeleteAvatar(); }, Platform.OS === 'ios' ? 350 : 0);
                                 }}
                             >
                                 <Text style={[styles.sheetOptionText, styles.sheetOptionDanger]}>Șterge poza</Text>
