@@ -19,6 +19,7 @@ import { emitter } from '../../../helpers/eventBus.js';
 import { UI_SCALE } from '../../../helpers/layout.js';
 
 import {Text, TextInput} from '../../../helpers/AppText.jsx';
+import PostListSkeleton from '../../../helpers/skeletons/PostListSkeleton.jsx';
 
 const COLORS = {
     primary: '#800000',
@@ -231,11 +232,7 @@ export default function GracePostsTab({ headerComponent }) {
 
     const ListEmpty = useMemo(() => {
         if (loading) {
-            return (
-                <View style={styles.emptyContainer}>
-                    <ActivityIndicator size="large" color={COLORS.secondary} />
-                </View>
-            );
+            return <PostListSkeleton />;
         }
         return (
             <View style={styles.emptyContainer}>

@@ -14,12 +14,14 @@ import {
     KeyboardAvoidingView,
     ActivityIndicator,
     Keyboard,
-    RefreshControl
+    RefreshControl,
+    ScrollView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { assets } from '../../../assets.js';
 import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
 import ReportModal from './ReportModal.jsx';
+import Shimmer from '../../../helpers/skeletons/Shimmer.jsx';
 
 import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
@@ -27,6 +29,87 @@ const { height, width } = Dimensions.get('window');
 
 const MODAL_HEIGHT_PERCENT = 0.8; 
 const TOP_OFFSET = height * (1 - MODAL_HEIGHT_PERCENT); 
+
+const COMMENT_SKELETON_ITEM_HEIGHT = 80;
+
+const CommentSkeleton = () => (
+    <View style={skeletonStyles.row}>
+        <Shimmer width={36} height={36} borderRadius={18} style={skeletonStyles.avatar} />
+        <View style={skeletonStyles.content}>
+            <View style={skeletonStyles.headerRow}>
+                <Shimmer width={80} height={11} borderRadius={4} />
+                <Shimmer width={40} height={9} borderRadius={4} style={skeletonStyles.timeAgo} />
+            </View>
+            <Shimmer width="95%" height={12} borderRadius={4} style={skeletonStyles.line1} />
+            <Shimmer width="65%" height={12} borderRadius={4} style={skeletonStyles.line2} />
+            <Shimmer width={50} height={10} borderRadius={4} style={skeletonStyles.replyBtn} />
+        </View>
+        <View style={skeletonStyles.likeCol}>
+            <Shimmer width={14} height={14} borderRadius={7} />
+            <Shimmer width={16} height={9} borderRadius={4} style={skeletonStyles.likeCount} />
+        </View>
+    </View>
+);
+
+const CommentListSkeleton = () => {
+    const sheetBodyHeight = height * MODAL_HEIGHT_PERCENT - 120;
+    const count = Math.ceil(sheetBodyHeight / COMMENT_SKELETON_ITEM_HEIGHT);
+    const items = [];
+    for (let i = 0; i < count; i++) {
+        items.push(<CommentSkeleton key={i} />);
+    }
+    return (
+        <ScrollView pointerEvents="none" showsVerticalScrollIndicator={false}>
+            {items}
+        </ScrollView>
+    );
+};
+
+const skeletonStyles = StyleSheet.create({
+    row: {
+        flexDirection: 'row',
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f9f9f9',
+        alignItems: 'flex-start',
+    },
+    avatar: {
+        marginRight: 12,
+        marginTop: 2,
+    },
+    content: {
+        flex: 1,
+        marginRight: 10,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 6,
+        gap: 8,
+    },
+    timeAgo: {
+        marginLeft: 6,
+    },
+    line1: {
+        marginBottom: 5,
+    },
+    line2: {
+        marginBottom: 7,
+    },
+    replyBtn: {
+        marginTop: 2,
+    },
+    likeCol: {
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: 5,
+        width: 30,
+    },
+    likeCount: {
+        marginTop: 4,
+    },
+});
 
 const timeAgo = (dateString) => {
     if (!dateString) return '';
@@ -570,7 +653,7 @@ const CommentsSheet = ({ visible, onClose, saleId, onCommentAdded, postAuthorId,
                     >
                         <View style={styles.commentsBody}>
                             {isLoadingComments && commentsList.length === 0 ? (
-                                <ActivityIndicator size="small" color="#800000" style={{marginTop: 20}} />
+                                <CommentListSkeleton />
                             ) : commentsList.length === 0 ? (
                                 <View style={styles.emptyCommentsContainer}>
                                     <Text style={styles.emptyCommentsText}>

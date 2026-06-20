@@ -27,6 +27,8 @@ import ActivePostsTab from './components/ActivePostsTab.jsx';
 import GracePostsTab from './components/GracePostsTab.jsx';
 import LikedPostsTab from './components/LikedPostsTab.jsx';
 import { Context } from '../../context/Context.js';
+import PostListSkeleton from '../../helpers/skeletons/PostListSkeleton.jsx';
+import Shimmer from '../../helpers/skeletons/Shimmer.jsx';
 
 const COLORS = {
     primary: '#800000',
@@ -37,6 +39,9 @@ const COLORS = {
 };
 
 const DEFAULT_AVATAR = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+
+const HEADER_SHIMMER_BASE = 'rgba(255, 255, 255, 0.18)';
+const HEADER_SHIMMER_HIGHLIGHT = 'rgba(255, 255, 255, 0.42)';
 
 export default function ProfileScreen() {
     const navigation = useNavigation();
@@ -322,11 +327,71 @@ export default function ProfileScreen() {
         </View>
     ), [userData, activeTab, deleting]);
 
+    const renderHeaderSkeleton = () => (
+        <View style={styles.profileHeader}>
+            <View style={styles.shareButton}>
+                <Shimmer width={24} height={24} borderRadius={6} baseColor={HEADER_SHIMMER_BASE} highlightColor={HEADER_SHIMMER_HIGHLIGHT} />
+            </View>
+
+            <View style={styles.settingsButton}>
+                <Shimmer width={24} height={24} borderRadius={6} baseColor={HEADER_SHIMMER_BASE} highlightColor={HEADER_SHIMMER_HIGHLIGHT} />
+            </View>
+
+            <View style={styles.avatarContainer}>
+                <Shimmer width="100%" height="100%" borderRadius={40} />
+            </View>
+
+            <Shimmer
+                width={150}
+                height={22}
+                borderRadius={6}
+                baseColor={HEADER_SHIMMER_BASE}
+                highlightColor={HEADER_SHIMMER_HIGHLIGHT}
+                style={{ marginBottom: 15 }}
+            />
+
+            <View style={styles.infoRow}>
+                <Shimmer
+                    width={210}
+                    height={14}
+                    borderRadius={5}
+                    baseColor={HEADER_SHIMMER_BASE}
+                    highlightColor={HEADER_SHIMMER_HIGHLIGHT}
+                />
+            </View>
+
+            <View style={styles.infoRow}>
+                <Shimmer
+                    width={150}
+                    height={14}
+                    borderRadius={5}
+                    baseColor={HEADER_SHIMMER_BASE}
+                    highlightColor={HEADER_SHIMMER_HIGHLIGHT}
+                />
+            </View>
+
+            <View style={styles.tabsContainer}>
+                <View style={styles.tabButton}>
+                    <Shimmer width={22} height={22} borderRadius={6} baseColor={HEADER_SHIMMER_BASE} highlightColor={HEADER_SHIMMER_HIGHLIGHT} />
+                </View>
+                <View style={styles.tabButton}>
+                    <Shimmer width={22} height={22} borderRadius={6} baseColor={HEADER_SHIMMER_BASE} highlightColor={HEADER_SHIMMER_HIGHLIGHT} />
+                </View>
+                <View style={styles.tabButton}>
+                    <Shimmer width={22} height={22} borderRadius={6} baseColor={HEADER_SHIMMER_BASE} highlightColor={HEADER_SHIMMER_HIGHLIGHT} />
+                </View>
+            </View>
+        </View>
+    );
+
     if (loading) {
         return (
-            <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} />
-                <ActivityIndicator size="large" color={COLORS.white} />
+            <SafeAreaView style={styles.container}>
+                <StatusBar barStyle="light-content" backgroundColor="#13161A" />
+                {renderHeaderSkeleton()}
+                <View style={{ flex: 1, backgroundColor: COLORS.grayBg, paddingTop: 10 }}>
+                    <PostListSkeleton />
+                </View>
             </SafeAreaView>
         );
     }

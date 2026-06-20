@@ -19,12 +19,14 @@ import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 import { showMessage } from 'react-native-flash-message';
 import { emitter } from '../../helpers/eventBus.js';
 import { UI_SCALE } from '../../helpers/layout.js';
+import PostListSkeleton from '../../helpers/skeletons/PostListSkeleton.jsx';
 
 const { width, height } = Dimensions.get('window');
 
 const COLORS = {
     primary: '#800000',
     secondary: '#081539',
+    dark: '#13161A',
     white: '#FFFFFF',
     text: '#333333',
     grayBg: '#F5F5F5',
@@ -51,6 +53,8 @@ export default function SearchListScreen() {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+    const [totalCount, setTotalCount] = useState(null);
 
     const [optionsVisible, setOptionsVisible] = useState(false);
     const [selectedPost, setSelectedPost] = useState(null);
@@ -108,6 +112,7 @@ export default function SearchListScreen() {
 
                 if (isRefresh) {
                     setPosts(newPosts);
+                    setTotalCount(response.data.totalCount);
                 } else {
                     setPosts(prev => {
                         const existingIds = new Set(prev.map(p => p._id));
@@ -121,7 +126,10 @@ export default function SearchListScreen() {
             }
         } catch (error) {
             console.error("SearchListScreen fetch error:", error);
-            if (isRefresh) setPosts([]);
+            if (isRefresh) {
+                setPosts([]);
+                setTotalCount(0);
+            }
         } finally {
             setLoading(false);
             setIsLoadingMore(false);
@@ -201,6 +209,13 @@ export default function SearchListScreen() {
     const formatKm = (km) => new Intl.NumberFormat('de-DE').format(km);
     const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
+    const formatCount = (n) => {
+        const noun = n === 1 ? 'anunț găsit' : 'anunțuri găsite';
+        const lastTwo = n % 100;
+        const de = (n >= 20 && (lastTwo === 0 || lastTwo >= 20)) ? 'de ' : '';
+        return `${new Intl.NumberFormat('de-DE').format(n)} ${de}${noun}`;
+    };
+
     const getPreviewImage = (mediaArray) => {
         if (!mediaArray || mediaArray.length === 0) return null;
         const firstImage = mediaArray.find(m => m.type === 'image');
@@ -258,11 +273,7 @@ export default function SearchListScreen() {
 
     const ListEmpty = useMemo(() => {
         if (loading) {
-            return (
-                <View style={styles.emptyContainer}>
-                    <ActivityIndicator size="large" color={COLORS.secondary} />
-                </View>
-            );
+            return <PostListSkeleton />;
         }
         return (
             <View style={styles.emptyContainer}>
@@ -293,6 +304,10 @@ export default function SearchListScreen() {
                     <Text style={styles.backButtonText}>Înapoi</Text>
                 </Pressable>
             </View>
+
+            {!loading && totalCount > 0 && (
+                <Text style={styles.resultsCount}>{formatCount(totalCount)}</Text>
+            )}
 
             <View style={styles.listArea}>
                 <FlatList
@@ -370,6 +385,14 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    resultsCount: {
+        color: COLORS.dark,
+        fontSize: Math.round(11 * csc),
+        fontWeight: '500',
+        letterSpacing: 0.2,
+        paddingHorizontal: 15,
+        paddingBottom: 8,
     },
     listArea: {
         flex: 1,

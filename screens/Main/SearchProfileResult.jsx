@@ -23,18 +23,24 @@ import { Context } from '../../context/Context.js';
 import ReportModal from './components/ReportModal.jsx';
 import { emitter } from '../../helpers/eventBus.js';
 import { UI_SCALE } from '../../helpers/layout.js';
+import PostListSkeleton from '../../helpers/skeletons/PostListSkeleton.jsx';
+import Shimmer from '../../helpers/skeletons/Shimmer.jsx';
 
 const { width } = Dimensions.get('window');
 
 const COLORS = {
     primary: '#800000',
     secondary: '#081539',
+    dark: '#13161A',
     white: '#FFFFFF',
     text: '#333333',
     grayBg: '#F5F5F5',
     tagBg: '#EEEEEE',
     textLight: '#666666'
 };
+
+const HEADER_SHIMMER_BASE = 'rgba(255, 255, 255, 0.18)';
+const HEADER_SHIMMER_HIGHLIGHT = 'rgba(255, 255, 255, 0.42)';
 
 const csc = UI_SCALE;
 const cardScaled = {
@@ -234,6 +240,61 @@ export default function SearchProfileResult() {
     const formatKm = (km) => new Intl.NumberFormat('de-DE').format(km);
     const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
+    const renderHeaderSkeleton = () => (
+        <View style={styles.profileHeader}>
+            <View style={styles.avatarContainer}>
+                <Shimmer width="100%" height="100%" borderRadius={43} />
+            </View>
+
+            <Shimmer
+                width={160}
+                height={20}
+                borderRadius={6}
+                baseColor={HEADER_SHIMMER_BASE}
+                highlightColor={HEADER_SHIMMER_HIGHLIGHT}
+                style={{ marginBottom: 5 }}
+            />
+
+            <Shimmer
+                width={200}
+                height={13}
+                borderRadius={5}
+                baseColor={HEADER_SHIMMER_BASE}
+                highlightColor={HEADER_SHIMMER_HIGHLIGHT}
+                style={{ marginBottom: 15 }}
+            />
+
+            <View style={styles.actionRow}>
+                <Shimmer
+                    width={45}
+                    height={45}
+                    borderRadius={22.5}
+                    baseColor={HEADER_SHIMMER_BASE}
+                    highlightColor={HEADER_SHIMMER_HIGHLIGHT}
+                    style={{ marginRight: 6 }}
+                />
+                <Shimmer
+                    width={45}
+                    height={45}
+                    borderRadius={22.5}
+                    baseColor={HEADER_SHIMMER_BASE}
+                    highlightColor={HEADER_SHIMMER_HIGHLIGHT}
+                    style={{ marginLeft: 6 }}
+                />
+            </View>
+
+            <View style={styles.statsRow}>
+                <Shimmer
+                    width={90}
+                    height={13}
+                    borderRadius={5}
+                    baseColor={HEADER_SHIMMER_BASE}
+                    highlightColor={HEADER_SHIMMER_HIGHLIGHT}
+                />
+            </View>
+        </View>
+    );
+
     const renderHeader = () => {
         if (!profileData) return null;
 
@@ -424,8 +485,9 @@ export default function SearchProfileResult() {
             </View>
 
             {loading ? (
-                <View style={styles.center}>
-                    <ActivityIndicator size="large" color={COLORS.primary} />
+                <View style={{ flex: 1, backgroundColor: COLORS.grayBg }}>
+                    {renderHeaderSkeleton()}
+                    <PostListSkeleton style={{ paddingTop: 10 }} />
                 </View>
             ) : (
                 <FlatList
@@ -588,7 +650,7 @@ const styles = StyleSheet.create({
         height: 86,
         borderRadius: 43,
         borderWidth: 3,
-        borderColor: COLORS.secondary, 
+        borderColor: COLORS.dark, 
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 10,
@@ -627,7 +689,7 @@ const styles = StyleSheet.create({
         width: 45,
         height: 45,
         borderRadius: 22.5,
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.dark,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: "#000",

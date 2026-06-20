@@ -10,6 +10,7 @@ import {
     Modal,
     Platform,
     StatusBar,
+    useWindowDimensions,
 } from 'react-native';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
@@ -19,6 +20,7 @@ import { formatConversationTime } from '../../helpers/chatHelper.js';
 import { emitter } from '../../helpers/eventBus.js';
 import { Context } from '../../context/Context.js';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Shimmer from '../../helpers/skeletons/Shimmer.jsx';
 
 const COLORS = {
     primary: '#800000',
@@ -30,6 +32,48 @@ const COLORS = {
     placeholder: '#999999',
     disabled: '#F0F0F0'
 };
+
+const SKELETON_ROW_WIDTHS = [
+    { name: '52%', msg: '80%' },
+    { name: '40%', msg: '66%' },
+    { name: '61%', msg: '86%' },
+    { name: '46%', msg: '73%' },
+    { name: '55%', msg: '60%' },
+    { name: '37%', msg: '82%' },
+];
+
+function ConversationListSkeleton() {
+    const { height } = useWindowDimensions();
+    const count = Math.max(8, Math.ceil(height / 76) + 1);
+
+    return (
+        <View style={styles.skeletonList} pointerEvents="none">
+            {Array.from({ length: count }).map((_, i) => {
+                const w = SKELETON_ROW_WIDTHS[i % SKELETON_ROW_WIDTHS.length];
+                return (
+                    <View key={i}>
+                        <View style={styles.convItem}>
+                            <View style={styles.avatarContainer}>
+                                <Shimmer width={52} height={52} borderRadius={26} />
+                            </View>
+
+                            <View style={styles.convContent}>
+                                <View style={styles.convTop}>
+                                    <Shimmer width={w.name} height={14} borderRadius={6} />
+                                    <Shimmer width={38} height={11} borderRadius={5} />
+                                </View>
+                                <View style={styles.convBottom}>
+                                    <Shimmer width={w.msg} height={12} borderRadius={5} />
+                                </View>
+                            </View>
+                        </View>
+                        {i < count - 1 && <View style={styles.separator} />}
+                    </View>
+                );
+            })}
+        </View>
+    );
+}
 
 export default function ChatListScreen({ navigation }) {
     const { fetchUnreadChatCount, activeChatConversationRef } = useContext(Context);
@@ -361,12 +405,7 @@ export default function ChatListScreen({ navigation }) {
                 {!isSearching && (
                     <>
                         {loading ? (
-                            <View style={styles.loadingContainer}>
-                                <ActivityIndicator
-                                    size="large"
-                                    color={COLORS.primary}
-                                />
-                            </View>
+                            <ConversationListSkeleton />
                         ) : (
                             <FlatList
                                 data={conversations}
@@ -461,6 +500,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
+    },
+    skeletonList: {
+        flex: 1,
+        overflow: 'hidden',
     },
     header: {
         backgroundColor: COLORS.secondary,

@@ -27,6 +27,7 @@ import { assets } from '../../assets.js';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 import TypingIndicator from './components/TypingIndicator.jsx';
+import Shimmer from '../../helpers/skeletons/Shimmer.jsx';
 
 
 const COLORS = {
@@ -47,6 +48,44 @@ const REPORT_REASONS = [
     'Limbaj de ură',
     'Alt motiv',
 ];
+
+const SKELETON_BUBBLES = [
+    { own: false, w: '58%', h: 40 },
+    { own: false, w: '40%', h: 40 },
+    { own: true,  w: '52%', h: 60 },
+    { own: false, w: '62%', h: 40 },
+    { own: true,  w: '45%', h: 40 },
+    { own: true,  w: '56%', h: 40 },
+];
+
+function ChatThreadSkeleton() {
+    return (
+        <View style={styles.skelThread} pointerEvents="none">
+            {SKELETON_BUBBLES.map((b, i) => (
+                <View
+                    key={i}
+                    style={[
+                        styles.messageWrapper,
+                        b.own ? styles.messageWrapperOwn : styles.messageWrapperOther,
+                    ]}
+                >
+                    {!b.own && (
+                        <Shimmer width={28} height={28} borderRadius={14} style={{ marginRight: 6 }} />
+                    )}
+                    <View
+                        style={[
+                            styles.skelBubble,
+                            b.own ? styles.skelBubbleOwn : styles.skelBubbleOther,
+                            { width: b.w, height: b.h },
+                        ]}
+                    >
+                        <Shimmer width="100%" height="100%" borderRadius={0} />
+                    </View>
+                </View>
+            ))}
+        </View>
+    );
+}
 
 export default function ChatScreen({ route, navigation }) {
     const { conversationId, participantName, participantIcon, participantId } = route.params;
@@ -621,8 +660,8 @@ export default function ChatScreen({ route, navigation }) {
                     <View style={[styles.headerAvatar, { backgroundColor: COLORS.disabled }]} />
                     <View style={{ flex: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, marginRight: 40 }} />
                 </View>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={COLORS.primary} />
+                <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+                    <ChatThreadSkeleton />
                 </View>
             </SafeAreaView>
         );
@@ -669,9 +708,7 @@ export default function ChatScreen({ route, navigation }) {
                 keyboardVerticalOffset={0}
             >
                 {loading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color={COLORS.primary} />
-                    </View>
+                    <ChatThreadSkeleton />
                 ) : (
                     <FlatList
                         ref={flatListRef}
@@ -946,6 +983,22 @@ const styles = StyleSheet.create({
     messagesList: {
         paddingHorizontal: 12,
         paddingVertical: 8,
+    },
+    skelThread: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    skelBubble: {
+        borderRadius: 18,
+        overflow: 'hidden',
+    },
+    skelBubbleOwn: {
+        borderBottomRightRadius: 4,
+    },
+    skelBubbleOther: {
+        borderBottomLeftRadius: 4,
     },
     messageWrapper: {
         flexDirection: 'row',
