@@ -8,6 +8,7 @@ import { requestUserPermission, getFcmToken, notificationListener, listenTokenRe
 import { emitter } from "../helpers/eventBus.js";
 import { io as socketIO } from 'socket.io-client';
 import { showInAppNotification } from '../helpers/notificationHelper.js';
+import { signOutGoogle } from '../helpers/googleAuth.js';
 
 export default function ContextProvider({children}){
 
@@ -201,6 +202,7 @@ export default function ContextProvider({children}){
             setIsLogged(false);
             setUnreadChatCount(0);
             activeChatConversationRef.current = null;
+            await signOutGoogle();
         }
     };
 
@@ -323,9 +325,14 @@ export default function ContextProvider({children}){
 
         let unsub;
         initNotifications().then(fn => unsub = fn);
-
         const unsubTokenRefresh = listenTokenRefresh(async (newToken) => {
-            await axiosAuthGuard.put('/api/users/save-push-token', { token: newToken });
+            try {
+                const creds = await getCreds();
+                if (!creds?.accessToken) return;
+                await axiosAuthGuard.put('/api/users/save-push-token', { token: newToken });
+            } catch (e) {
+                console.log('Sync push token (refresh) eșuat:', e?.message);
+            }
         });
         
         return () => {

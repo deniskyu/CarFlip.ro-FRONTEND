@@ -1,5 +1,7 @@
 const url = 'https://car-flip.com';
 const app_version = 2;
+const GOOGLE_WEB_CLIENT_ID = '490139065115-0m1q8dkorilro1r7cbuuntkackjlpdea.apps.googleusercontent.com';
+const IOS_CLIENT_ID = '490139065115-hl8vbl7jgt7idoeh3abq0tdu3k9rvvbd.apps.googleusercontent.com';
 
 import back_arrow from './media/back_arrow.png';
 import comments_icon from './media/comments_icon.png';
@@ -29,10 +31,16 @@ import logo from './media/logo.jpeg';
 import verified_icon from './media/verified_icon.png';
 import map_icon from './media/map_icon.png';
 import red_light from './media/red_light.png';
+import google_icon from './media/google_icon.png';
+import apple_icon from './media/apple_icon.png';
 
 export const assets = {
     url,
+    GOOGLE_WEB_CLIENT_ID,
+    IOS_CLIENT_ID,
     map_icon,
+    google_icon,
+    apple_icon,
     app_version,
     verified_icon,
     red_light,

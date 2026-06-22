@@ -5,7 +5,7 @@ import { assets } from '../../assets.js';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
 
-const LAST_UPDATED = '24 martie 2026';
+const LAST_UPDATED = '22 iunie 2026';
 
 export default function LegalScreen() {
     const navigation = useNavigation();
@@ -65,7 +65,7 @@ export default function LegalScreen() {
 
                 <Text style={styles.subtitle}>1.4 Contul de utilizator</Text>
                 <Text style={styles.paragraph}>
-                    Pentru a utiliza serviciile CarFlip, este necesară crearea unui cont cu o adresă de email validă și o parolă. Contul este activat prin verificarea unui cod OTP transmis pe email. Ești singurul responsabil pentru păstrarea confidențialității datelor tale de autentificare. Orice activitate desfășurată prin contul tău este responsabilitatea ta exclusivă. Un utilizator poate deține un singur cont activ. În cazul în care suspectezi o utilizare neautorizată a contului, te rugăm să ne contactezi imediat la carflip.ro@outlook.com.
+                    Pentru a utiliza serviciile CarFlip, este necesară crearea unui cont cu o adresă de email validă și o parolă. Contul este activat prin verificarea unui cod OTP transmis pe email. Alternativ, îți poți crea contul și te poți autentifica folosind un cont Google (Google Sign-In) sau Apple (Sign in with Apple); în acest caz autentificarea se realizează prin furnizorul ales, iar contul nu necesită o parolă stabilită în aplicația noastră. Poți adăuga ulterior o parolă prin secțiunea de resetare a parolei, dacă dorești. Ești singurul responsabil pentru păstrarea confidențialității datelor tale de autentificare. Orice activitate desfășurată prin contul tău este responsabilitatea ta exclusivă. Un utilizator poate deține un singur cont activ. În cazul în care suspectezi o utilizare neautorizată a contului, te rugăm să ne contactezi imediat la carflip.ro@outlook.com.
                 </Text>
 
                 <Text style={styles.subtitle}>1.5 Publicarea anunțurilor</Text>
@@ -134,7 +134,9 @@ export default function LegalScreen() {
                 <Text style={styles.paragraph}>
                     În cadrul utilizării aplicației CarFlip, colectăm următoarele categorii de date personale:
                 </Text>
-                <Text style={styles.bulletItem}>• Informații de cont: nume de utilizator, adresă de email, parolă (stocată exclusiv în formă criptată cu algoritmul bcrypt)</Text>
+                <Text style={styles.bulletItem}>
+                    • Informații de cont: nume de utilizator, adresă de email, parolă (stocată exclusiv în formă criptată cu algoritmul bcrypt) sau identificatorii unici și profilul public de bază furnizate de Google/Apple în cazul autentificării prin servicii de tip OAuth (Sign-In). La autentificarea cu Apple poți alege să îți ascunzi adresa reală de email, caz în care primim o adresă de redirecționare anonimizată de tip privaterelay.appleid.com
+                </Text>
                 <Text style={styles.bulletItem}>• Conținut generat de utilizator: anunțuri, fotografii, videoclipuri, descrieri, comentarii, mesaje private</Text>
                 <Text style={styles.bulletItem}>• Date tehnice: token-uri de notificare Firebase Cloud Messaging (FCM), tipul dispozitivului</Text>
                 <Text style={styles.bulletItem}>• Date de utilizare: interacțiuni cu anunțurile (vizualizări, aprecieri), postări vizualizate</Text>
@@ -180,6 +182,8 @@ export default function LegalScreen() {
                 </Text>
                 <Text style={styles.bulletItem}>• Mailgun (Sinch Email) — transmiterea email-urilor tranzacționale</Text>
                 <Text style={styles.bulletItem}>• Firebase Cloud Messaging (Google) — transmiterea notificărilor push</Text>
+                <Text style={styles.bulletItem}>• Google LLC — furnizarea serviciului de autentificare securizată Google Sign-In</Text>
+                <Text style={styles.bulletItem}>• Apple Inc. — furnizarea serviciului de autentificare securizată Sign in with Apple</Text>
                 <Text style={styles.bulletItem}>• Cloudflare R2 (Cloudflare, Inc.) — stocarea fișierelor media (imagini, videoclipuri)</Text>
                 <Text style={styles.bulletItem}>• MongoDB Atlas (MongoDB, Inc.) — stocarea bazei de date</Text>
                 <Text style={styles.paragraph}>
@@ -208,7 +212,7 @@ export default function LegalScreen() {
 
                 <Text style={styles.subtitle}>2.9 Transferuri internaționale de date</Text>
                 <Text style={styles.paragraph}>
-                    Datele personale sunt stocate și prelucrate preponderent în cadrul Spațiului Economic European (SEE). În cazul în care anumiți furnizori de servicii (Cloudflare, Google/Firebase) prelucrează date în afara SEE, aceștia asigură un nivel adecvat de protecție prin clauze contractuale standard aprobate de Comisia Europeană sau prin certificări recunoscute (EU-US Data Privacy Framework).
+                    Datele personale sunt stocate și prelucrate preponderent în cadrul Spațiului Economic European (SEE). În cazul în care anumiți furnizori de servicii (Cloudflare, Google/Firebase, Apple) prelucrează date în afara SEE, aceștia asigură un nivel adecvat de protecție prin clauze contractuale standard aprobate de Comisia Europeană sau prin certificări recunoscute (EU-US Data Privacy Framework).
                 </Text>
 
                 <View style={styles.sectionDivider} />

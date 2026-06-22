@@ -1,7 +1,7 @@
 import { ActivityIndicator, Modal, Pressable, StyleSheet, View, Image, StatusBar, Keyboard } from 'react-native';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -22,11 +22,24 @@ export default function SecurityScreen() {
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
+    const [hasPassword, setHasPassword] = useState(true);
+
     const [data, setData] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
     });
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const res = await axiosAuthGuard.get(`${url}/api/user/data`);
+                if (mounted && res.data?.success) setHasPassword(!!res.data.hasPassword);
+            } catch (e) {}
+        })();
+        return () => { mounted = false; };
+    }, []);
 
     const onChangeHandler = (name, value) => {
         setData(prev => ({ ...prev, [name]: value }));
@@ -80,6 +93,7 @@ export default function SecurityScreen() {
 
     const [deleteModal, setDeleteModal] = useState(false);
     const [deletePassword, setDeletePassword] = useState('');
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState('');
 
@@ -87,15 +101,24 @@ export default function SecurityScreen() {
         Keyboard.dismiss();
         setDeleteError('');
 
-        if (!deletePassword) {
-            setDeleteError('Introdu parola pentru confirmare.');
-            return;
+        if (hasPassword) {
+            if (!deletePassword) {
+                setDeleteError('Introdu parola pentru confirmare.');
+                return;
+            }
+        } else {
+            const confirmOk = deleteConfirmText.trim().toUpperCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'STERGE';
+            if (!confirmOk) {
+                setDeleteError('Scrie STERGE pentru a confirma.');
+                return;
+            }
         }
 
         setDeleteLoading(true);
         try {
             const response = await axiosAuthGuard.delete(`${url}/api/user/delete-account`, {
-                data: { password: deletePassword }
+                data: hasPassword ? { password: deletePassword } : {}
             });
 
             if (response.data.success) {
@@ -141,77 +164,81 @@ export default function SecurityScreen() {
                 showsVerticalScrollIndicator={false}
             >
 
-                <Text style={styles.sectionLabel}>Schimbă parola</Text>
+                {hasPassword && (
+                    <>
+                        <Text style={styles.sectionLabel}>Schimbă parola</Text>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Parola curentă</Text>
-                    <View style={styles.passwordContainer}>
-                        <TextInput
-                            value={data.currentPassword}
-                            onChangeText={(val) => onChangeHandler('currentPassword', val)}
-                            style={styles.passwordInput}
-                            secureTextEntry={!showCurrent}
-                            maxLength={32}
-                            placeholder="Introdu parola actuală"
-                            placeholderTextColor="#A0A0A0"
-                        />
-                        <Pressable onPress={() => setShowCurrent(!showCurrent)} style={styles.eyeBtn}>
-                            <Image source={assets.view_icon} style={[styles.eyeIcon, showCurrent && { opacity: 0.5 }]} />
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Parola curentă</Text>
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    value={data.currentPassword}
+                                    onChangeText={(val) => onChangeHandler('currentPassword', val)}
+                                    style={styles.passwordInput}
+                                    secureTextEntry={!showCurrent}
+                                    maxLength={32}
+                                    placeholder="Introdu parola actuală"
+                                    placeholderTextColor="#A0A0A0"
+                                />
+                                <Pressable onPress={() => setShowCurrent(!showCurrent)} style={styles.eyeBtn}>
+                                    <Image source={assets.view_icon} style={[styles.eyeIcon, showCurrent && { opacity: 0.5 }]} />
+                                </Pressable>
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Parola nouă</Text>
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    value={data.newPassword}
+                                    onChangeText={(val) => onChangeHandler('newPassword', val)}
+                                    style={styles.passwordInput}
+                                    secureTextEntry={!showNew}
+                                    maxLength={32}
+                                    placeholder="Creează o parolă nouă"
+                                    placeholderTextColor="#A0A0A0"
+                                />
+                                <Pressable onPress={() => setShowNew(!showNew)} style={styles.eyeBtn}>
+                                    <Image source={assets.view_icon} style={[styles.eyeIcon, showNew && { opacity: 0.5 }]} />
+                                </Pressable>
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Confirmă parola nouă</Text>
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    value={data.confirmPassword}
+                                    onChangeText={(val) => onChangeHandler('confirmPassword', val)}
+                                    style={styles.passwordInput}
+                                    secureTextEntry={!showConfirm}
+                                    maxLength={32}
+                                    placeholder="Confirmă parola nouă"
+                                    placeholderTextColor="#A0A0A0"
+                                />
+                                <Pressable onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeBtn}>
+                                    <Image source={assets.view_icon} style={[styles.eyeIcon, showConfirm && { opacity: 0.5 }]} />
+                                </Pressable>
+                            </View>
+                        </View>
+
+                        <View style={styles.errorContainer}>
+                            {errors ? <Text style={styles.errorText}>{errors}</Text> : null}
+                        </View>
+
+                        <Pressable
+                            onPress={() => loading ? null : handleChangePassword()}
+                            style={({ pressed }) => [styles.saveButton, pressed && styles.buttonPressed]}
+                        >
+                            {loading
+                                ? <ActivityIndicator size="small" color="#FFFFFF" />
+                                : <Text style={styles.saveButtonText}>Schimbă parola</Text>
+                            }
                         </Pressable>
-                    </View>
-                </View>
+                    </>
+                )}
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Parola nouă</Text>
-                    <View style={styles.passwordContainer}>
-                        <TextInput
-                            value={data.newPassword}
-                            onChangeText={(val) => onChangeHandler('newPassword', val)}
-                            style={styles.passwordInput}
-                            secureTextEntry={!showNew}
-                            maxLength={32}
-                            placeholder="Creează o parolă nouă"
-                            placeholderTextColor="#A0A0A0"
-                        />
-                        <Pressable onPress={() => setShowNew(!showNew)} style={styles.eyeBtn}>
-                            <Image source={assets.view_icon} style={[styles.eyeIcon, showNew && { opacity: 0.5 }]} />
-                        </Pressable>
-                    </View>
-                </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Confirmă parola nouă</Text>
-                    <View style={styles.passwordContainer}>
-                        <TextInput
-                            value={data.confirmPassword}
-                            onChangeText={(val) => onChangeHandler('confirmPassword', val)}
-                            style={styles.passwordInput}
-                            secureTextEntry={!showConfirm}
-                            maxLength={32}
-                            placeholder="Confirmă parola nouă"
-                            placeholderTextColor="#A0A0A0"
-                        />
-                        <Pressable onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeBtn}>
-                            <Image source={assets.view_icon} style={[styles.eyeIcon, showConfirm && { opacity: 0.5 }]} />
-                        </Pressable>
-                    </View>
-                </View>
-
-                <View style={styles.errorContainer}>
-                    {errors ? <Text style={styles.errorText}>{errors}</Text> : null}
-                </View>
-
-                <Pressable
-                    onPress={() => loading ? null : handleChangePassword()}
-                    style={({ pressed }) => [styles.saveButton, pressed && styles.buttonPressed]}
-                >
-                    {loading
-                        ? <ActivityIndicator size="small" color="#FFFFFF" />
-                        : <Text style={styles.saveButtonText}>Schimbă parola</Text>
-                    }
-                </Pressable>
-
-                <View style={styles.dangerZone}>
+                <View style={[styles.dangerZone, !hasPassword && styles.dangerZoneNoBorder]}>
                     <Text style={styles.dangerTitle}>Ștergere cont</Text>
                     <Text style={styles.dangerDescription}>
                         Această acțiune este ireversibilă. Toate datele tale vor fi șterse definitiv, inclusiv anunțurile, comentariile și conversațiile.
@@ -220,6 +247,7 @@ export default function SecurityScreen() {
                     <Pressable
                         onPress={() => {
                             setDeletePassword('');
+                            setDeleteConfirmText('');
                             setDeleteError('');
                             setDeleteModal(true);
                         }}
@@ -237,18 +265,33 @@ export default function SecurityScreen() {
                         <View style={styles.modalContainer}>
                             <Text style={styles.modalTitle}>Ești sigur?</Text>
                             <Text style={styles.modalSubtitle}>
-                                Introdu parola ta pentru a confirma. Contul tău și toate datele asociate vor fi șterse permanent.
+                                {hasPassword
+                                    ? "Introdu parola ta pentru a confirma. Contul tău și toate datele asociate vor fi șterse permanent."
+                                    : "Scrie STERGE mai jos pentru a confirma. Contul tău și toate datele asociate vor fi șterse permanent."}
                             </Text>
 
-                            <TextInput
-                                value={deletePassword}
-                                onChangeText={setDeletePassword}
-                                style={styles.modalInput}
-                                secureTextEntry
-                                maxLength={32}
-                                placeholder="Parola ta"
-                                placeholderTextColor="#A0A0A0"
-                            />
+                            {hasPassword ? (
+                                <TextInput
+                                    value={deletePassword}
+                                    onChangeText={setDeletePassword}
+                                    style={styles.modalInput}
+                                    secureTextEntry
+                                    maxLength={32}
+                                    placeholder="Parola ta"
+                                    placeholderTextColor="#A0A0A0"
+                                />
+                            ) : (
+                                <TextInput
+                                    value={deleteConfirmText}
+                                    onChangeText={setDeleteConfirmText}
+                                    style={styles.modalInput}
+                                    autoCapitalize="characters"
+                                    autoCorrect={false}
+                                    maxLength={10}
+                                    placeholder="Scrie STERGE"
+                                    placeholderTextColor="#A0A0A0"
+                                />
+                            )}
 
                             <View style={styles.modalErrorContainer}>
                                 {deleteError ? <Text style={styles.modalErrorText}>{deleteError}</Text> : null}
@@ -401,6 +444,11 @@ const styles = StyleSheet.create({
         paddingTop: 32,
         borderTopWidth: 1,
         borderTopColor: '#F0F0F0',
+    },
+    dangerZoneNoBorder: {
+        marginTop: 8,
+        paddingTop: 0,
+        borderTopWidth: 0,
     },
     dangerTitle: {
         fontSize: 18,
