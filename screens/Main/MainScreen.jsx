@@ -27,6 +27,7 @@ import { useCustomScroll } from "../../helpers/useCustomScroll.js";
 import { showMessage } from "react-native-flash-message";
 import { Layout, calibrateItemHeight, UI_SCALE } from "../../helpers/layout.js";
 import { assets } from "../../assets.js";
+import PostItemSkeleton from '../../helpers/skeletons/PostItemSkeleton.jsx';
 
 const { width, height } = Dimensions.get('window');
 
@@ -445,10 +446,11 @@ const fetchFeed = async (isRefresh = false, currentCursor = null, currentMode = 
     ), [targetCommentId, itemHeight]);
 
     if (loading && (!sales || sales.length === 0)) {
+
         return (
-            <View style={styles.center}>
+            <View style={{ flex: 1, backgroundColor: 'black' }}>
                 <StatusBar barStyle="light-content" />
-                <ActivityIndicator size="large" color="#800000" />
+                <PostItemSkeleton />
             </View>
         );
     }

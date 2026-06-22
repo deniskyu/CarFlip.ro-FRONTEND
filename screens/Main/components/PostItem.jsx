@@ -38,7 +38,7 @@ import FastImage from '@d11/react-native-fast-image';
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
 const sc = UI_SCALE;
-const scaled = {
+export const scaled = {
     iconSize: Math.round(30 * sc),
     profileSize: Math.round(45 * sc),
     profileRadius: Math.round(22.5 * sc),

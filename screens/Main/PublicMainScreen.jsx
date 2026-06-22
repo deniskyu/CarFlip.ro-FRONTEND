@@ -22,6 +22,7 @@ import FastImage from '@d11/react-native-fast-image';
 import { useCustomScroll } from "../../helpers/useCustomScroll.js"; 
 import { Layout, calibrateItemHeight } from "../../helpers/layout.js";
 import { assets } from '../../assets.js';
+import PostItemSkeleton from "../../helpers/skeletons/PostItemSkeleton.jsx";
 
 const { width, height } = Dimensions.get('window');
 
@@ -330,9 +331,9 @@ export default function PublicMainScreen() {
 
     if (loading && (!sales || sales.length === 0)) {
         return (
-            <View style={styles.center}>
+            <View style={{ flex: 1, backgroundColor: 'black' }}>
                 <StatusBar barStyle="light-content" />
-                <ActivityIndicator size="large" color="#800000" />
+                <PostItemSkeleton />
             </View>
         );
     }

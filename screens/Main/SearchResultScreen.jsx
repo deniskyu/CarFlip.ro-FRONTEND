@@ -21,6 +21,7 @@ import { emitter } from '../../helpers/eventBus.js';
 import FastImage from '@d11/react-native-fast-image';
 import { useCustomScroll } from "../../helpers/useCustomScroll.js"; 
 import { Layout } from "../../helpers/layout.js";
+import PostItemSkeleton from '../../helpers/skeletons/PostItemSkeleton.jsx';
 
 const { width, height } = Dimensions.get('window');
 
@@ -309,9 +310,9 @@ export default function SearchResultScreen() {
             </View>
 
             {loading ? (
-                <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#800000" />
-                    <Text style={styles.loadingText}>Căutăm...</Text>
+                <View style={{ flex: 1, backgroundColor: 'black' }}>
+                    <StatusBar barStyle="light-content" />
+                    <PostItemSkeleton />
                 </View>
             ) : (
                 <View style={{ flex: 1 }} onLayout={handleContainerLayout}>
