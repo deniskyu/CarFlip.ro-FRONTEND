@@ -4,6 +4,17 @@ import {Text, TextInput} from '../../helpers/AppText.jsx';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
+const COLORS = {
+    primary: '#800000',
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    border: '#2F353E',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
+};
+
 const CONTACT_EMAIL = 'carfip.ro@outlook.com';
 
 export default function ContactScreen() {
@@ -15,7 +26,7 @@ export default function ContactScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Contact</Text>
@@ -108,7 +119,7 @@ export default function ContactScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.bg,
     },
 
     header: {
@@ -118,12 +129,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 12,
         paddingBottom: 16,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.bg,
     },
     headerTitle: {
         fontSize: 26,
         fontWeight: 'bold',
-        color: '#081539',
+        color: COLORS.text,
     },
     menuButton: {
         padding: 8,
@@ -135,7 +146,7 @@ const styles = StyleSheet.create({
     },
     menuLine: {
         height: 2.5,
-        backgroundColor: '#081539',
+        backgroundColor: COLORS.text,
         borderRadius: 2,
     },
 
@@ -151,26 +162,26 @@ const styles = StyleSheet.create({
     sectionLabel: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#081539',
+        color: COLORS.text,
         marginBottom: 10,
     },
     contactText: {
         fontSize: 14,
-        color: '#666666',
+        color: COLORS.textMuted,
         lineHeight: 21,
         marginBottom: 20,
     },
     emailBox: {
-        backgroundColor: '#F5F7FA',
+        backgroundColor: COLORS.surface,
         borderRadius: 14,
         padding: 20,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#E1E5EB',
+        borderColor: COLORS.border,
     },
     emailLabel: {
         fontSize: 12,
-        color: '#888888',
+        color: COLORS.textMuted,
         textTransform: 'uppercase',
         letterSpacing: 1,
         marginBottom: 6,
@@ -178,23 +189,23 @@ const styles = StyleSheet.create({
     emailAddress: {
         fontSize: 17,
         fontWeight: '700',
-        color: '#081539',
+        color: COLORS.accent,
         marginBottom: 6,
     },
     emailHint: {
         fontSize: 12,
-        color: '#AAAAAA',
+        color: COLORS.placeholder,
     },
 
     aboutSection: {
         marginTop: 56,
         paddingTop: 32,
         borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        borderTopColor: COLORS.border,
     },
     aboutIntro: {
         fontSize: 14,
-        color: '#666666',
+        color: COLORS.textMuted,
         lineHeight: 21,
         marginBottom: 24,
     },
@@ -203,7 +214,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         paddingVertical: 18,
         borderBottomWidth: 0.5,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: COLORS.border,
     },
     valueEmoji: {
         fontSize: 24,
@@ -216,12 +227,12 @@ const styles = StyleSheet.create({
     valueTitle: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#081539',
+        color: COLORS.text,
         marginBottom: 4,
     },
     valueDescription: {
         fontSize: 13,
-        color: '#888888',
+        color: COLORS.textMuted,
         lineHeight: 19,
     },
 
@@ -230,18 +241,18 @@ const styles = StyleSheet.create({
         marginTop: 40,
         paddingTop: 24,
         borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        borderTopColor: COLORS.border,
     },
     footerBrand: {
         fontSize: 20,
         fontWeight: '900',
-        color: '#081539',
+        color: COLORS.text,
         letterSpacing: 2,
         marginBottom: 4,
     },
     footerTagline: {
         fontSize: 13,
-        color: '#AAAAAA',
+        color: COLORS.placeholder,
         fontStyle: 'italic',
     },
 });

@@ -91,9 +91,6 @@ export default function PostItemSkeleton() {
                     ))}
                 </View>
             </View>
-            <View style={styles.centerLoader}>
-                <ActivityIndicator size="large" color="rgba(255,255,255,0.6)" />
-            </View>
         </View>
     );
 }
@@ -159,15 +156,5 @@ const styles = StyleSheet.create({
     },
     tagsRow: {
         flexDirection: 'row',
-    },
-    centerLoader: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 200,
     },
 });

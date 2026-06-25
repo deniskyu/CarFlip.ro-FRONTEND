@@ -30,13 +30,18 @@ const { width } = Dimensions.get('window');
 
 const COLORS = {
     primary: '#800000',
-    secondary: '#081539',
+    accent: '#E0706C',
     dark: '#13161A',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
     white: '#FFFFFF',
-    text: '#333333',
-    grayBg: '#F5F5F5',
-    tagBg: '#EEEEEE',
-    textLight: '#666666'
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
 };
 
 const HEADER_SHIMMER_BASE = 'rgba(255, 255, 255, 0.18)';
@@ -414,7 +419,7 @@ export default function SearchProfileResult() {
                     <View style={styles.divider} />
 
                     <Pressable style={styles.optionButton} onPress={handleBlock}>
-                        <Text style={[styles.optionText, { color: '#800000', fontWeight: 'bold' }]}>
+                        <Text style={[styles.optionText, { color: COLORS.accent, fontWeight: 'bold' }]}>
                             Blochează utilizator
                         </Text>
                     </Pressable>
@@ -426,9 +431,9 @@ export default function SearchProfileResult() {
     if (isUnavailable) {
         return (
             <View style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="white" />
+                <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
                 <Pressable 
-                    style={[styles.backButton, { backgroundColor: '#f0f0f0' }]} 
+                    style={[styles.backButton, { backgroundColor: COLORS.surface, position: 'relative', top: 0, left: 0, marginTop: Platform.OS === 'ios' ? 50 : 40, marginLeft: 20 }]} 
                     onPress={() => {
                         if (navigation.canGoBack()) {
                             navigation.goBack();
@@ -438,15 +443,15 @@ export default function SearchProfileResult() {
                     }}
                     hitSlop={20}
                 >
-                    <Image source={assets.back_arrow} style={[styles.topIcon, { tintColor: '#333' }]} />
+                    <Image source={assets.back_arrow} style={[styles.topIcon, { tintColor: COLORS.text }]} />
                 </Pressable>
                 
                 <View style={styles.center}>
                     <Text style={{ fontSize: 40, marginBottom: 20 }}>😕</Text>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.text }}>
                         Utilizatorul nu a fost găsit
                     </Text>
-                    <Text style={{ color: '#666', marginTop: 10 }}>
+                    <Text style={{ color: COLORS.textMuted, marginTop: 10 }}>
                         Este posibil ca acest cont să fi fost șters sau restricționat.
                     </Text>
                 </View>
@@ -485,7 +490,7 @@ export default function SearchProfileResult() {
             </View>
 
             {loading ? (
-                <View style={{ flex: 1, backgroundColor: COLORS.grayBg }}>
+                <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
                     {renderHeaderSkeleton()}
                     <PostListSkeleton style={{ paddingTop: 10 }} />
                 </View>
@@ -497,11 +502,11 @@ export default function SearchProfileResult() {
                     ListHeaderComponent={renderHeader}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ paddingBottom: 50, flexGrow: 1 }}
-                    style={{ backgroundColor: COLORS.grayBg }} 
+                    style={{ backgroundColor: COLORS.bg }} 
                     
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
-                    ListFooterComponent={isLoadingMore ? <ActivityIndicator size="small" color={COLORS.primary} style={{ margin: 20 }}/> : null}
+                    ListFooterComponent={isLoadingMore ? <ActivityIndicator size="small" color={COLORS.accent} style={{ margin: 20 }}/> : null}
                     
                     ListEmptyComponent={() => (
                         <View style={styles.emptyContainer}>
@@ -525,7 +530,7 @@ export default function SearchProfileResult() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.white, 
+        backgroundColor: COLORS.bg, 
     },
     center: {
         flex: 1,
@@ -534,22 +539,19 @@ const styles = StyleSheet.create({
     },
     cardContainer: {
         flexDirection: 'row',
-        backgroundColor: 'white',
+        backgroundColor: COLORS.surface,
         marginHorizontal: 10,
         marginTop: 10,
         borderRadius: 12,
         height: 116,
         overflow: 'hidden',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     imageContainer: {
         width: 130,
         height: '100%',
-        backgroundColor: '#eee',
+        backgroundColor: COLORS.sheet,
     },
     cardImage: {
         width: '100%',
@@ -572,14 +574,14 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#333',
+        color: COLORS.text,
     },
     tagsContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
     },
     tag: {
-        backgroundColor: COLORS.tagBg,
+        backgroundColor: COLORS.sheet,
         paddingHorizontal: 6,
         paddingVertical: 3,
         borderRadius: 4,
@@ -588,7 +590,7 @@ const styles = StyleSheet.create({
     },
     tagText: {
         fontSize: 11,
-        color: '#555',
+        color: COLORS.textMuted,
         fontWeight: '500',
     },
     bottomRow: {
@@ -599,11 +601,11 @@ const styles = StyleSheet.create({
     priceText: {
         fontSize: 17,
         fontWeight: 'bold',
-        color: COLORS.primary,
+        color: COLORS.accent,
     },
     locationText: {
         fontSize: 11,
-        color: '#999',
+        color: COLORS.placeholder,
         marginBottom: 2,
     },
     backButton: {
@@ -719,7 +721,7 @@ const styles = StyleSheet.create({
         paddingTop: 50,
     },
     emptyText: {
-        color: '#999',
+        color: COLORS.textMuted,
         fontSize: 14,
         fontStyle: 'italic'
     },
@@ -729,7 +731,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: 'white',
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingBottom: Platform.OS === 'ios' ? 40 : 20, 
@@ -748,7 +750,7 @@ const styles = StyleSheet.create({
     handleBar: {
         width: 40,
         height: 5,
-        backgroundColor: '#E0E0E0',
+        backgroundColor: COLORS.borderStrong,
         borderRadius: 3,
     },
     optionButton: {
@@ -759,11 +761,11 @@ const styles = StyleSheet.create({
     optionText: {
         fontSize: 16,
         fontWeight: '500',
-        color: '#333',
+        color: COLORS.text,
     },
     divider: {
         height: 1,
-        backgroundColor: '#F0F0F0',
+        backgroundColor: COLORS.border,
         width: '100%',
     }
 });

@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15, paddingTop: Platform.OS === 'ios' ? 50 : 40,
     },
     backButton: {
-        height: 55, backgroundColor: '#081539', borderRadius: 12,
+        height: 55, backgroundColor: '#13161A', borderRadius: 12,
         justifyContent: 'center', alignItems: 'center',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)'

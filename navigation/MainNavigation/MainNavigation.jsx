@@ -65,12 +65,12 @@ function CustomDrawerContent(props) {
             <View style={{ flex: 1, paddingTop: 10 }}>
                 <DrawerItemList {...props} />
             </View>
-            <View style={{ paddingBottom: 30, borderTopWidth: 0.5, borderTopColor: '#E8E8E8', marginTop: 4 }}>
+            <View style={{ paddingBottom: 30, borderTopWidth: 0.5, borderTopColor: '#2F353E', marginTop: 4 }}>
                 <DrawerItem 
                     label="Deconectare" 
                     onPress={() => logoutContext()} 
                     labelStyle={{ 
-                        color: '#800000', 
+                        color: '#E0706C', 
                         fontWeight: 'bold', 
                         fontSize: 15,
                     }}
@@ -140,11 +140,11 @@ function ProfileDrawerNavigation() {
                 headerShown: false,
                 drawerStyle: {
                     width: '60%',     
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: '#1B1F26',
                 },
                 drawerActiveTintColor: '#800000',  
-                drawerActiveBackgroundColor: 'rgba(128, 0, 0, 0.06)', 
-                drawerInactiveTintColor: '#081539',   
+                drawerActiveBackgroundColor: 'rgba(128, 0, 0, 0.08)',
+                drawerInactiveTintColor: '#E6E8EB',   
                 drawerLabelStyle: {
                     fontSize: 15,
                     fontWeight: '500',
@@ -152,7 +152,7 @@ function ProfileDrawerNavigation() {
                 },
                 drawerItemStyle: {
                     borderBottomWidth: 0.5,   
-                    borderBottomColor: '#E8E8E8',
+                    borderBottomColor: '#2F353E',
                     borderRadius: 0,        
                     marginHorizontal: 0,
                     paddingVertical: 2,

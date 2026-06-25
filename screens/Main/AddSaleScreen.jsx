@@ -7,10 +7,10 @@ import {
     Image, 
     Modal, 
     FlatList, 
-    Alert, 
     ActivityIndicator, 
     Platform,
     KeyboardAvoidingView,
+    Dimensions,
 } from 'react-native';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
@@ -23,18 +23,146 @@ import { LOCATIONS, FUEL_TYPES } from './staticData.js';
 import { emitter } from '../../helpers/eventBus.js';
 import { normalizeMediaUri } from '../../helpers/normalizeMediaUri.js';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const COLORS = {
     primary: '#800000',
-    secondary: '#081539',
-    background: '#F5F5F5',
-    white: '#FFFFFF',
-    text: '#333333',
-    border: '#E0E0E0',
-    placeholder: '#999999',
-    disabled: '#F0F0F0'
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
 };
 
+// ─── Custom Alert Component ───────────────────────────────────────────────────
+const CustomAlert = ({ visible, title, message, buttons, onDismiss }) => {
+    if (!visible) return null;
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={onDismiss}
+            statusBarTranslucent
+        >
+            <Pressable style={alertStyles.overlay} onPress={onDismiss}>
+                <Pressable style={alertStyles.card} onPress={() => {}}>
+                    {title ? <Text style={alertStyles.title}>{title}</Text> : null}
+                    {message ? <Text style={alertStyles.message}>{message}</Text> : null}
+                    <View style={[alertStyles.buttonsRow, buttons && buttons.length === 1 && alertStyles.buttonsRowSingle]}>
+                        {buttons && buttons.map((btn, i) => (
+                            <Pressable
+                                key={i}
+                                style={({ pressed }) => [
+                                    alertStyles.button,
+                                    buttons.length === 1 && alertStyles.buttonFull,
+                                    btn.style === 'cancel' && alertStyles.buttonCancel,
+                                    btn.style !== 'cancel' && alertStyles.buttonConfirm,
+                                    pressed && alertStyles.buttonPressed,
+                                ]}
+                                onPress={() => {
+                                    onDismiss();
+                                    btn.onPress && btn.onPress();
+                                }}
+                            >
+                                <Text style={[
+                                    alertStyles.buttonText,
+                                    btn.style === 'cancel' && alertStyles.buttonTextCancel,
+                                    btn.style !== 'cancel' && alertStyles.buttonTextConfirm,
+                                ]}>
+                                    {btn.text}
+                                </Text>
+                            </Pressable>
+                        ))}
+                    </View>
+                </Pressable>
+            </Pressable>
+        </Modal>
+    );
+};
+
+const alertStyles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+    },
+    card: {
+        width: '100%',
+        maxWidth: 360,
+        backgroundColor: COLORS.sheet,
+        borderRadius: 18,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+        elevation: 12,
+    },
+    title: {
+        fontSize: 17,
+        fontWeight: '800',
+        color: COLORS.text,
+        textAlign: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 6,
+    },
+    message: {
+        fontSize: 14,
+        color: COLORS.textMuted,
+        textAlign: 'center',
+        paddingHorizontal: 20,
+        paddingBottom: 22,
+        lineHeight: 20,
+    },
+    buttonsRow: {
+        flexDirection: 'row',
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+    },
+    buttonsRowSingle: {
+        flexDirection: 'row',
+    },
+    button: {
+        flex: 1,
+        paddingVertical: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    buttonFull: {
+        flex: 1,
+    },
+    buttonCancel: {
+        borderRightWidth: 1,
+        borderRightColor: COLORS.border,
+        backgroundColor: 'transparent',
+    },
+    buttonConfirm: {
+        backgroundColor: COLORS.primary,
+    },
+    buttonPressed: {
+        opacity: 0.75,
+    },
+    buttonText: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    buttonTextCancel: {
+        color: COLORS.textMuted,
+    },
+    buttonTextConfirm: {
+        color: '#FFFFFF',
+    },
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 const ENGINE_CAPACITIES = [
     { id: 'electric', name: 'Fără (Electric)' }
@@ -134,7 +262,6 @@ export default function AddSaleScreen({ navigation }) {
     const [phoneNumber, setPhoneNumber] = useState(''); 
     const [description, setDescription] = useState('');
 
-
     const [modalVisible, setModalVisible] = useState(false);
     const [currentSelectionType, setCurrentSelectionType] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -145,6 +272,28 @@ export default function AddSaleScreen({ navigation }) {
     const [loadingMedia, setLoadingMedia] = useState(false);
 
     const [scrollEnabled, setScrollEnabled] = useState(true);
+
+    // ─── Custom Alert State ───────────────────────────────────────────────────
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        buttons: [],
+    });
+
+    const showAlert = useCallback((title, message, buttons) => {
+        setAlertConfig({
+            visible: true,
+            title: title || '',
+            message: message || '',
+            buttons: buttons || [{ text: 'OK', style: 'confirm' }],
+        });
+    }, []);
+
+    const dismissAlert = useCallback(() => {
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+    }, []);
+    // ─────────────────────────────────────────────────────────────────────────
 
     useEffect(() => {
         fetchBrands();
@@ -205,7 +354,7 @@ export default function AddSaleScreen({ navigation }) {
         if (isPickingRef.current) return;
         
         if (media.length >= 13) {
-            Alert.alert("Limită atinsă", "Poți încărca maxim 13 fișiere.");
+            showAlert("Limită atinsă", "Poți încărca maxim 13 fișiere.");
             return;
         }
     
@@ -241,7 +390,7 @@ export default function AddSaleScreen({ navigation }) {
                     const isVideo = file.type && file.type.includes('video');
                     const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
                     if (file.fileSize && file.fileSize > maxSize) {
-                        Alert.alert(
+                        showAlert(
                             'Fișier prea mare',
                             isVideo
                                 ? `Videoclipul "${file.fileName || 'fișier'}" depășește 50 MB și a fost ignorat.`
@@ -251,11 +400,11 @@ export default function AddSaleScreen({ navigation }) {
                     }                
                     if (file.type && file.type.includes('video')) {
                         if (videoCount >= 1) {
-                            Alert.alert("Info", "Poți avea maxim 1 videoclip.");
+                            showAlert("Info", "Poți avea maxim 1 videoclip.");
                             continue;
                         }
                         if (file.duration && file.duration > 45) {
-                            Alert.alert("Video prea lung", "Videoclipul trebuie să aibă maxim 45 secunde.");
+                            showAlert("Video prea lung", "Videoclipul trebuie să aibă maxim 45 secunde.");
                             continue;
                         }
                         videoCount++;
@@ -265,7 +414,7 @@ export default function AddSaleScreen({ navigation }) {
                         if (normalized) {
                             currentMedia.push(normalized);
                         } else {
-                            Alert.alert('Eroare', `Fișierul "${file.fileName || 'fișier'}" nu a putut fi procesat.`);
+                            showAlert('Eroare', `Fișierul "${file.fileName || 'fișier'}" nu a putut fi procesat.`);
                         }
                     }
                 }
@@ -310,7 +459,7 @@ export default function AddSaleScreen({ navigation }) {
     const openModal = (type) => {
         if (type === 'model') {
             if (!selectedBrand) {
-                Alert.alert("Atenție", "Alege întâi Marca.");
+                showAlert("Atenție", "Alege întâi Marca.");
                 return;
             }
             if (models.length === 0) {
@@ -319,7 +468,7 @@ export default function AddSaleScreen({ navigation }) {
         }
         if (type === 'city') {
             if (!selectedCounty) {
-                Alert.alert("Atenție", "Alege întâi Județul.");
+                showAlert("Atenție", "Alege întâi Județul.");
                 return;
             }
         }
@@ -469,7 +618,6 @@ export default function AddSaleScreen({ navigation }) {
         }
     };
 
-
     const handleNavigateToPreview = () => {
         const hasPhoto = media.some(file => file.type && file.type.includes('image'));
 
@@ -480,7 +628,7 @@ export default function AddSaleScreen({ navigation }) {
             !selectedTransmission || !selectedDrivetrain || !selectedPollution || !description.trim() ||
             !title.trim()
         ) {
-            Alert.alert(
+            showAlert(
                 "Eroare", 
                 "Te rugăm să completezi toate câmpurile obligatorii și să adaugi cel puțin o FOTOGRAFIE (videoclipurile sunt opționale)."
             );
@@ -547,7 +695,7 @@ export default function AddSaleScreen({ navigation }) {
                         <Text style={[styles.sectionSubtitle, {marginBottom: 4}]}>
                             O imagine este obligatorie, și va fi cea de copertă in profil. Procesarea anunțului va dura undeva la câteva minute.
                         </Text>
-                        <Text style={[styles.sectionSubtitle, {marginBottom: 12, color: '#800000'}]}>
+                        <Text style={[styles.sectionSubtitle, {marginBottom: 12, color: COLORS.accent}]}>
                             După 3 luni, anunțul va fi dezactivat automat. Poți intra la secțiunea de profil pentru a reactiva încă 3 luni anunțul.
                         </Text>
 
@@ -557,7 +705,7 @@ export default function AddSaleScreen({ navigation }) {
                             disabled={loadingMedia}
                         >
                             {loadingMedia ? (
-                                <ActivityIndicator size="small" color={COLORS.primary} />
+                                <ActivityIndicator size="small" color={COLORS.accent} />
                             ) : (
                                 <>
                                     <Text style={styles.plusSign}>+</Text>
@@ -945,12 +1093,13 @@ export default function AddSaleScreen({ navigation }) {
                         <TextInput 
                             style={styles.searchInput}
                             placeholder="Caută..."
+                            placeholderTextColor={COLORS.placeholder}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                         />
 
                         {isLoading() ? (
-                            <ActivityIndicator size="large" color={COLORS.primary} style={{marginTop: 20}} />
+                            <ActivityIndicator size="large" color={COLORS.accent} style={{marginTop: 20}} />
                         ) : (
                             <FlatList
                                 data={getFilteredData()}
@@ -965,12 +1114,20 @@ export default function AddSaleScreen({ navigation }) {
                                         </View>
                                     </Pressable>
                                 )}
-                                ListEmptyComponent={<Text style={{textAlign: 'center', marginTop: 20, color: '#999'}}>Nu am găsit rezultate.</Text>}
+                                ListEmptyComponent={<Text style={{textAlign: 'center', marginTop: 20, color: COLORS.textMuted}}>Nu am găsit rezultate.</Text>}
                             />
                         )}
                     </View>
                 </View>
             </Modal>
+
+            <CustomAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                buttons={alertConfig.buttons}
+                onDismiss={dismissAlert}
+            />
 
         </SafeAreaView>
     );
@@ -979,12 +1136,12 @@ export default function AddSaleScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.bg,
     },
     header: {
         paddingVertical: 15,
         paddingHorizontal: 20,
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.bg,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
         alignItems: 'center'
@@ -992,7 +1149,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.primary,
+        color: COLORS.accent,
     },
     scrollContent: {
         padding: 20,
@@ -1003,12 +1160,12 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: COLORS.secondary,
+        color: COLORS.text,
         marginBottom: 4,
     },
     sectionSubtitle: {
         fontSize: 13,
-        color: '#666',
+        color: COLORS.textMuted,
         marginBottom: 4,
     },
     mediaRow: {
@@ -1039,7 +1196,7 @@ const styles = StyleSheet.create({
     },
     mediaItemFirst: {
         borderWidth: 2.5,
-        borderColor: COLORS.primary,
+        borderColor: COLORS.accent,
         borderRadius: 12,
     },
     coverBadge: {
@@ -1054,22 +1211,22 @@ const styles = StyleSheet.create({
     addMediaButton: {
         width: 100,
         height: 100,
-        backgroundColor: '#EAEAEA',
+        backgroundColor: COLORS.surface,
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#CCC',
+        borderColor: COLORS.borderStrong,
         borderStyle: 'dashed'
     },
     plusSign: {
         fontSize: 30,
-        color: '#888',
+        color: COLORS.textMuted,
     },
     addText: {
         fontSize: 12,
-        color: '#888',
+        color: COLORS.textMuted,
         fontWeight: '600'
     },
     mediaImage: {
@@ -1103,9 +1260,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     formContainer: {
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         padding: 20,
         borderRadius: 16,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -1115,7 +1274,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: COLORS.secondary,
+        color: COLORS.text,
         marginBottom: 8,
         marginTop: 17,
         marginLeft: 2,
@@ -1123,7 +1282,7 @@ const styles = StyleSheet.create({
     inputSelector: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F9F9F9',
+        backgroundColor: COLORS.sheet,
         borderWidth: 1,
         borderColor: COLORS.border,
         borderRadius: 12,
@@ -1143,7 +1302,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.sheet,
     },
     segmentActive: {
         backgroundColor: COLORS.primary,
@@ -1155,15 +1314,15 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     segmentTextActive: {
-        color: COLORS.white,
+        color: COLORS.onAccent,
     },
     disabledInput: {
         opacity: 0.6,
-        backgroundColor: '#F0F0F0',
+        backgroundColor: COLORS.surface,
     },
     readOnlyInput: {
-        backgroundColor: COLORS.disabled, 
-        borderColor: '#E0E0E0',
+        backgroundColor: COLORS.surface, 
+        borderColor: COLORS.border,
     },
     inputText: {
         flex: 1,
@@ -1175,12 +1334,12 @@ const styles = StyleSheet.create({
     },
     suffix: {
         fontSize: 16,
-        color: '#888',
+        color: COLORS.textMuted,
         marginLeft: 10,
     },
     hpText: {
         fontSize: 12,
-        color: '#888',
+        color: COLORS.textMuted,
         marginTop: 2,
     },
     brandLogoSmall: {
@@ -1191,11 +1350,11 @@ const styles = StyleSheet.create({
     },
     chevron: {
         fontSize: 12,
-        color: '#888',
+        color: COLORS.textMuted,
         marginLeft: 10,
     },
     textArea: {
-        backgroundColor: '#F9F9F9',
+        backgroundColor: COLORS.sheet,
         borderWidth: 1,
         borderColor: COLORS.border,
         borderRadius: 12,
@@ -1216,7 +1375,7 @@ const styles = StyleSheet.create({
         height: 50,
     },
     applyButton: {
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.primary,
         height: 50,
         paddingHorizontal: 20,
         borderRadius: 12,
@@ -1224,7 +1383,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     applyButtonText: {
-        color: COLORS.white,
+        color: COLORS.onAccent,
         fontSize: 14,
         fontWeight: 'bold',
     },
@@ -1246,7 +1405,7 @@ const styles = StyleSheet.create({
     totalLabel: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
     },
     totalPriceContainer: {
         flexDirection: 'row',
@@ -1254,23 +1413,23 @@ const styles = StyleSheet.create({
     },
     oldPrice: {
         fontSize: 14,
-        color: '#999',
+        color: COLORS.textMuted,
         textDecorationLine: 'line-through',
         marginRight: 8,
     },
     finalPrice: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.primary,
+        color: COLORS.accent,
     },
     lunarText: {
         fontSize: 14,
-        color: '#888',
+        color: COLORS.textMuted,
         marginLeft: 4,
     },
     publishButton: {
         marginTop: 30,
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.primary,
         height: 60,
         borderRadius: 16,
         justifyContent: 'center',
@@ -1282,7 +1441,7 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     publishButtonText: {
-        color: 'white',
+        color: COLORS.onAccent,
         fontSize: 18,
         fontWeight: 'bold',
         letterSpacing: 1,
@@ -1293,7 +1452,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: 'white',
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 25,
         borderTopRightRadius: 25,
         height: '80%',
@@ -1308,19 +1467,20 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
     },
     closeButton: {
         fontSize: 16,
-        color: COLORS.primary,
+        color: COLORS.accent,
         fontWeight: '600',
     },
     searchInput: {
-        backgroundColor: '#F0F0F0',
+        backgroundColor: COLORS.surface,
         height: 50,
         borderRadius: 10,
         paddingHorizontal: 15,
         fontSize: 16,
+        color: COLORS.text,
         marginBottom: 15,
     },
     listItem: {
@@ -1328,7 +1488,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#EEE',
+        borderBottomColor: COLORS.border,
     },
     brandLogoList: {
         width: 40,
@@ -1338,12 +1498,12 @@ const styles = StyleSheet.create({
     },
     listItemText: {
         fontSize: 16,
-        color: '#333',
+        color: COLORS.text,
         fontWeight: '500',
     },
     subText: {
         fontSize: 13,
-        color: '#777',
+        color: COLORS.textMuted,
         marginTop: 3,
     },
     checkboxContainer: {
@@ -1357,11 +1517,11 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         borderWidth: 2,
-        borderColor: COLORS.border,
+        borderColor: COLORS.borderStrong,
         borderRadius: 6,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         marginRight: 10,
     },
     checkboxActive: {
@@ -1369,14 +1529,14 @@ const styles = StyleSheet.create({
         borderColor: COLORS.primary,
     },
     checkmark: {
-        color: COLORS.white,
+        color: COLORS.onAccent,
         fontSize: 16,
         fontWeight: 'bold',
         marginTop: Platform.OS === 'ios' ? -2 : -3, 
     },
     checkboxLabel: {
         fontSize: 15,
-        color: COLORS.secondary,
+        color: COLORS.text,
         fontWeight: '500',
     },
     prepOverlay: {
@@ -1385,7 +1545,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: '#fefefe',
+        backgroundColor: COLORS.bg,
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2000,
@@ -1393,7 +1553,7 @@ const styles = StyleSheet.create({
     prepText: {
         marginTop: 14,
         fontSize: 16,
-        color: COLORS.primary,
+        color: COLORS.accent,
         fontWeight: '600',
     },
 });

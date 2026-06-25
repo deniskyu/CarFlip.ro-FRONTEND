@@ -16,6 +16,16 @@ import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const { width, height } = Dimensions.get('window');
 
+const COLORS = {
+    primary: '#800000',
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    border: '#2F353E',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+};
+
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
 const sc = UI_SCALE;
@@ -60,7 +70,7 @@ const SummarySlide = ({ item, formatPrice, formatKm, itemHeight }) => (
             {item.title || `${item.brand.name} ${item.model.name}`}
         </Text>
         <Text style={[styles.summaryPrice, { fontSize: summaryScaled.priceFont, marginBottom: summaryScaled.priceMargin }]}>
-            {formatPrice(item.price)} € <Text style={{fontSize: summaryScaled.negotiableFont, color: '#888', fontWeight: 'normal'}}>{item.negotiable ? '(Negociabil)' : '(Preț Fix)'}</Text>
+            {formatPrice(item.price)} € <Text style={{fontSize: summaryScaled.negotiableFont, color: COLORS.textMuted, fontWeight: 'normal'}}>{item.negotiable ? '(Negociabil)' : '(Preț Fix)'}</Text>
         </Text>
 
         <View style={[styles.summaryTagsContainer, { marginBottom: summaryScaled.tagsMargin }]}>
@@ -93,15 +103,15 @@ const SummarySlide = ({ item, formatPrice, formatKm, itemHeight }) => (
             </View>
 
             {item.for_dismante && (
-                <View style={[styles.summaryTag, { backgroundColor: '#ffe6e6', borderColor: '#ffcccc', paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
-                    <Text style={[styles.summaryTagText, { color: '#cc0000', fontWeight: 'bold', fontSize: summaryScaled.tagFont }]}>
+                <View style={[styles.summaryTag, { backgroundColor: '#3A2222', borderColor: '#5C2E2E', paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                    <Text style={[styles.summaryTagText, { color: '#EF7A78', fontWeight: 'bold', fontSize: summaryScaled.tagFont }]}>
                         ⚠️ Pentru dezmembrare
                     </Text>
                 </View>
             )}
 
-            <View style={[styles.summaryTag, item.vin ? { backgroundColor: '#e8f5e9', borderColor: '#c8e6c9' } : null, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
-                <Text style={[styles.summaryTagText, item.vin ? { color: '#2e7d32', fontWeight: 'bold' } : null, { fontSize: summaryScaled.tagFont }]}>
+            <View style={[styles.summaryTag, item.vin ? { backgroundColor: '#1E2C20', borderColor: '#2E4A33' } : null, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
+                <Text style={[styles.summaryTagText, item.vin ? { color: '#7FC489', fontWeight: 'bold' } : null, { fontSize: summaryScaled.tagFont }]}>
                     {item.vin ? `VIN: ${item.vin}` : "VIN: Nespecificat"}
                 </Text>
             </View>
@@ -392,18 +402,18 @@ const styles = StyleSheet.create({
     mediaInnerContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     editingBorder: { borderWidth: 2, borderColor: '#800000' },
     gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.75%', backgroundColor: 'rgba(0, 0, 0, 0.13)' },
-    summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },
-    summaryTitle: { fontSize: 26.5, fontWeight: '900', color: '#800000', marginBottom: 2, marginTop: 10 },
-    summaryPrice: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 16 },
+    summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: COLORS.bg, padding: 20, paddingTop: 122 },
+    summaryTitle: { fontSize: 26.5, fontWeight: '900', color: COLORS.accent, marginBottom: 2, marginTop: 10 },
+    summaryPrice: { fontSize: 22, fontWeight: 'bold', color: COLORS.text, marginBottom: 16 },
     summaryTagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
-    summaryTag: { backgroundColor: '#f5f5f5', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 6, marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: '#e0e0e0' },
-    summaryTagText: { color: '#333', fontSize: 13, fontWeight: '500' },
-    descriptionLabel: { fontSize: 16, fontWeight: 'bold', color: '#800000', marginBottom: 5, marginTop: -6 },
-    descriptionContainer: { height: 164, backgroundColor: '#f9f9f9', borderRadius: 8, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#eee' },
-    summaryDescription: { fontSize: 15, color: '#444', lineHeight: 22 },
-    summaryLocation: { paddingTop: 15, borderTopWidth: 1, borderTopColor: '#eee' },
-    locationText1: { fontSize: 18, color: '#081539', fontWeight: '800', marginBottom: 5 },
-    phoneText: { fontSize: 14, color: '#800000', fontWeight: 'bold' },
+    summaryTag: { backgroundColor: COLORS.surface, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 6, marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
+    summaryTagText: { color: COLORS.text, fontSize: 13, fontWeight: '500' },
+    descriptionLabel: { fontSize: 16, fontWeight: 'bold', color: COLORS.accent, marginBottom: 5, marginTop: -6 },
+    descriptionContainer: { height: 164, backgroundColor: COLORS.surface, borderRadius: 8, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
+    summaryDescription: { fontSize: 15, color: COLORS.text, lineHeight: 22 },
+    summaryLocation: { paddingTop: 15, borderTopWidth: 1, borderTopColor: COLORS.border },
+    locationText1: { fontSize: 18, color: COLORS.text, fontWeight: '800', marginBottom: 5 },
+    phoneText: { fontSize: 14, color: COLORS.accent, fontWeight: 'bold' },
     bottomOverlay: { position: 'absolute', left: 14, width: '80%', zIndex: 5 },
     userInfoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
     userNameText: { color: '#FFFFFF', fontWeight: '600', textShadowColor: 'rgba(0, 0, 0, 0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3, marginRight: 6 },

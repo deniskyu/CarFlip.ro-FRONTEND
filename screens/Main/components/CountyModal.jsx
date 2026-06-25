@@ -13,6 +13,21 @@ import { LOCATIONS } from '../staticData.js';
 
 import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
+const COLORS = {
+    primary: '#800000',
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
+    accentSurface: '#3A2526',
+};
+
 const COUNTY_NAMES = LOCATIONS.map((loc) => loc.judet).filter(Boolean);
 
 export default function CountyModal({ visible, onClose, currentCounty = null, onCountyChanged }) {
@@ -58,7 +73,7 @@ export default function CountyModal({ visible, onClose, currentCounty = null, on
                     {label}
                 </Text>
                 {isSaving ? (
-                    <ActivityIndicator size="small" color="#800000" />
+                    <ActivityIndicator size="small" color={COLORS.accent} />
                 ) : selected ? (
                     <Text style={styles.rowCheck}>✓</Text>
                 ) : null}
@@ -120,7 +135,7 @@ const styles = StyleSheet.create({
         width: '90%',
         maxWidth: 420,
         height: '80%',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.sheet,
         borderRadius: 16,
         padding: 20,
         overflow: 'hidden',
@@ -138,31 +153,31 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: '800',
-        color: '#081539',
+        color: COLORS.text,
         marginBottom: 6,
     },
     description: {
         fontSize: 13,
-        color: '#777',
+        color: COLORS.textMuted,
         lineHeight: 19,
     },
     closeBtn: {
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: '#800000',
+        backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 2,
     },
     closeBtnText: {
-        color: '#FFFFFF',
+        color: COLORS.onAccent,
         fontSize: 16,
         fontWeight: 'bold',
     },
     divider: {
         height: 1,
-        backgroundColor: '#E8E8E8',
+        backgroundColor: COLORS.border,
         marginBottom: 6,
     },
     list: {
@@ -181,22 +196,22 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     rowSelected: {
-        backgroundColor: '#FBEAEA',
+        backgroundColor: COLORS.accentSurface,
     },
     rowText: {
         flex: 1,
         fontSize: 15,
-        color: '#333',
+        color: COLORS.text,
         fontWeight: '500',
         marginRight: 10,
     },
     rowTextSelected: {
-        color: '#800000',
+        color: COLORS.accent,
         fontWeight: '800',
     },
     rowCheck: {
         fontSize: 16,
-        color: '#800000',
+        color: COLORS.accent,
         fontWeight: 'bold',
     },
 });

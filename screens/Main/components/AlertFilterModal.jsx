@@ -17,13 +17,17 @@ import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const COLORS = {
     primary: '#800000',
-    secondary: '#081539',
+    accent: '#E0706C',
     blue: '#007AFF',
-    background: '#F5F5F5',
-    white: '#FFFFFF',
-    text: '#333333',
-    border: '#E0E0E0',
-    placeholder: '#999999'
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
 };
 
 const STEERING_OPTIONS = [
@@ -333,11 +337,11 @@ export default function AlertFilterModal({ visible, onClose, alertData, onSaveSu
                         <Text style={styles.label}>Preț (€)</Text>
                         <View style={styles.row}>
                             <TextInput 
-                                style={styles.inputHalf} placeholder="De la" keyboardType="numeric"
+                                style={styles.inputHalf} placeholder="De la" placeholderTextColor={COLORS.placeholder} keyboardType="numeric"
                                 value={minPrice} onChangeText={(text) => setMinPrice(formatNumberWithDots(text))}
                             />
                             <TextInput 
-                                style={styles.inputHalf} placeholder="Până la" keyboardType="numeric"
+                                style={styles.inputHalf} placeholder="Până la" placeholderTextColor={COLORS.placeholder} keyboardType="numeric"
                                 value={maxPrice} onChangeText={(text) => setMaxPrice(formatNumberWithDots(text))}
                             />
                         </View>
@@ -345,11 +349,11 @@ export default function AlertFilterModal({ visible, onClose, alertData, onSaveSu
                         <Text style={styles.label}>An Fabricație</Text>
                         <View style={styles.row}>
                             <TextInput 
-                                style={styles.inputHalf} placeholder="De la" keyboardType="numeric"
+                                style={styles.inputHalf} placeholder="De la" placeholderTextColor={COLORS.placeholder} keyboardType="numeric"
                                 value={minYear} onChangeText={setMinYear} maxLength={4}
                             />
                             <TextInput 
-                                style={styles.inputHalf} placeholder="Până la" keyboardType="numeric"
+                                style={styles.inputHalf} placeholder="Până la" placeholderTextColor={COLORS.placeholder} keyboardType="numeric"
                                 value={maxYear} onChangeText={setMaxYear} maxLength={4}
                             />
                         </View>
@@ -357,11 +361,11 @@ export default function AlertFilterModal({ visible, onClose, alertData, onSaveSu
                         <Text style={styles.label}>Kilometraj</Text>
                         <View style={styles.row}>
                             <TextInput 
-                                style={styles.inputHalf} placeholder="Min KM" keyboardType="numeric"
+                                style={styles.inputHalf} placeholder="Min KM" placeholderTextColor={COLORS.placeholder} keyboardType="numeric"
                                 value={minKm} onChangeText={(text) => setMinKm(formatNumberWithDots(text))} 
                             />
                             <TextInput 
-                                style={styles.inputHalf} placeholder="Max KM" keyboardType="numeric"
+                                style={styles.inputHalf} placeholder="Max KM" placeholderTextColor={COLORS.placeholder} keyboardType="numeric"
                                 value={maxKm} onChangeText={(text) => setMaxKm(formatNumberWithDots(text))}
                             />
                         </View>
@@ -460,12 +464,13 @@ export default function AlertFilterModal({ visible, onClose, alertData, onSaveSu
                             <TextInput 
                                 style={styles.searchInput}
                                 placeholder="Caută în listă..."
+                                placeholderTextColor={COLORS.placeholder}
                                 value={searchQuery}
                                 onChangeText={setSearchQuery}
                             />
 
                             {loadingData ? (
-                                <ActivityIndicator color={COLORS.primary} size="large" />
+                                <ActivityIndicator color={COLORS.accent} size="large" />
                             ) : (
                                 <FlatList 
                                     data={getListData()}
@@ -473,8 +478,8 @@ export default function AlertFilterModal({ visible, onClose, alertData, onSaveSu
                                     renderItem={({item}) => (
                                         <Pressable style={styles.listItem} onPress={() => handleSelect(item)}>
                                             {selectionType === 'brand' && (
-                                                <View style={{width: 30, height: 30, marginRight: 10, backgroundColor: '#F9F9F9', justifyContent: 'center', alignItems: 'center', borderRadius: 15, borderWidth: 1, borderColor: '#EEE'}}>
-                                                    <Text style={{fontSize: 10, fontWeight: 'bold', color: '#800000'}}>
+                                                <View style={styles.brandChip}>
+                                                    <Text style={styles.brandChipText}>
                                                         {item.name ? item.name.substring(0, 3).toUpperCase() : '---'}
                                                     </Text>
                                                 </View>
@@ -495,68 +500,73 @@ export default function AlertFilterModal({ visible, onClose, alertData, onSaveSu
 const styles = StyleSheet.create({
     container: { 
         flex: 1, 
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.bg,
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
     header: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE'
+        paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: COLORS.border
     },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: COLORS.secondary },
+    headerTitle: { fontSize: 18, fontWeight: 'bold', color: COLORS.text },
     closeBtn: { padding: 5 },
     closeText: { fontSize: 24, color: COLORS.text },
-    resetText: { fontSize: 14, color: COLORS.primary, fontWeight: '600', padding: 5 },
+    resetText: { fontSize: 14, color: COLORS.accent, fontWeight: '600', padding: 5 },
     
     form: { padding: 20 },
-    label: { fontSize: 14, fontWeight: '600', color: COLORS.secondary, marginBottom: 8, marginTop: 10 },
-    labelSmall: { fontSize: 12, color: '#999', marginRight: 5 },
+    label: { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: 8, marginTop: 10 },
+    labelSmall: { fontSize: 12, color: COLORS.textMuted, marginRight: 5 },
     
     row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
 
     selectorHalf: {
-        flex: 0.48, height: 50, backgroundColor: '#F9F9F9', borderWidth: 1, borderColor: COLORS.border,
+        flex: 0.48, height: 50, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
         borderRadius: 10, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, justifyContent: 'space-between'
     },
     selectorFull: {
-        width: '100%', height: 50, backgroundColor: '#F9F9F9', borderWidth: 1, borderColor: COLORS.border,
+        width: '100%', height: 50, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
         borderRadius: 10, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, marginBottom: 10
     },
     inputHalf: {
-        flex: 0.48, height: 50, backgroundColor: '#fff', borderWidth: 1, borderColor: COLORS.border,
-        borderRadius: 10, paddingHorizontal: 15, fontSize: 16
+        flex: 0.48, height: 50, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: 10, paddingHorizontal: 15, fontSize: 16, color: COLORS.text
     },
     selText: { fontSize: 14, color: COLORS.text, flex: 1 },
     placeholder: { color: COLORS.placeholder },
-    disabled: { opacity: 0.5, backgroundColor: '#EEE' },
-    chevron: { color: '#999', fontSize: 10 },
+    disabled: { opacity: 0.5, backgroundColor: COLORS.bg },
+    chevron: { color: COLORS.textMuted, fontSize: 10 },
 
     checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 15 },
     checkbox: { 
-        width: 24, height: 24, borderWidth: 2, borderColor: COLORS.border, borderRadius: 6, 
-        marginRight: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white
+        width: 24, height: 24, borderWidth: 2, borderColor: COLORS.borderStrong, borderRadius: 6, 
+        marginRight: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.surface
     },
     checkboxChecked: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
     checkboxLabel: { fontSize: 14, color: COLORS.text, fontWeight: '500' },
 
     footer: {
-        padding: 20, borderTopWidth: 1, borderTopColor: '#EEE', backgroundColor: 'white'
+        padding: 20, borderTopWidth: 1, borderTopColor: COLORS.border, backgroundColor: COLORS.bg
     },
     saveButton: {
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.primary,
         height: 55, 
         borderRadius: 15,
         justifyContent: 'center', 
         alignItems: 'center'
     },
-    saveButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
+    saveButtonText: { color: COLORS.onAccent, fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
 
-    //modalu
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContent: { backgroundColor: 'white', height: '80%', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
+    modalContent: { backgroundColor: COLORS.sheet, height: '80%', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-    modalTitle: { fontSize: 18, fontWeight: 'bold', color: COLORS.secondary },
-    closeTextModal: { color: COLORS.primary, fontWeight: 'bold', fontSize: 16 },
-    searchInput: { backgroundColor: '#F5F5F5', height: 45, borderRadius: 10, paddingHorizontal: 15, marginBottom: 15, fontSize: 16 },
-    listItem: { paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE', flexDirection: 'row', alignItems: 'center' },
-    listItemText: { fontSize: 16, color: '#333' }
+    modalTitle: { fontSize: 18, fontWeight: 'bold', color: COLORS.text },
+    closeTextModal: { color: COLORS.accent, fontWeight: 'bold', fontSize: 16 },
+    searchInput: { backgroundColor: COLORS.surface, height: 45, borderRadius: 10, paddingHorizontal: 15, marginBottom: 15, fontSize: 16, color: COLORS.text },
+    listItem: { paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: COLORS.border, flexDirection: 'row', alignItems: 'center' },
+    listItemText: { fontSize: 16, color: COLORS.text },
+    brandChip: {
+        width: 30, height: 30, marginRight: 10, backgroundColor: COLORS.surface,
+        justifyContent: 'center', alignItems: 'center', borderRadius: 15,
+        borderWidth: 1, borderColor: COLORS.border
+    },
+    brandChipText: { fontSize: 10, fontWeight: 'bold', color: COLORS.accent }
 });

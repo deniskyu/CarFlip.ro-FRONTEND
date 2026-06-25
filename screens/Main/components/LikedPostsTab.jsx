@@ -22,13 +22,18 @@ import PostListSkeleton from '../../../helpers/skeletons/PostListSkeleton.jsx';
 
 const COLORS = {
     primary: '#800000',
-    secondary: '#081539',
-    white: '#FFFFFF',
-    text: '#333333',
-    grayBg: '#F5F5F5',
-    tagBg: '#EEEEEE',
-    danger: '#D32F2F',
-    success: '#388E3C'
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
+    danger: '#EF5350',
+    success: '#66BB6A',
 };
 
 const csc = UI_SCALE;
@@ -261,7 +266,7 @@ export default function LikedPostsTab() {
         if (!isLoadingMore) return null;
         return (
             <View style={{ paddingVertical: 20 }}>
-                <ActivityIndicator size="small" color={COLORS.secondary} />
+                <ActivityIndicator size="small" color={COLORS.accent} />
             </View>
         );
     };
@@ -277,15 +282,15 @@ export default function LikedPostsTab() {
                 ListFooterComponent={ListFooter}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 50, flexGrow: 1 }}
-                style={{ backgroundColor: COLORS.grayBg }}
+                style={{ backgroundColor: COLORS.bg }}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.8}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={handleRefresh}
-                        colors={[COLORS.secondary]}
-                        tintColor={COLORS.secondary}
+                        colors={[COLORS.accent]}
+                        tintColor={COLORS.accent}
                     />
                 }
             />
@@ -315,26 +320,23 @@ export default function LikedPostsTab() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.grayBg
+        backgroundColor: COLORS.bg
     },
     cardContainer: {
         flexDirection: 'row',
-        backgroundColor: 'white',
+        backgroundColor: COLORS.surface,
         marginHorizontal: 10,
         marginBottom: 10,
         borderRadius: 12,
         height: 116,
         overflow: 'hidden',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     imageContainer: {
         width: 130,
         height: '100%',
-        backgroundColor: '#eee',
+        backgroundColor: COLORS.sheet,
     },
     cardImage: {
         width: '100%',
@@ -363,7 +365,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 15,
         fontWeight: 'bold',
-        color: '#333',
+        color: COLORS.text,
         marginRight: 10,
     },
     optionsButton: {
@@ -374,7 +376,7 @@ const styles = StyleSheet.create({
     dotsIcon: {
         width: 16,
         height: 16,
-        tintColor: '#999',
+        tintColor: COLORS.textMuted,
         resizeMode: 'contain',
     },
     tagsContainer: {
@@ -382,7 +384,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
     },
     tag: {
-        backgroundColor: COLORS.tagBg,
+        backgroundColor: COLORS.sheet,
         paddingHorizontal: 6,
         paddingVertical: 3,
         borderRadius: 4,
@@ -391,7 +393,7 @@ const styles = StyleSheet.create({
     },
     tagText: {
         fontSize: 11,
-        color: '#555',
+        color: COLORS.textMuted,
         fontWeight: '500',
     },
     bottomRow: {
@@ -402,11 +404,11 @@ const styles = StyleSheet.create({
     priceText: {
         fontSize: 17,
         fontWeight: 'bold',
-        color: COLORS.primary,
+        color: COLORS.accent,
     },
     locationText: {
         fontSize: 11,
-        color: '#999',
+        color: COLORS.placeholder,
         marginBottom: 2,
     },
     emptyContainer: {
@@ -415,7 +417,7 @@ const styles = StyleSheet.create({
         paddingTop: 50,
     },
     emptyText: {
-        color: '#999',
+        color: COLORS.textMuted,
         fontSize: 14,
         fontStyle: 'italic',
     },
@@ -425,7 +427,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     optionsModalContent: {
-        backgroundColor: 'white',
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingBottom: Platform.OS === 'ios' ? 40 : 20,
@@ -444,7 +446,7 @@ const styles = StyleSheet.create({
     handleBar: {
         width: 40,
         height: 5,
-        backgroundColor: '#E0E0E0',
+        backgroundColor: COLORS.borderStrong,
         borderRadius: 3,
     },
     optionButton: {

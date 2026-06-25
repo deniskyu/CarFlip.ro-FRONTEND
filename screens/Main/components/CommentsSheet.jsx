@@ -27,6 +27,23 @@ import {Text, TextInput} from '../../../helpers/AppText.jsx';
 
 const { height, width } = Dimensions.get('window');
 
+const COLORS = {
+    primary: '#800000',
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
+};
+
+const SKELETON_BASE = '#32383F';
+const SKELETON_HIGHLIGHT = '#3C424B';
+
 const MODAL_HEIGHT_PERCENT = 0.8; 
 const TOP_OFFSET = height * (1 - MODAL_HEIGHT_PERCENT); 
 
@@ -34,19 +51,19 @@ const COMMENT_SKELETON_ITEM_HEIGHT = 80;
 
 const CommentSkeleton = () => (
     <View style={skeletonStyles.row}>
-        <Shimmer width={36} height={36} borderRadius={18} style={skeletonStyles.avatar} />
+        <Shimmer width={36} height={36} borderRadius={18} style={skeletonStyles.avatar} baseColor={SKELETON_BASE} highlightColor={SKELETON_HIGHLIGHT} />
         <View style={skeletonStyles.content}>
             <View style={skeletonStyles.headerRow}>
-                <Shimmer width={80} height={11} borderRadius={4} />
-                <Shimmer width={40} height={9} borderRadius={4} style={skeletonStyles.timeAgo} />
+                <Shimmer width={80} height={11} borderRadius={4} baseColor={SKELETON_BASE} highlightColor={SKELETON_HIGHLIGHT} />
+                <Shimmer width={40} height={9} borderRadius={4} style={skeletonStyles.timeAgo} baseColor={SKELETON_BASE} highlightColor={SKELETON_HIGHLIGHT} />
             </View>
-            <Shimmer width="95%" height={12} borderRadius={4} style={skeletonStyles.line1} />
-            <Shimmer width="65%" height={12} borderRadius={4} style={skeletonStyles.line2} />
-            <Shimmer width={50} height={10} borderRadius={4} style={skeletonStyles.replyBtn} />
+            <Shimmer width="95%" height={12} borderRadius={4} style={skeletonStyles.line1} baseColor={SKELETON_BASE} highlightColor={SKELETON_HIGHLIGHT} />
+            <Shimmer width="65%" height={12} borderRadius={4} style={skeletonStyles.line2} baseColor={SKELETON_BASE} highlightColor={SKELETON_HIGHLIGHT} />
+            <Shimmer width={50} height={10} borderRadius={4} style={skeletonStyles.replyBtn} baseColor={SKELETON_BASE} highlightColor={SKELETON_HIGHLIGHT} />
         </View>
         <View style={skeletonStyles.likeCol}>
-            <Shimmer width={14} height={14} borderRadius={7} />
-            <Shimmer width={16} height={9} borderRadius={4} style={skeletonStyles.likeCount} />
+            <Shimmer width={14} height={14} borderRadius={7} baseColor={SKELETON_BASE} highlightColor={SKELETON_HIGHLIGHT} />
+            <Shimmer width={16} height={9} borderRadius={4} style={skeletonStyles.likeCount} baseColor={SKELETON_BASE} highlightColor={SKELETON_HIGHLIGHT} />
         </View>
     </View>
 );
@@ -71,7 +88,7 @@ const skeletonStyles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#f9f9f9',
+        borderBottomColor: COLORS.border,
         alignItems: 'flex-start',
     },
     avatar: {
@@ -310,7 +327,7 @@ const CommentItem = React.memo(({ comment, onReply, onLongPress, selectedComment
 
             {showReplies && (
                 <View style={styles.repliesContainer}>
-                    {loadingReplies && <ActivityIndicator size="small" color="#800000" style={{ marginBottom: 10 }} />}
+                    {loadingReplies && <ActivityIndicator size="small" color={COLORS.accent} style={{ marginBottom: 10 }} />}
                     {replies.map(reply => (
                         <CommentItem 
                             key={reply._id} 
@@ -696,7 +713,7 @@ const CommentsSheet = ({ visible, onClose, saleId, onCommentAdded, postAuthorId,
                                     }}
                                     ListFooterComponent={
                                         isLoadingComments && commentsList.length > 0 ? (
-                                            <ActivityIndicator size="small" color="#800000" style={{ marginVertical: 20 }} />
+                                            <ActivityIndicator size="small" color={COLORS.accent} style={{ marginVertical: 20 }} />
                                         ) : (
                                             <View style={{ height: 400 }} />
                                         )
@@ -705,7 +722,7 @@ const CommentsSheet = ({ visible, onClose, saleId, onCommentAdded, postAuthorId,
                                         <RefreshControl
                                             refreshing={isRefreshing}
                                             onRefresh={handleRefresh}
-                                            tintColor="#800000"
+                                            tintColor={COLORS.accent}
                                         />
                                     }
                                 />
@@ -717,7 +734,7 @@ const CommentsSheet = ({ visible, onClose, saleId, onCommentAdded, postAuthorId,
                                 ref={inputRef}
                                 style={styles.inputField}
                                 placeholder={replyingTo ? `Răspunde lui @${replyingTo.username}...` : "Adaugă un comentariu..."}
-                                placeholderTextColor="#888"
+                                placeholderTextColor={COLORS.placeholder}
                                 value={newCommentText}
                                 onChangeText={setNewCommentText}
                                 multiline={true}
@@ -741,7 +758,7 @@ const CommentsSheet = ({ visible, onClose, saleId, onCommentAdded, postAuthorId,
                                 
                                 {canDelete && (
                                     <Pressable style={styles.optionButton} onPress={handleDelete}>
-                                        <Text style={[styles.optionText, { color: '#800000', fontWeight: 'bold' }]}>Șterge</Text>
+                                        <Text style={[styles.optionText, { color: COLORS.accent, fontWeight: 'bold' }]}>Șterge</Text>
                                     </Pressable>
                                 )}
 
@@ -783,7 +800,7 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         height: `${MODAL_HEIGHT_PERCENT * 100}%`, 
-        backgroundColor: 'white',
+        backgroundColor: COLORS.bg,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         overflow: 'hidden',
@@ -791,7 +808,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
     },
     headerContainer: {
-        backgroundColor: 'white',
+        backgroundColor: COLORS.bg,
         zIndex: 10,
     },
     handleContainer: {
@@ -801,7 +818,7 @@ const styles = StyleSheet.create({
     handleBar: {
         width: 40,
         height: 5,
-        backgroundColor: '#DDDDDD',
+        backgroundColor: COLORS.borderStrong,
         borderRadius: 3,
     },
     modalHeader: {
@@ -811,7 +828,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingBottom: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
+        borderBottomColor: COLORS.border,
     },
     emptyHeaderSpace: {
         width: 30, 
@@ -819,7 +836,7 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 17,
         fontWeight: '700',
-        color: '#333',
+        color: COLORS.text,
     },
     closeButton: {
         width: 30,
@@ -829,11 +846,11 @@ const styles = StyleSheet.create({
     closeButtonText: {
         fontSize: 18, 
         fontWeight: '600',
-        color: '#333',
+        color: COLORS.text,
     },
     commentsBody: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.bg,
     },
     emptyCommentsContainer: {
         flex: 1,
@@ -842,7 +859,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 40,
     },
     emptyCommentsText: {
-        color: '#999',
+        color: COLORS.textMuted,
         fontSize: 14,
         textAlign: 'center',
     },
@@ -851,20 +868,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 10,
         borderTopWidth: 1,
-        borderTopColor: '#f0f0f0',
-        backgroundColor: 'white',
+        borderTopColor: COLORS.border,
+        backgroundColor: COLORS.bg,
         paddingBottom: Platform.OS === 'ios' ? 35 : 10, 
     },
     inputField: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: COLORS.surface,
         borderRadius: 20,
         paddingHorizontal: 15,
         paddingVertical: 10,
         maxHeight: 100,
         marginRight: 10,
         fontSize: 14,
-        color: '#333'
+        color: COLORS.text
     },
     sendButton: {
         padding: 5,
@@ -873,11 +890,11 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         resizeMode: 'contain',
-        tintColor: '#800000'
+        tintColor: COLORS.accent
     },
     commentTreeContainer: {
         borderBottomWidth: 1,
-        borderBottomColor: '#f9f9f9',
+        borderBottomColor: COLORS.border,
     },
     commentRowContainer: {
         paddingVertical: 8, 
@@ -891,7 +908,7 @@ const styles = StyleSheet.create({
         marginLeft: 48, 
     },
     highlightedRow: {
-        backgroundColor: '#f2f2f2', 
+        backgroundColor: COLORS.surface, 
     },
     commentAvatar: {
         width: 36,
@@ -912,16 +929,16 @@ const styles = StyleSheet.create({
     commentUser: {
         fontSize: 13,
         fontWeight: 'bold',
-        color: '#333',
+        color: COLORS.text,
         marginRight: 8
     },
     timeAgoText: {
         fontSize: 11,
-        color: '#999',
+        color: COLORS.textMuted,
     },
     commentText: {
         fontSize: 14,
-        color: '#444',
+        color: COLORS.text,
         lineHeight: 20,
     },
     actionRow: {
@@ -930,12 +947,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     seeMoreText: {
-        color: '#999',
+        color: COLORS.textMuted,
         fontSize: 12,
         fontWeight: '500'
     },
     replyButtonText: {
-        color: '#666',
+        color: COLORS.textMuted,
         fontSize: 12,
         fontWeight: '600',
     },
@@ -949,10 +966,10 @@ const styles = StyleSheet.create({
     horizontalLine: {
         width: 20, 
         height: 1,
-        backgroundColor: '#ddd',
+        backgroundColor: COLORS.borderStrong,
     },
     viewRepliesText: {
-        color: '#888',
+        color: COLORS.textMuted,
         fontSize: 11,
         fontWeight: '600',
     },
@@ -979,14 +996,14 @@ const styles = StyleSheet.create({
         height: 14
     },
     commentLikeIconUnliked: {
-        tintColor: '#aaa' 
+        tintColor: COLORS.textMuted 
     },
     commentLikeIconLiked: {
-        tintColor: '#800000' 
+        tintColor: COLORS.accent 
     },
     commentLikeCount: {
         fontSize: 10,
-        color: '#888',
+        color: COLORS.textMuted,
         marginTop: 2
     },
     absoluteOptionsOverlay: {
@@ -1000,7 +1017,7 @@ const styles = StyleSheet.create({
         zIndex: 100
     },
     optionsCard: {
-        backgroundColor: 'white',
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingBottom: 40,
@@ -1016,13 +1033,13 @@ const styles = StyleSheet.create({
         paddingVertical: 18,
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
+        borderBottomColor: COLORS.border,
         width: '100%'
     },
     optionText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333'
+        color: COLORS.text
     },
     toastContainer: {
         position: 'absolute',

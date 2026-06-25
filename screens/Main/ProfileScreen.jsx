@@ -32,10 +32,18 @@ import Shimmer from '../../helpers/skeletons/Shimmer.jsx';
 
 const COLORS = {
     primary: '#800000',
-    secondary: '#081539',
+    accent: '#E0706C',
+    header: '#13161A',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
     white: '#FFFFFF',
-    text: '#333333',
-    grayBg: '#F5F5F5',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
 };
 
 const DEFAULT_AVATAR = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
@@ -181,7 +189,16 @@ export default function ProfileScreen() {
                 showMessage({ message: "Succes", description: "Poză de profil actualizată!", type: "success" });
             }
         } catch (error) {
-            Alert.alert("Eroare", "Nu s-a putut încărca imaginea.");
+            const code = error?.response?.data?.code;
+            const status = error?.response?.status;
+
+            if (code === 'NUDITY_DETECTED') {
+                Alert.alert("Imagine respinsă", "Imaginea pare să conțină nuditate. Te rugăm alege altă poză.");
+            } else if (code === 'MODERATION_UNAVAILABLE' || status === 503) {
+                Alert.alert("Indisponibil momentan", "Verificarea imaginii nu e disponibilă acum. Mai încearcă în câteva momente.");
+            } else {
+                Alert.alert("Eroare", "Nu s-a putut încărca imaginea.");
+            }
         } finally {
             setUploading(false);
         }
@@ -338,7 +355,7 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.avatarContainer}>
-                <Shimmer width="100%" height="100%" borderRadius={40} />
+                <Shimmer width="100%" height="100%" borderRadius={40} baseColor={HEADER_SHIMMER_BASE} highlightColor={HEADER_SHIMMER_HIGHLIGHT} />
             </View>
 
             <Shimmer
@@ -389,7 +406,7 @@ export default function ProfileScreen() {
             <SafeAreaView style={styles.container}>
                 <StatusBar barStyle="light-content" backgroundColor="#13161A" />
                 {renderHeaderSkeleton()}
-                <View style={{ flex: 1, backgroundColor: COLORS.grayBg, paddingTop: 10 }}>
+                <View style={{ flex: 1, backgroundColor: COLORS.bg, paddingTop: 10 }}>
                     <PostListSkeleton />
                 </View>
             </SafeAreaView>
@@ -403,7 +420,7 @@ export default function ProfileScreen() {
 
             {StaticHeader}
 
-            <View style={{ flex: 1, backgroundColor: COLORS.grayBg, paddingTop: 10, }}>
+            <View style={{ flex: 1, backgroundColor: COLORS.bg, paddingTop: 10, }}>
                 <View style={{ flex: activeTab === 'active' ? 1 : 0, display: activeTab === 'active' ? 'flex' : 'none' }}>
                     <ActivePostsTab />
                 </View>
@@ -465,14 +482,14 @@ export default function ProfileScreen() {
                         {imagePreview && <Image source={{ uri: imagePreview }} style={styles.previewImage} />}
                         <View style={styles.modalActions}>
                             <Pressable
-                                style={[styles.modalButton, { backgroundColor: '#ccc' }]}
+                                style={[styles.modalButton, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.borderStrong }]}
                                 onPress={() => { if (!uploading) setImageModalVisible(false) }}
                                 disabled={uploading}
                             >
                                 <Text style={styles.buttonTextDark}>Anulează</Text>
                             </Pressable>
                             <Pressable
-                                style={[styles.modalButton, { backgroundColor: COLORS.secondary, opacity: uploading ? 0.7 : 1 }]}
+                                style={[styles.modalButton, { backgroundColor: COLORS.primary, opacity: uploading ? 0.7 : 1 }]}
                                 onPress={handleUploadImage}
                                 disabled={uploading}
                             >
@@ -499,7 +516,7 @@ export default function ProfileScreen() {
                             <TextInput
                                 style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
                                 placeholder="Spune ceva despre tine..."
-                                placeholderTextColor="#999"
+                                placeholderTextColor={COLORS.placeholder}
                                 multiline={true}
                                 maxLength={70}
                                 value={editForm.bio}
@@ -515,7 +532,7 @@ export default function ProfileScreen() {
                             <TextInput
                                 style={styles.input}
                                 placeholder="Ex: 07xxxxxxxx"
-                                placeholderTextColor="#999"
+                                placeholderTextColor={COLORS.placeholder}
                                 keyboardType="phone-pad"
                                 maxLength={15}
                                 value={editForm.phone_number}
@@ -524,14 +541,14 @@ export default function ProfileScreen() {
 
                             <View style={styles.modalActions}>
                                 <Pressable
-                                    style={[styles.modalButton, { backgroundColor: '#ccc' }]}
+                                    style={[styles.modalButton, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.borderStrong }]}
                                     onPress={() => { if (!saving) setEditModalVisible(false) }}
                                     disabled={saving}
                                 >
                                     <Text style={styles.buttonTextDark}>Anulează</Text>
                                 </Pressable>
                                 <Pressable
-                                    style={[styles.modalButton, { backgroundColor: COLORS.secondary, opacity: saving ? 0.7 : 1 }]}
+                                    style={[styles.modalButton, { backgroundColor: COLORS.primary, opacity: saving ? 0.7 : 1 }]}
                                     onPress={handleSaveProfile}
                                     disabled={saving}
                                 >
@@ -549,11 +566,11 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#13161A',
+        backgroundColor: COLORS.header,
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0, 
     },
     profileHeader: {
-        backgroundColor: '#13161A',
+        backgroundColor: COLORS.header,
         alignItems: 'center',
         paddingTop: Platform.OS === 'ios' ? 20 : 10,
         paddingBottom: 0,
@@ -691,7 +708,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     sheetContainer: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingTop: 12,
@@ -703,7 +720,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 4,
         borderRadius: 2,
-        backgroundColor: '#D1D1D6',
+        backgroundColor: COLORS.borderStrong,
         marginBottom: 12,
     },
     sheetOption: {
@@ -715,19 +732,19 @@ const styles = StyleSheet.create({
     sheetOptionText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#081539',
+        color: COLORS.text,
     },
     sheetOptionDanger: {
-        color: '#800000',
+        color: COLORS.accent,
     },
     sheetCancel: {
         marginTop: 8,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: COLORS.surface,
     },
     sheetCancelText: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#666666',
+        color: COLORS.textMuted,
     },
     modalOverlay: {
         flex: 1,
@@ -742,7 +759,7 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         width: '100%',
-        backgroundColor: 'white',
+        backgroundColor: COLORS.sheet,
         borderRadius: 20,
         padding: 20,
         alignItems: 'center',
@@ -755,7 +772,7 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
         marginBottom: 20,
     },
     previewImage: {
@@ -764,27 +781,27 @@ const styles = StyleSheet.create({
         borderRadius: 75,
         marginBottom: 20,
         borderWidth: 2,
-        borderColor: COLORS.secondary,
+        borderColor: COLORS.borderStrong,
     },
     label: {
         alignSelf: 'flex-start',
         fontSize: 14,
         fontWeight: '600',
-        color: '#555',
+        color: COLORS.text,
         marginBottom: 5,
         marginLeft: 5,
     },
     input: {
         width: '100%',
-        backgroundColor: '#F5F5F5',
+        backgroundColor: COLORS.surface,
         borderRadius: 12,
         paddingHorizontal: 15,
         paddingVertical: 12,
         fontSize: 15,
-        color: '#333',
+        color: COLORS.text,
         marginBottom: 15,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
+        borderColor: COLORS.border,
     },
     modalActions: {
         flexDirection: 'row',
@@ -800,7 +817,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
     },
     buttonTextDark: {
-        color: '#333',
+        color: COLORS.text,
         fontWeight: 'bold',
         fontSize: 15,
     },

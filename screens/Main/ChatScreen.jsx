@@ -32,14 +32,23 @@ import Shimmer from '../../helpers/skeletons/Shimmer.jsx';
 
 const COLORS = {
     primary: '#800000',
+    accent: '#E0706C',
     secondary: '#13161A',
-    background: '#F5F5F5',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
     white: '#FFFFFF',
-    text: '#333333',
-    border: '#E0E0E0',
-    placeholder: '#999999',
-    disabled: '#F0F0F0'
+    text: '#E6E8EB',
+    placeholder: '#9AA0A8',
+    accentSurface: '#3A2526',
+    danger: '#EF5350',
 };
+
+const SK_BASE = '#32383F';
+const SK_HIGH = '#3C424B';
 
 const REPORT_REASONS = [
     'Spam sau reclame',
@@ -70,7 +79,7 @@ function ChatThreadSkeleton() {
                     ]}
                 >
                     {!b.own && (
-                        <Shimmer width={28} height={28} borderRadius={14} style={{ marginRight: 6 }} />
+                        <Shimmer width={28} height={28} borderRadius={14} style={{ marginRight: 6 }} baseColor={SK_BASE} highlightColor={SK_HIGH} />
                     )}
                     <View
                         style={[
@@ -79,7 +88,7 @@ function ChatThreadSkeleton() {
                             { width: b.w, height: b.h },
                         ]}
                     >
-                        <Shimmer width="100%" height="100%" borderRadius={0} />
+                        <Shimmer width="100%" height="100%" borderRadius={0} baseColor={SK_BASE} highlightColor={SK_HIGH} />
                     </View>
                 </View>
             ))}
@@ -657,10 +666,10 @@ export default function ChatScreen({ route, navigation }) {
                     <Pressable onPress={() => navigation.popToTop()} style={styles.backButton} hitSlop={10}>
                         <Image source={assets.back_arrow} style={styles.backIcon} />
                     </Pressable>
-                    <View style={[styles.headerAvatar, { backgroundColor: COLORS.disabled }]} />
+                    <View style={[styles.headerAvatar, { backgroundColor: COLORS.surface }]} />
                     <View style={{ flex: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, marginRight: 40 }} />
                 </View>
-                <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+                <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
                     <ChatThreadSkeleton />
                 </View>
             </SafeAreaView>
@@ -703,7 +712,7 @@ export default function ChatScreen({ route, navigation }) {
             </View>
 
             <KeyboardAvoidingView
-                style={{ flex: 1, backgroundColor: COLORS.background }}
+                style={{ flex: 1, backgroundColor: COLORS.bg }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
                 keyboardVerticalOffset={0}
             >
@@ -722,7 +731,7 @@ export default function ChatScreen({ route, navigation }) {
                         onEndReached={handleLoadMore}
                         onEndReachedThreshold={0.3}
                         ListFooterComponent={loadingMore
-                            ? <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 10 }} />
+                            ? <ActivityIndicator color={COLORS.accent} style={{ marginVertical: 10 }} />
                             : null
                         }
                         ListHeaderComponent={renderTypingIndicator}
@@ -738,7 +747,7 @@ export default function ChatScreen({ route, navigation }) {
                         disabled={uploadingImage}
                     >
                         {uploadingImage
-                            ? <ActivityIndicator size="small" color={COLORS.primary} />
+                            ? <ActivityIndicator size="small" color={COLORS.accent} />
                             : <Image source={assets.gallery_icon} style={styles.galleryIcon} />
                         }
                     </Pressable>
@@ -817,7 +826,7 @@ export default function ChatScreen({ route, navigation }) {
                         <Pressable
                             style={({ pressed }) => [
                                 styles.deleteSheetOption,
-                                pressed && { backgroundColor: '#FFF5F5' }
+                                pressed && { backgroundColor: COLORS.accentSurface }
                             ]}
                             onPress={handleDeleteMessage}
                         >
@@ -827,7 +836,7 @@ export default function ChatScreen({ route, navigation }) {
                         <Pressable
                             style={({ pressed }) => [
                                 styles.deleteSheetCancel,
-                                pressed && { backgroundColor: '#EBEBEB' }
+                                pressed && { backgroundColor: COLORS.borderStrong }
                             ]}
                             onPress={() => {
                                 setDeleteModalVisible(false);
@@ -890,7 +899,7 @@ export default function ChatScreen({ route, navigation }) {
                                 </View>
                                 <Text style={[
                                     styles.reportReasonText,
-                                    selectedReason === reason && { color: COLORS.primary, fontWeight: '600' }
+                                    selectedReason === reason && { color: COLORS.accent, fontWeight: '600' }
                                 ]}>
                                     {reason}
                                 </Text>
@@ -957,7 +966,7 @@ const styles = StyleSheet.create({
         height: 38,
         borderRadius: 19,
         marginRight: 10,
-        backgroundColor: COLORS.disabled,
+        backgroundColor: COLORS.surface,
         borderWidth: 1.5,
         borderColor: 'rgba(255,255,255,0.3)',
     },
@@ -1016,7 +1025,7 @@ const styles = StyleSheet.create({
         height: 28,
         borderRadius: 14,
         marginRight: 6,
-        backgroundColor: COLORS.disabled,
+        backgroundColor: COLORS.surface,
     },
     messageBubbleContainer: {
         maxWidth: '75%',
@@ -1031,13 +1040,10 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 4,
     },
     messageBubbleOther: {
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         borderBottomLeftRadius: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 3,
-        elevation: 1,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     deletedBubble: {
         backgroundColor: 'transparent',
@@ -1091,16 +1097,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
     },
     typingBubble: {
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         borderRadius: 18,
         borderBottomLeftRadius: 4,
         paddingHorizontal: 14,
         paddingVertical: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 3,
-        elevation: 1,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     typingText: {
         fontSize: 16,
@@ -1110,7 +1113,7 @@ const styles = StyleSheet.create({
     inputBar: {
         flexDirection: 'row',
         alignItems: 'flex-end',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         paddingHorizontal: 10,
         paddingVertical: 8,
         borderTopWidth: 1,
@@ -1132,7 +1135,7 @@ const styles = StyleSheet.create({
     },
     textInput: {
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.sheet,
         borderRadius: 20,
         paddingHorizontal: 14,
         paddingTop: 10,
@@ -1154,7 +1157,7 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     sendButtonDisabled: {
-        backgroundColor: COLORS.disabled,
+        backgroundColor: COLORS.borderStrong,
     },
     sendIcon: {
         width: 18,
@@ -1185,7 +1188,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     deleteSheet: {
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingBottom: Platform.OS === 'ios' ? 36 : 20,
@@ -1195,7 +1198,7 @@ const styles = StyleSheet.create({
     deleteSheetHandle: {
         width: 40,
         height: 4,
-        backgroundColor: COLORS.border,
+        backgroundColor: COLORS.borderStrong,
         borderRadius: 2,
         marginBottom: 16,
     },
@@ -1204,18 +1207,18 @@ const styles = StyleSheet.create({
         paddingVertical: 18,
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: COLORS.border,
     },
     deleteSheetOptionText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#D32F2F',
+        color: COLORS.danger,
     },
     deleteSheetCancel: {
         width: '100%',
         paddingVertical: 18,
         alignItems: 'center',
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.surface,
         marginTop: 8,
     },
     deleteSheetCancelText: {
@@ -1224,7 +1227,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     reportModal: {
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingHorizontal: 20,
@@ -1234,7 +1237,7 @@ const styles = StyleSheet.create({
     reportHandle: {
         width: 40,
         height: 4,
-        backgroundColor: COLORS.border,
+        backgroundColor: COLORS.borderStrong,
         borderRadius: 2,
         alignSelf: 'center',
         marginBottom: 16,
@@ -1249,12 +1252,12 @@ const styles = StyleSheet.create({
         height: 44,
         borderRadius: 22,
         marginRight: 12,
-        backgroundColor: COLORS.disabled,
+        backgroundColor: COLORS.surface,
     },
     reportTitle: {
         fontSize: 17,
         fontWeight: '700',
-        color: COLORS.secondary,
+        color: COLORS.text,
     },
     reportSubtitle: {
         fontSize: 13,
@@ -1279,10 +1282,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         borderRadius: 10,
         marginBottom: 4,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.surface,
     },
     reportReasonSelected: {
-        backgroundColor: '#FFF0F0',
+        backgroundColor: COLORS.accentSurface,
     },
     reportRadio: {
         width: 20,
@@ -1316,7 +1319,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingVertical: 13,
         borderRadius: 12,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.surface,
         alignItems: 'center',
     },
     reportCancelText: {
@@ -1348,19 +1351,16 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 4,
     },
     saleLinkCardOther: {
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         borderBottomLeftRadius: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 3,
-        elevation: 1,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     saleLinkThumb: {
         width: 64,
         height: 64,
         borderRadius: 8,
-        backgroundColor: COLORS.disabled,
+        backgroundColor: COLORS.sheet,
         marginRight: 10,
         justifyContent: 'center',
         alignItems: 'center',
@@ -1373,13 +1373,13 @@ const styles = StyleSheet.create({
     saleLinkTitle: {
         fontSize: 13,
         fontWeight: '700',
-        color: '#081539',
+        color: COLORS.text,
         marginBottom: 3,
     },
     saleLinkPrice: {
         fontSize: 14,
         fontWeight: '800',
-        color: '#800000',
+        color: COLORS.accent,
     },
     saleLinkThumbFallback: {
         fontSize: 28,

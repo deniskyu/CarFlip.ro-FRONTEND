@@ -5,6 +5,16 @@ import { assets } from '../../assets.js';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
 
+const COLORS = {
+    primary: '#800000',
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    border: '#2F353E',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
+};
+
 const LAST_UPDATED = '22 iunie 2026';
 
 export default function LegalScreen() {
@@ -15,7 +25,7 @@ export default function LegalScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
             <View style={styles.header}>
                 {showBack ? (
@@ -289,7 +299,7 @@ export default function LegalScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.bg,
     },
     header: {
         flexDirection: 'row',
@@ -298,12 +308,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 12,
         paddingBottom: 16,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.bg,
     },
     headerTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#081539',
+        color: COLORS.text,
         flex: 1,
     },
     backButton: {
@@ -313,7 +323,7 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         resizeMode: 'contain',
-        tintColor: '#081539',
+        tintColor: COLORS.text,
     },
     menuButton: {
         padding: 8,
@@ -325,7 +335,7 @@ const styles = StyleSheet.create({
     },
     menuLine: {
         height: 2.5,
-        backgroundColor: '#081539',
+        backgroundColor: COLORS.text,
         borderRadius: 2,
     },
     scrollView: {
@@ -338,48 +348,48 @@ const styles = StyleSheet.create({
     },
     lastUpdated: {
         fontSize: 12,
-        color: '#AAAAAA',
+        color: COLORS.placeholder,
         marginBottom: 24,
     },
     mainTitle: {
         fontSize: 20,
         fontWeight: '800',
-        color: '#081539',
+        color: COLORS.text,
         marginBottom: 16,
     },
     subtitle: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#081539',
+        color: COLORS.text,
         marginTop: 20,
         marginBottom: 8,
     },
     paragraph: {
         fontSize: 14,
-        color: '#555555',
+        color: COLORS.textMuted,
         lineHeight: 22,
         marginBottom: 10,
     },
     bulletItem: {
         fontSize: 14,
-        color: '#555555',
+        color: COLORS.textMuted,
         lineHeight: 22,
         marginBottom: 6,
         paddingLeft: 8,
     },
     ruleItem: {
         fontSize: 14,
-        color: '#555555',
+        color: COLORS.textMuted,
         lineHeight: 22,
         marginBottom: 14,
     },
     ruleBold: {
         fontWeight: '700',
-        color: '#081539',
+        color: COLORS.text,
     },
     sectionDivider: {
         height: 1,
-        backgroundColor: '#F0F0F0',
+        backgroundColor: COLORS.border,
         marginVertical: 32,
     },
     footer: {
@@ -387,17 +397,17 @@ const styles = StyleSheet.create({
         marginTop: 32,
         paddingTop: 24,
         borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        borderTopColor: COLORS.border,
     },
     footerBrand: {
         fontSize: 20,
         fontWeight: '900',
-        color: '#081539',
+        color: COLORS.text,
         letterSpacing: 2,
         marginBottom: 6,
     },
     footerText: {
         fontSize: 12,
-        color: '#AAAAAA',
+        color: COLORS.placeholder,
     },
 });

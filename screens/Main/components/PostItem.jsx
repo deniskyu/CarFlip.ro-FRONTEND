@@ -35,7 +35,29 @@ const { width, height } = Dimensions.get('window');
 import { ITEM_HEIGHT, UI_SCALE, SUMMARY_SCALE } from '../../../helpers/layout.js';
 import FastImage from '@d11/react-native-fast-image';
 
+const COLORS = {
+    primary: '#800000',
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
+};
+
 const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+
+const MONTHS_RO = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
+const formatPostedDate = (dateStr) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d)) return null;
+    return `${d.getDate()} ${MONTHS_RO[d.getMonth()]} ${d.getFullYear()}`;
+};
 
 const sc = UI_SCALE;
 export const scaled = {
@@ -127,9 +149,21 @@ const SummarySlide = ({ item, formatPrice, formatKm, itemHeight, onDescriptionPr
         <Text style={[styles.summaryTitle, { fontSize: summaryScaled.titleFont }]}>
             {item.title || `${item.brand.name} ${item.model.name}`}
         </Text>
-        <Text style={[styles.summaryPrice, { fontSize: summaryScaled.priceFont, marginBottom: summaryScaled.priceMargin }]}>
-            {formatPrice(item.price)} € <Text style={[styles.negotiableText, { fontSize: summaryScaled.negotiableFont }]}>{item.negotiable ? '(Negociabil)' : '(Preț Fix)'}</Text>
-        </Text>
+        <View style={styles.summaryPriceRow}>
+            <View style={styles.summaryPriceLeft}>
+                <Text style={[styles.summaryPrice, { fontSize: summaryScaled.priceFont }]}>
+                    {formatPrice(item.price)} €
+                </Text>
+                <Text style={[styles.negotiableText, { fontSize: summaryScaled.negotiableFont }]}>
+                    {item.negotiable ? '(Negociabil)' : '(Preț Fix)'}
+                </Text>
+            </View>
+            {formatPostedDate(item.createdAt) && (
+                <Text style={styles.postedDate} numberOfLines={1}>
+                    {formatPostedDate(item.createdAt)}
+                </Text>
+            )}
+        </View>
 
         <View style={[styles.summaryTagsContainer, { marginBottom: summaryScaled.tagsMargin }]}>
             <View style={[styles.summaryTag, { paddingVertical: summaryScaled.tagPadV, paddingHorizontal: summaryScaled.tagPadH }]}>
@@ -199,7 +233,7 @@ const SummarySlide = ({ item, formatPrice, formatKm, itemHeight, onDescriptionPr
             </View>
         </View>
 
-        <Text style={[styles.descriptionLabel, { fontSize: summaryScaled.descLabelFont }]}>Descriere:</Text>
+        <Text style={[styles.descriptionLabel, { fontSize: summaryScaled.descLabelFont }]}>Descriere: </Text>
         <Pressable 
             style={[styles.descriptionContainer, { height: summaryScaled.descContainerHeight, padding: summaryScaled.descPad, marginBottom: summaryScaled.descMargin }]}
             onPress={onDescriptionPress}
@@ -809,7 +843,7 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
                         <TextInput
                             style={styles.msgModalInput}
                             placeholder="Ex: Salut, mai este disponibil?"
-                            placeholderTextColor="#999"
+                            placeholderTextColor={COLORS.placeholder}
                             multiline
                             maxLength={500}
                             value={messageText}
@@ -861,23 +895,23 @@ const styles = StyleSheet.create({
     gradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '22.75%', backgroundColor: 'rgba(0, 0, 0, 0.13)' },
     bigHeartContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', zIndex: 20, elevation: 20, backgroundColor: 'transparent' },
     bigHeartImage: { width: 100, height: 100, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3.84 },
-    summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: '#FFFFFF', padding: 20, paddingTop: 122 },
-    summaryTitle: { fontSize: 26.5, fontWeight: '900', color: '#800000', marginBottom: 2, marginTop: 10 },
-    summaryPrice: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 16 },
-    negotiableText: { fontSize: 14, color: '#888', fontWeight: 'normal' },
+    summarySlide: { width: width, height: ITEM_HEIGHT, backgroundColor: COLORS.bg, padding: 20, paddingTop: 122 },
+    summaryTitle: { fontSize: 26.5, fontWeight: '900', color: COLORS.accent, marginBottom: 2, marginTop: 10 },
+    summaryPrice: { fontSize: 22, fontWeight: 'bold', color: COLORS.text, marginBottom: 16 },
+    negotiableText: { fontSize: 14, color: COLORS.textMuted, fontWeight: 'normal' },
     summaryTagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
-    summaryTag: { backgroundColor: '#f5f5f5', paddingVertical: 5, paddingHorizontal: 9, borderRadius: 6, marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: '#e0e0e0' },
-    summaryTagText: { color: '#333', fontSize: 13, fontWeight: '500' },
-    dismantleTag: { backgroundColor: '#ffe6e6', borderColor: '#ffcccc' },
-    dismantleTagText: { color: '#cc0000', fontWeight: 'bold' },
-    vinTagActive: { backgroundColor: '#e8f5e9', borderColor: '#c8e6c9' },
-    vinTagTextActive: { color: '#2e7d32', fontWeight: 'bold' },
-    descriptionLabel: { fontSize: 16, fontWeight: 'bold', color: '#800000', marginBottom: 5, marginTop: -6 },
-    descriptionContainer: { height: 164, backgroundColor: '#f9f9f9', borderRadius: 8, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#eee' },
-    summaryDescription: { fontSize: 15, color: '#444', lineHeight: 22 },
-    summaryLocation: { paddingTop: 15, borderTopWidth: 1, borderTopColor: '#eee' },
-    locationText1: { fontSize: 18, color: '#081539', fontWeight: '800', marginBottom: 5 },
-    phoneText: { fontSize: 14, color: '#800000', fontWeight: 'bold' },
+    summaryTag: { backgroundColor: COLORS.surface, paddingVertical: 5, paddingHorizontal: 9, borderRadius: 6, marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
+    summaryTagText: { color: COLORS.text, fontSize: 13, fontWeight: '500' },
+    dismantleTag: { backgroundColor: '#3A2222', borderColor: '#5C2E2E' },
+    dismantleTagText: { color: '#EF7A78', fontWeight: 'bold' },
+    vinTagActive: { backgroundColor: '#1E2C20', borderColor: '#2E4A33' },
+    vinTagTextActive: { color: '#7FC489', fontWeight: 'bold' },
+    descriptionLabel: { fontSize: 16, fontWeight: 'bold', color: COLORS.accent, marginBottom: 5, marginTop: -6 },
+    descriptionContainer: { height: 164, backgroundColor: COLORS.surface, borderRadius: 8, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
+    summaryDescription: { fontSize: 15, color: COLORS.text, lineHeight: 22 },
+    summaryLocation: { paddingTop: 15, borderTopWidth: 1, borderTopColor: COLORS.border },
+    locationText1: { fontSize: 18, color: COLORS.text, fontWeight: '800', marginBottom: 5 },
+    phoneText: { fontSize: 14, color: COLORS.accent, fontWeight: 'bold' },
     rightActions: { position: 'absolute', right: 10, alignItems: 'center', zIndex: 10 },
     actionButtonProfile: { alignItems: 'center' },
     actionButton: { alignItems: 'center' },
@@ -908,39 +942,69 @@ const styles = StyleSheet.create({
     toastText: { color: 'white', fontWeight: 'bold', fontSize: 14, textAlign: 'center' },
     separatorCheckIcon: { width: width/8, height: width/8, marginBottom: 20 },
     descModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    descModalCard: { width: '94%', height: '70%', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, paddingTop: 20 },
+    descModalCard: { width: '94%', height: '70%', backgroundColor: COLORS.sheet, borderRadius: 16, padding: 20, paddingTop: 20 },
     descModalHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 },
     descModalHeaderText: { flex: 1, marginRight: 12 },
-    descModalTitle: { fontSize: 22, fontWeight: '800', color: '#081539', marginBottom: 4 },
-    descModalPrice: { fontSize: 16, fontWeight: '600', color: '#800000' },
-    descModalClose: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#800000', justifyContent: 'center', alignItems: 'center', marginTop: 2 },
-    descModalCloseText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
-    descModalDivider: { height: 1, backgroundColor: '#E8E8E8', marginBottom: 14 },
-    descModalScroll: { flex: 1, backgroundColor: '#FAFAFA', borderRadius: 10, borderWidth: 1, borderColor: '#F0F0F0' },
+    descModalTitle: { fontSize: 22, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
+    descModalPrice: { fontSize: 16, fontWeight: '600', color: COLORS.accent },
+    descModalClose: { width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
+    descModalCloseText: { color: COLORS.onAccent, fontSize: 16, fontWeight: 'bold' },
+    descModalDivider: { height: 1, backgroundColor: COLORS.border, marginBottom: 14 },
+    descModalScroll: { flex: 1, backgroundColor: COLORS.surface, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border },
     descModalScrollContent: { padding: 14 },
-    descModalText: { fontSize: 17, color: '#333', lineHeight: 26 },
+    descModalText: { fontSize: 17, color: COLORS.text, lineHeight: 26 },
     msgButton: { position: 'absolute', left: 15, zIndex: 10, backgroundColor: '#800000', flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 4, elevation: 5 },
     msgButtonText: { color: '#FFFFFF', fontWeight: '700', letterSpacing: 0.3 },
     msgModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-    msgModalCard: { width: '90%', maxWidth: 400, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20 },
+    msgModalCard: { width: '90%', maxWidth: 400, backgroundColor: COLORS.sheet, borderRadius: 16, padding: 20 },
     msgModalHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-    msgModalThumb: { width: 56, height: 56, borderRadius: 8, backgroundColor: '#E0E0E0', marginRight: 12 },
+    msgModalThumb: { width: 56, height: 56, borderRadius: 8, backgroundColor: COLORS.surface, marginRight: 12 },
     msgModalInfo: { flex: 1, marginRight: 8 },
-    msgModalTitle: { fontSize: 16, fontWeight: '800', color: '#081539', marginBottom: 2 },
-    msgModalPrice: { fontSize: 15, fontWeight: '700', color: '#800000', marginBottom: 2 },
-    msgModalSeller: { fontSize: 12, color: '#999', fontWeight: '500' },
-    msgModalCloseBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#800000', justifyContent: 'center', alignItems: 'center' },
-    msgModalCloseBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' },
-    msgModalDivider: { height: 1, backgroundColor: '#E8E8E8', marginBottom: 14 },
-    msgModalLabel: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
-    msgModalInput: { backgroundColor: '#F5F5F5', borderRadius: 10, padding: 12, height: 90, textAlignVertical: 'top', fontSize: 14, color: '#333', borderWidth: 1, borderColor: '#E0E0E0', marginBottom: 4 },
-    msgModalCharCount: { fontSize: 11, color: '#999', textAlign: 'right', marginBottom: 16 },
+    msgModalTitle: { fontSize: 16, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
+    msgModalPrice: { fontSize: 15, fontWeight: '700', color: COLORS.accent, marginBottom: 2 },
+    msgModalSeller: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+    msgModalCloseBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
+    msgModalCloseBtnText: { color: COLORS.onAccent, fontSize: 14, fontWeight: 'bold' },
+    msgModalDivider: { height: 1, backgroundColor: COLORS.border, marginBottom: 14 },
+    msgModalLabel: { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: 8 },
+    msgModalInput: { backgroundColor: COLORS.surface, borderRadius: 10, padding: 12, height: 90, textAlignVertical: 'top', fontSize: 14, color: COLORS.text, borderWidth: 1, borderColor: COLORS.border, marginBottom: 4 },
+    msgModalCharCount: { fontSize: 11, color: COLORS.placeholder, textAlign: 'right', marginBottom: 16 },
     msgModalActions: { flexDirection: 'row', gap: 10 },
-    msgModalCancelBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center' },
-    msgModalCancelText: { fontSize: 15, fontWeight: '600', color: '#333' },
-    msgModalSendBtn: { flex: 2, paddingVertical: 13, borderRadius: 12, backgroundColor: '#081539', alignItems: 'center', justifyContent: 'center' },
-    msgModalSendText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+    msgModalCancelBtn: { flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.borderStrong, alignItems: 'center', justifyContent: 'center' },
+    msgModalCancelText: { fontSize: 15, fontWeight: '600', color: COLORS.textMuted },
+    msgModalSendBtn: { flex: 2, paddingVertical: 13, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
+    msgModalSendText: { fontSize: 15, fontWeight: '700', color: COLORS.onAccent },
     msgModalCentered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    summaryPriceRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: summaryScaled.priceMargin,
+        gap: 8,
+    },
+    summaryPriceLeft: {
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        flexShrink: 1,
+        gap: 4,
+    },
+    summaryPrice: { 
+        fontSize: 22, 
+        fontWeight: 'bold', 
+        color: COLORS.text 
+    },
+    negotiableText: { 
+        fontSize: 14, 
+        color: COLORS.textMuted, 
+        fontWeight: 'normal' 
+    },
+    postedDate: {
+        fontSize: 10,
+        color: COLORS.placeholder,
+        fontWeight: '400',
+        flexShrink: 0,
+        textAlign: 'right',
+    },
 });
 
 export default PostItem;

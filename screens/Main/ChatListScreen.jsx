@@ -24,14 +24,23 @@ import Shimmer from '../../helpers/skeletons/Shimmer.jsx';
 
 const COLORS = {
     primary: '#800000',
+    accent: '#E0706C',
     secondary: '#13161A',
-    background: '#F5F5F5',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
     white: '#FFFFFF',
-    text: '#333333',
-    border: '#E0E0E0',
-    placeholder: '#999999',
-    disabled: '#F0F0F0'
+    text: '#E6E8EB',
+    placeholder: '#9AA0A8',
+    pressedBg: '#30363F',
+    accentSurface: '#3A2526',
 };
+
+const SK_BASE = '#32383F';
+const SK_HIGH = '#3C424B';
 
 const SKELETON_ROW_WIDTHS = [
     { name: '52%', msg: '80%' },
@@ -54,16 +63,16 @@ function ConversationListSkeleton() {
                     <View key={i}>
                         <View style={styles.convItem}>
                             <View style={styles.avatarContainer}>
-                                <Shimmer width={52} height={52} borderRadius={26} />
+                                <Shimmer width={52} height={52} borderRadius={26} baseColor={SK_BASE} highlightColor={SK_HIGH} />
                             </View>
 
                             <View style={styles.convContent}>
                                 <View style={styles.convTop}>
-                                    <Shimmer width={w.name} height={14} borderRadius={6} />
-                                    <Shimmer width={38} height={11} borderRadius={5} />
+                                    <Shimmer width={w.name} height={14} borderRadius={6} baseColor={SK_BASE} highlightColor={SK_HIGH} />
+                                    <Shimmer width={38} height={11} borderRadius={5} baseColor={SK_BASE} highlightColor={SK_HIGH} />
                                 </View>
                                 <View style={styles.convBottom}>
-                                    <Shimmer width={w.msg} height={12} borderRadius={5} />
+                                    <Shimmer width={w.msg} height={12} borderRadius={5} baseColor={SK_BASE} highlightColor={SK_HIGH} />
                                 </View>
                             </View>
                         </View>
@@ -244,7 +253,7 @@ export default function ChatListScreen({ navigation }) {
             <Pressable
                 style={({ pressed }) => [
                     styles.convItem,
-                    pressed && { backgroundColor: '#F0F0F0' }
+                    pressed && { backgroundColor: COLORS.pressedBg }
                 ]}
                 onPress={() => navigation.navigate('ChatScreen', {
                     conversationId: item._id,
@@ -303,7 +312,7 @@ export default function ChatListScreen({ navigation }) {
         <Pressable
             style={({ pressed }) => [
                 styles.searchResultItem,
-                pressed && { backgroundColor: '#F0F0F0' }
+                pressed && { backgroundColor: COLORS.pressedBg }
             ]}
             onPress={() => openConversation(item._id, item.username, item.icon)}
         >
@@ -380,7 +389,7 @@ export default function ChatListScreen({ navigation }) {
                     <View style={styles.searchResultsContainer}>
                         {searchLoading ? (
                             <ActivityIndicator
-                                color={COLORS.primary}
+                                color={COLORS.accent}
                                 style={{ marginTop: 20 }}
                             />
                         ) : searchResults.length === 0 ? (
@@ -461,7 +470,7 @@ export default function ChatListScreen({ navigation }) {
                                 style={({ pressed }) => [
                                     styles.menuItem,
                                     pressed && {
-                                        backgroundColor: '#FFF5F5'
+                                        backgroundColor: COLORS.accentSurface
                                     }
                                 ]}
                                 onPress={handleReport}
@@ -479,7 +488,7 @@ export default function ChatListScreen({ navigation }) {
                                 style={({ pressed }) => [
                                     styles.menuItemCancel,
                                     pressed && {
-                                        backgroundColor: '#F0F0F0'
+                                        backgroundColor: COLORS.borderStrong
                                     }
                                 ]}
                                 onPress={() => setMenuVisible(false)}
@@ -499,7 +508,7 @@ export default function ChatListScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.bg,
     },
     skeletonList: {
         flex: 1,
@@ -546,7 +555,7 @@ const styles = StyleSheet.create({
     },
     searchResultsContainer: {
         flex: 1,
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.bg,
     },
     searchResultItem: {
         flexDirection: 'row',
@@ -558,7 +567,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: COLORS.disabled,
+        backgroundColor: COLORS.sheet,
         marginRight: 12,
     },
     searchUsername: {
@@ -580,7 +589,7 @@ const styles = StyleSheet.create({
     convItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         paddingHorizontal: 16,
         paddingVertical: 12,
     },
@@ -591,7 +600,7 @@ const styles = StyleSheet.create({
         width: 52,
         height: 52,
         borderRadius: 26,
-        backgroundColor: COLORS.disabled,
+        backgroundColor: COLORS.sheet,
     },
     convContent: {
         flex: 1,
@@ -612,14 +621,14 @@ const styles = StyleSheet.create({
     },
     convNameBold: {
         fontWeight: '700',
-        color: COLORS.secondary,
+        color: COLORS.text,
     },
     convTime: {
         fontSize: 12,
         color: COLORS.placeholder,
     },
     convTimeBold: {
-        color: COLORS.primary,
+        color: COLORS.accent,
         fontWeight: '600',
     },
     convBottom: {
@@ -680,7 +689,7 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
         marginBottom: 8,
     },
     emptySubtitle: {
@@ -695,7 +704,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     menuContainer: {
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingBottom: Platform.OS === 'ios' ? 34 : 20,
@@ -711,13 +720,13 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: COLORS.disabled,
+        backgroundColor: COLORS.surface,
         marginRight: 12,
     },
     menuUsername: {
         fontSize: 16,
         fontWeight: '600',
-        color: COLORS.secondary,
+        color: COLORS.text,
     },
     menuDivider: {
         height: 1,
@@ -737,13 +746,13 @@ const styles = StyleSheet.create({
     },
     menuItemTextReport: {
         fontSize: 16,
-        color: COLORS.primary,
+        color: COLORS.accent,
         fontWeight: '500',
     },
     menuItemCancel: {
         marginHorizontal: 16,
         marginTop: 8,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.surface,
         borderRadius: 12,
         paddingVertical: 14,
         alignItems: 'center',

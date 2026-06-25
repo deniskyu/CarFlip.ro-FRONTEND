@@ -9,6 +9,22 @@ import { showMessage } from 'react-native-flash-message';
 import { Context } from '../../context/Context.js';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 
+const COLORS = {
+    primary: '#800000',
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
+    accentSurface: '#3A2526',
+    accentBorder: '#5C3A3A',
+};
+
 export default function PrivacyScreen() {
     const navigation = useNavigation();
     const { url } = useContext(Context);
@@ -98,7 +114,7 @@ export default function PrivacyScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Confidențialitate</Text>
@@ -128,7 +144,7 @@ export default function PrivacyScreen() {
 
                 {blockedLoading ? (
                     <View style={styles.centeredBox}>
-                        <ActivityIndicator size="small" color="#081539" />
+                        <ActivityIndicator size="small" color={COLORS.accent} />
                     </View>
                 ) : blockedUsers.length === 0 ? (
                     <View style={styles.emptyBox}>
@@ -151,7 +167,7 @@ export default function PrivacyScreen() {
                                     disabled={unblockingId === item._id}
                                 >
                                     {unblockingId === item._id
-                                        ? <ActivityIndicator size="small" color="#800000" />
+                                        ? <ActivityIndicator size="small" color={COLORS.accent} />
                                         : <Text style={styles.unblockText}>Deblochează</Text>
                                     }
                                 </Pressable>
@@ -175,7 +191,7 @@ export default function PrivacyScreen() {
                             maxLength={16}
                             autoCapitalize="none"
                             placeholder="Introdu noul nume"
-                            placeholderTextColor="#A0A0A0"
+                            placeholderTextColor={COLORS.placeholder}
                         />
                     </View>
 
@@ -202,7 +218,7 @@ export default function PrivacyScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.bg,
     },
 
     header: {
@@ -212,12 +228,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 12,
         paddingBottom: 16,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.bg,
     },
     headerTitle: {
         fontSize: 26,
         fontWeight: 'bold',
-        color: '#081539',
+        color: COLORS.text,
     },
     menuButton: {
         padding: 8,
@@ -229,7 +245,7 @@ const styles = StyleSheet.create({
     },
     menuLine: {
         height: 2.5,
-        backgroundColor: '#081539',
+        backgroundColor: COLORS.text,
         borderRadius: 2,
     },
 
@@ -245,12 +261,12 @@ const styles = StyleSheet.create({
     sectionLabel: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#081539',
+        color: COLORS.text,
         marginBottom: 6,
     },
     sectionDescription: {
         fontSize: 13,
-        color: '#888888',
+        color: COLORS.textMuted,
         lineHeight: 19,
         marginBottom: 18,
     },
@@ -265,7 +281,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 14,
-        color: '#AAAAAA',
+        color: COLORS.placeholder,
     },
     blockedList: {
         gap: 0,
@@ -275,31 +291,31 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 14,
         borderBottomWidth: 0.5,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: COLORS.border,
     },
     blockedAvatar: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#E8E8E8',
+        backgroundColor: COLORS.surface,
         marginRight: 12,
     },
     blockedUsername: {
         flex: 1,
         fontSize: 15,
         fontWeight: '600',
-        color: '#081539',
+        color: COLORS.text,
     },
     unblockButton: {
-        backgroundColor: 'rgba(128, 0, 0, 0.08)',
+        backgroundColor: COLORS.accentSurface,
         paddingHorizontal: 14,
         paddingVertical: 9,
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: 'rgba(128, 0, 0, 0.2)',
+        borderColor: COLORS.accentBorder,
     },
     unblockText: {
-        color: '#800000',
+        color: COLORS.accent,
         fontSize: 13,
         fontWeight: '600',
     },
@@ -308,44 +324,44 @@ const styles = StyleSheet.create({
         marginTop: 56,
         paddingTop: 32,
         borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        borderTopColor: COLORS.border,
     },
     inputGroup: {
         marginBottom: 16,
     },
     label: {
-        color: '#081539',
+        color: COLORS.text,
         fontSize: 14,
         fontWeight: '600',
         marginBottom: 8,
         marginLeft: 4,
     },
     inputBox: {
-        backgroundColor: '#F5F7FA',
+        backgroundColor: COLORS.surface,
         borderWidth: 1,
-        borderColor: '#E1E5EB',
+        borderColor: COLORS.border,
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 16,
         fontSize: 16,
-        color: '#081539',
+        color: COLORS.text,
         height: 56,
     },
     fieldError: {
-        color: '#800000',
+        color: COLORS.danger || '#EF5350',
         fontSize: 13,
         fontWeight: '500',
         marginBottom: 14,
         marginLeft: 4,
     },
     saveButton: {
-        backgroundColor: '#081539',
+        backgroundColor: COLORS.primary,
         width: '100%',
         height: 56,
         borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#081539',
+        shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 4,

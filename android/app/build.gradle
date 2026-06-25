@@ -85,8 +85,8 @@ android {
         applicationId "com.mobilefrontendframe"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 25
-        versionName "1.8.2"
+        versionCode 26
+        versionName "2.0.0"
     }
     signingConfigs {
         debug {

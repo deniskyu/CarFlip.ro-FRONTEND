@@ -1,17 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet, Image } from 'react-native';
 import { assets } from '../../../assets.js';
-
 const DOT_SIZE = 9;
-const COLORS = { primary: '#800000', disabled: '#F0F0F0' };
-
+const COLORS = { primary: '#800000', surface: '#262B33', border: '#2F353E' };
 export default function TypingIndicator({ avatarUri }) {
-    const dots = [useRef(new Animated.Value(0)).current,
-                  useRef(new Animated.Value(0)).current,
-                  useRef(new Animated.Value(0)).current];
-
-    useEffect(() => {
-        const animations = dots.map((dot, i) =>
+const dots = [useRef(new Animated.Value(0)).current,
+useRef(new Animated.Value(0)).current,
+useRef(new Animated.Value(0)).current];
+useEffect(() => {
+const animations = dots.map((dot, i) =>
             Animated.loop(
                 Animated.sequence([
                     Animated.delay(i * 150),
@@ -29,23 +26,21 @@ export default function TypingIndicator({ avatarUri }) {
                 ])
             )
         );
-
-        const parallel = Animated.parallel(animations);
+const parallel = Animated.parallel(animations);
         parallel.start();
-        return () => parallel.stop();
+return () => parallel.stop();
     }, []);
-
-    return (
-        <View style={styles.container}>
+return (
+<View style={styles.container}>
             <Image
-                source={avatarUri ? { uri: avatarUri } : assets.default_avatar}
-                style={styles.avatar}
-            />
+source={avatarUri ? { uri: avatarUri } : assets.default_avatar}
+style={styles.avatar}
+/>
             <View style={styles.bubble}>
                 {dots.map((dot, i) => (
-                    <Animated.View
-                        key={i}
-                        style={[
+<Animated.View
+key={i}
+style={[
                             styles.dot,
                             {
                                 transform: [{
@@ -60,13 +55,12 @@ export default function TypingIndicator({ avatarUri }) {
                                 }),
                             },
                         ]}
-                    />
+/>
                 ))}
             </View>
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
@@ -78,22 +72,19 @@ const styles = StyleSheet.create({
         height: 28,
         borderRadius: 14,
         marginRight: 6,
-        backgroundColor: COLORS.disabled,
+        backgroundColor: COLORS.surface,
     },
     bubble: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.surface,
         borderRadius: 18,
         borderBottomLeftRadius: 4,
         paddingHorizontal: 14,
         paddingVertical: 14,
         gap: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 3,
-        elevation: 1,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     dot: {
         width: DOT_SIZE,

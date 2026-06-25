@@ -12,6 +12,21 @@ import { getCreds } from '../../helpers/keychainFunctions.js';
 import axios from 'axios';
 import axiosAuthGuard from '../../helpers/axiosAuthGuard.js';
 
+const COLORS = {
+    primary: '#800000',
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
+    danger: '#EF5350',
+};
+
 export default function SecurityScreen() {
     const navigation = useNavigation();
     const { url, logoutContext } = useContext(Context);
@@ -141,7 +156,7 @@ export default function SecurityScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Securitate</Text>
@@ -178,7 +193,7 @@ export default function SecurityScreen() {
                                     secureTextEntry={!showCurrent}
                                     maxLength={32}
                                     placeholder="Introdu parola actuală"
-                                    placeholderTextColor="#A0A0A0"
+                                    placeholderTextColor={COLORS.placeholder}
                                 />
                                 <Pressable onPress={() => setShowCurrent(!showCurrent)} style={styles.eyeBtn}>
                                     <Image source={assets.view_icon} style={[styles.eyeIcon, showCurrent && { opacity: 0.5 }]} />
@@ -196,7 +211,7 @@ export default function SecurityScreen() {
                                     secureTextEntry={!showNew}
                                     maxLength={32}
                                     placeholder="Creează o parolă nouă"
-                                    placeholderTextColor="#A0A0A0"
+                                    placeholderTextColor={COLORS.placeholder}
                                 />
                                 <Pressable onPress={() => setShowNew(!showNew)} style={styles.eyeBtn}>
                                     <Image source={assets.view_icon} style={[styles.eyeIcon, showNew && { opacity: 0.5 }]} />
@@ -214,7 +229,7 @@ export default function SecurityScreen() {
                                     secureTextEntry={!showConfirm}
                                     maxLength={32}
                                     placeholder="Confirmă parola nouă"
-                                    placeholderTextColor="#A0A0A0"
+                                    placeholderTextColor={COLORS.placeholder}
                                 />
                                 <Pressable onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeBtn}>
                                     <Image source={assets.view_icon} style={[styles.eyeIcon, showConfirm && { opacity: 0.5 }]} />
@@ -278,7 +293,7 @@ export default function SecurityScreen() {
                                     secureTextEntry
                                     maxLength={32}
                                     placeholder="Parola ta"
-                                    placeholderTextColor="#A0A0A0"
+                                    placeholderTextColor={COLORS.placeholder}
                                 />
                             ) : (
                                 <TextInput
@@ -289,7 +304,7 @@ export default function SecurityScreen() {
                                     autoCorrect={false}
                                     maxLength={10}
                                     placeholder="Scrie STERGE"
-                                    placeholderTextColor="#A0A0A0"
+                                    placeholderTextColor={COLORS.placeholder}
                                 />
                             )}
 
@@ -321,7 +336,7 @@ export default function SecurityScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.bg,
     },
 
     header: {
@@ -331,12 +346,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 12,
         paddingBottom: 16,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.bg,
     },
     headerTitle: {
         fontSize: 26,
         fontWeight: 'bold',
-        color: '#081539',
+        color: COLORS.text,
     },
     menuButton: {
         padding: 8,
@@ -348,7 +363,7 @@ const styles = StyleSheet.create({
     },
     menuLine: {
         height: 2.5,
-        backgroundColor: '#081539',
+        backgroundColor: COLORS.text,
         borderRadius: 2,
     },
 
@@ -364,14 +379,14 @@ const styles = StyleSheet.create({
     sectionLabel: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#081539',
+        color: COLORS.text,
         marginBottom: 20,
     },
     inputGroup: {
         marginBottom: 20,
     },
     label: {
-        color: '#081539',
+        color: COLORS.text,
         fontSize: 14,
         fontWeight: '600',
         marginBottom: 8,
@@ -380,9 +395,9 @@ const styles = StyleSheet.create({
     passwordContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F5F7FA',
+        backgroundColor: COLORS.surface,
         borderWidth: 1,
-        borderColor: '#E1E5EB',
+        borderColor: COLORS.border,
         borderRadius: 12,
         height: 56,
     },
@@ -391,7 +406,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 16,
         fontSize: 16,
-        color: '#081539',
+        color: COLORS.text,
     },
     eyeBtn: {
         padding: 12,
@@ -402,7 +417,7 @@ const styles = StyleSheet.create({
         width: 20,
         height: 20,
         resizeMode: 'contain',
-        tintColor: '#A0A0A0',
+        tintColor: COLORS.textMuted,
     },
     errorContainer: {
         minHeight: 22,
@@ -411,19 +426,19 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     errorText: {
-        color: '#800000',
+        color: COLORS.danger,
         fontSize: 14,
         fontWeight: '500',
         textAlign: 'center',
     },
     saveButton: {
-        backgroundColor: '#081539',
+        backgroundColor: COLORS.primary,
         width: '100%',
         height: 56,
         borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#081539',
+        shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
@@ -443,7 +458,7 @@ const styles = StyleSheet.create({
         marginTop: 56,
         paddingTop: 32,
         borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        borderTopColor: COLORS.border,
     },
     dangerZoneNoBorder: {
         marginTop: 8,
@@ -453,17 +468,17 @@ const styles = StyleSheet.create({
     dangerTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#800000',
+        color: COLORS.accent,
         marginBottom: 8,
     },
     dangerDescription: {
         fontSize: 13,
-        color: '#888888',
+        color: COLORS.textMuted,
         lineHeight: 19,
         marginBottom: 20,
     },
     deleteButton: {
-        backgroundColor: '#800000',
+        backgroundColor: COLORS.primary,
         width: '100%',
         height: 54,
         borderRadius: 16,
@@ -478,13 +493,13 @@ const styles = StyleSheet.create({
 
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(8, 21, 57, 0.7)',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     modalContainer: {
         width: '88%',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: COLORS.sheet,
         borderRadius: 22,
         padding: 24,
         alignItems: 'center',
@@ -497,26 +512,26 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#800000',
+        color: COLORS.accent,
         marginBottom: 10,
     },
     modalSubtitle: {
         fontSize: 14,
-        color: '#666666',
+        color: COLORS.textMuted,
         textAlign: 'center',
         lineHeight: 20,
         marginBottom: 22,
     },
     modalInput: {
         width: '100%',
-        backgroundColor: '#F5F7FA',
+        backgroundColor: COLORS.surface,
         borderWidth: 1.5,
-        borderColor: '#E1E5EB',
+        borderColor: COLORS.border,
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 16,
         fontSize: 16,
-        color: '#081539',
+        color: COLORS.text,
         marginBottom: 6,
     },
     modalErrorContainer: {
@@ -526,13 +541,13 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     modalErrorText: {
-        color: '#800000',
+        color: COLORS.danger,
         fontSize: 13,
         fontWeight: '600',
     },
     modalDeleteBtn: {
         width: '100%',
-        backgroundColor: '#800000',
+        backgroundColor: COLORS.primary,
         height: 52,
         borderRadius: 14,
         alignItems: 'center',
@@ -549,7 +564,7 @@ const styles = StyleSheet.create({
     },
     modalCancelText: {
         fontSize: 15,
-        color: '#666666',
+        color: COLORS.textMuted,
         fontWeight: '500',
     },
 });

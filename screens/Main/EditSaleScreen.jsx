@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { 
     View, 
     StyleSheet, 
@@ -7,7 +7,6 @@ import {
     Pressable, 
     Modal, 
     FlatList, 
-    Alert, 
     Platform,
     KeyboardAvoidingView,
     ActivityIndicator,
@@ -20,17 +19,145 @@ import { Context } from '../../context/Context.js';
 
 const COLORS = {
     primary: '#800000',
-    secondary: '#081539',
-    background: '#F5F5F5',
-    white: '#FFFFFF',
-    text: '#333333',
-    border: '#E0E0E0',
-    placeholder: '#999999',
-    disabled: '#F0F0F0'
+    accent: '#E0706C',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
 };
 
 import { LOCATIONS } from './staticData.js';
 import { normalizeMediaUri } from '../../helpers/normalizeMediaUri.js';
+
+// ─── Custom Alert Component ───────────────────────────────────────────────────
+const CustomAlert = ({ visible, title, message, buttons, onDismiss }) => {
+    if (!visible) return null;
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={onDismiss}
+            statusBarTranslucent
+        >
+            <Pressable style={alertStyles.overlay} onPress={onDismiss}>
+                <Pressable style={alertStyles.card} onPress={() => {}}>
+                    {title ? <Text style={alertStyles.title}>{title}</Text> : null}
+                    {message ? <Text style={alertStyles.message}>{message}</Text> : null}
+                    <View style={[alertStyles.buttonsRow, buttons && buttons.length === 1 && alertStyles.buttonsRowSingle]}>
+                        {buttons && buttons.map((btn, i) => (
+                            <Pressable
+                                key={i}
+                                style={({ pressed }) => [
+                                    alertStyles.button,
+                                    buttons.length === 1 && alertStyles.buttonFull,
+                                    btn.style === 'cancel' && alertStyles.buttonCancel,
+                                    btn.style !== 'cancel' && alertStyles.buttonConfirm,
+                                    pressed && alertStyles.buttonPressed,
+                                ]}
+                                onPress={() => {
+                                    onDismiss();
+                                    btn.onPress && btn.onPress();
+                                }}
+                            >
+                                <Text style={[
+                                    alertStyles.buttonText,
+                                    btn.style === 'cancel' && alertStyles.buttonTextCancel,
+                                    btn.style !== 'cancel' && alertStyles.buttonTextConfirm,
+                                ]}>
+                                    {btn.text}
+                                </Text>
+                            </Pressable>
+                        ))}
+                    </View>
+                </Pressable>
+            </Pressable>
+        </Modal>
+    );
+};
+
+const alertStyles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+    },
+    card: {
+        width: '100%',
+        maxWidth: 360,
+        backgroundColor: COLORS.sheet,
+        borderRadius: 18,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+        elevation: 12,
+    },
+    title: {
+        fontSize: 17,
+        fontWeight: '800',
+        color: COLORS.text,
+        textAlign: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 24,
+        paddingBottom: 6,
+    },
+    message: {
+        fontSize: 14,
+        color: COLORS.textMuted,
+        textAlign: 'center',
+        paddingHorizontal: 20,
+        paddingBottom: 22,
+        lineHeight: 20,
+    },
+    buttonsRow: {
+        flexDirection: 'row',
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+    },
+    buttonsRowSingle: {
+        flexDirection: 'row',
+    },
+    button: {
+        flex: 1,
+        paddingVertical: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    buttonFull: {
+        flex: 1,
+    },
+    buttonCancel: {
+        borderRightWidth: 1,
+        borderRightColor: COLORS.border,
+        backgroundColor: 'transparent',
+    },
+    buttonConfirm: {
+        backgroundColor: COLORS.primary,
+    },
+    buttonPressed: {
+        opacity: 0.75,
+    },
+    buttonText: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    buttonTextCancel: {
+        color: COLORS.textMuted,
+    },
+    buttonTextConfirm: {
+        color: '#FFFFFF',
+    },
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 const ENGINE_CAPACITIES = [
     { id: 'electric', name: 'Fără (Electric)' }
@@ -74,6 +201,28 @@ export default function EditSaleScreen({ route, navigation }) {
     const [searchQuery, setSearchQuery] = useState('');
 
     const [scrollEnabled, setScrollEnabled] = useState(true);
+
+    // ─── Custom Alert State ───────────────────────────────────────────────────
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        buttons: [],
+    });
+
+    const showAlert = useCallback((title, message, buttons) => {
+        setAlertConfig({
+            visible: true,
+            title: title || '',
+            message: message || '',
+            buttons: buttons || [{ text: 'OK', style: 'confirm' }],
+        });
+    }, []);
+
+    const dismissAlert = useCallback(() => {
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+    }, []);
+    // ─────────────────────────────────────────────────────────────────────────
 
     useEffect(() => {
         const formattedCounties = LOCATIONS.map(item => ({
@@ -152,7 +301,7 @@ export default function EditSaleScreen({ route, navigation }) {
                     const isVideo = file.type && file.type.includes('video');
                     const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
                     if (file.fileSize && file.fileSize > maxSize) {
-                        Alert.alert(
+                        showAlert(
                             'Fișier prea mare',
                             isVideo
                                 ? `Videoclipul "${file.fileName || 'fișier'}" depășește 50 MB și a fost ignorat.`
@@ -162,11 +311,11 @@ export default function EditSaleScreen({ route, navigation }) {
                     }                
                     if (file.type && file.type.includes('video')) {
                         if (videoCount >= 1) {
-                            Alert.alert("Info", "Poți avea maxim 1 videoclip.");
+                            showAlert("Info", "Poți avea maxim 1 videoclip.");
                             continue;
                         }
                         if (file.duration && file.duration > 45) {
-                            Alert.alert("Video prea lung", "Videoclipul trebuie să aibă maxim 45 secunde.");
+                            showAlert("Video prea lung", "Videoclipul trebuie să aibă maxim 45 secunde.");
                             continue;
                         }
                         videoCount++;
@@ -176,7 +325,7 @@ export default function EditSaleScreen({ route, navigation }) {
                         if (normalized) {
                             currentMedia.push(normalized);
                         } else {
-                            Alert.alert('Eroare', `Fișierul "${file.fileName || 'fișier'}" nu a putut fi procesat.`);
+                            showAlert('Eroare', `Fișierul "${file.fileName || 'fișier'}" nu a putut fi procesat.`);
                         }
                     }
                 }
@@ -198,7 +347,7 @@ export default function EditSaleScreen({ route, navigation }) {
 
     const openModal = (type) => {
         if (type === 'city' && !selectedCounty) {
-            Alert.alert("Atenție", "Alege întâi Județul.");
+            showAlert("Atenție", "Alege întâi Județul.");
             return;
         }
         setCurrentSelectionType(type);
@@ -233,14 +382,14 @@ export default function EditSaleScreen({ route, navigation }) {
 
     const handleNavigateToPreview = () => {
         if (!price || !mileage || !phoneNumber || !selectedCounty || !selectedCity) {
-            Alert.alert("Eroare", "Te rugăm să completezi câmpurile obligatorii.");
+            showAlert("Eroare", "Te rugăm să completezi câmpurile obligatorii.");
             return;
         }
 
         if (newLocalMedia.length > 0) {
             const hasPhoto = newLocalMedia.some(f => f.type && f.type.includes('image'));
             if (!hasPhoto) {
-                Alert.alert("Eroare", "Trebuie să incluzi cel puțin o FOTOGRAFIE (videoclipurile sunt opționale).");
+                showAlert("Eroare", "Trebuie să incluzi cel puțin o FOTOGRAFIE (videoclipurile sunt opționale).");
                 return;
             }
         }
@@ -332,7 +481,7 @@ export default function EditSaleScreen({ route, navigation }) {
                         disabled={loadingMedia}
                     >
                         {loadingMedia ? (
-                            <ActivityIndicator size="small" color={COLORS.white} />
+                            <ActivityIndicator size="small" color={COLORS.onAccent} />
                         ) : (
                             <Text style={styles.changeMediaButtonText}>
                                 {newLocalMedia.length > 0
@@ -627,6 +776,7 @@ export default function EditSaleScreen({ route, navigation }) {
                         <TextInput 
                             style={styles.searchInput}
                             placeholder="Caută..."
+                            placeholderTextColor={COLORS.placeholder}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                         />
@@ -641,11 +791,19 @@ export default function EditSaleScreen({ route, navigation }) {
                                     </View>
                                 </Pressable>
                             )}
-                            ListEmptyComponent={<Text style={{textAlign: 'center', marginTop: 20, color: '#999'}}>Nu am găsit rezultate.</Text>}
+                            ListEmptyComponent={<Text style={{textAlign: 'center', marginTop: 20, color: COLORS.textMuted}}>Nu am găsit rezultate.</Text>}
                         />
                     </View>
                 </View>
             </Modal>
+
+            <CustomAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                buttons={alertConfig.buttons}
+                onDismiss={dismissAlert}
+            />
 
         </SafeAreaView>
     );
@@ -654,12 +812,12 @@ export default function EditSaleScreen({ route, navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.bg,
     },
     header: {
         paddingVertical: 15,
         paddingHorizontal: 20,
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.bg,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
         flexDirection: 'row',
@@ -673,38 +831,38 @@ const styles = StyleSheet.create({
     },
     backText: {
         fontSize: 22,
-        color: COLORS.secondary,
+        color: COLORS.text,
         fontWeight: 'bold',
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
     },
     scrollContent: {
         padding: 20,
     },
     infoCard: {
-        backgroundColor: '#e6f2ff',
+        backgroundColor: COLORS.surface,
         padding: 15,
         borderRadius: 12,
         marginBottom: 20,
         borderLeftWidth: 4,
-        borderLeftColor: COLORS.secondary,
+        borderLeftColor: COLORS.accent,
     },
     infoCardTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
         marginBottom: 4,
     },
     infoNote: {
         fontSize: 12,
-        color: '#666',
+        color: COLORS.textMuted,
         fontStyle: 'italic',
     },
     changeMediaButton: {
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.primary,
         height: 55,
         borderRadius: 12,
         justifyContent: 'center',
@@ -712,7 +870,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     changeMediaButtonText: {
-        color: COLORS.white,
+        color: COLORS.onAccent,
         fontSize: 15,
         fontWeight: '600',
         textAlign: 'center'
@@ -722,7 +880,7 @@ const styles = StyleSheet.create({
     },
     newMediaNote: {
         fontSize: 12,
-        color: '#888',
+        color: COLORS.textMuted,
         fontStyle: 'italic',
         marginBottom: 10,
         marginLeft: 2,
@@ -755,7 +913,7 @@ const styles = StyleSheet.create({
     },
     mediaItemFirst: {
         borderWidth: 2.5,
-        borderColor: COLORS.primary,
+        borderColor: COLORS.accent,
         borderRadius: 12,
     },
     coverBadge: {
@@ -798,9 +956,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     formContainer: {
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         padding: 20,
         borderRadius: 16,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -810,7 +970,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: COLORS.secondary,
+        color: COLORS.text,
         marginBottom: 8,
         marginTop: 17,
         marginLeft: 2,
@@ -818,7 +978,7 @@ const styles = StyleSheet.create({
     inputSelector: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F9F9F9',
+        backgroundColor: COLORS.sheet,
         borderWidth: 1,
         borderColor: COLORS.border,
         borderRadius: 12,
@@ -838,7 +998,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.sheet,
     },
     segmentActive: {
         backgroundColor: COLORS.primary,
@@ -850,11 +1010,11 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     segmentTextActive: {
-        color: COLORS.white,
+        color: COLORS.onAccent,
     },
     disabledInput: {
         opacity: 0.6,
-        backgroundColor: '#F0F0F0',
+        backgroundColor: COLORS.surface,
     },
     inputText: {
         flex: 1,
@@ -866,16 +1026,16 @@ const styles = StyleSheet.create({
     },
     suffix: {
         fontSize: 16,
-        color: '#888',
+        color: COLORS.textMuted,
         marginLeft: 10,
     },
     chevron: {
         fontSize: 12,
-        color: '#888',
+        color: COLORS.textMuted,
         marginLeft: 10,
     },
     textArea: {
-        backgroundColor: '#F9F9F9',
+        backgroundColor: COLORS.sheet,
         borderWidth: 1,
         borderColor: COLORS.border,
         borderRadius: 12,
@@ -896,11 +1056,11 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         borderWidth: 2,
-        borderColor: COLORS.border,
+        borderColor: COLORS.borderStrong,
         borderRadius: 6,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         marginRight: 10,
     },
     checkboxActive: {
@@ -908,7 +1068,7 @@ const styles = StyleSheet.create({
         borderColor: COLORS.primary,
     },
     checkmark: {
-        color: COLORS.white,
+        color: COLORS.onAccent,
         fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
@@ -917,17 +1077,17 @@ const styles = StyleSheet.create({
     },
     checkboxLabel: {
         fontSize: 15,
-        color: COLORS.secondary,
+        color: COLORS.text,
         fontWeight: '500',
     },
     publishButton: {
         marginTop: 30,
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.primary,
         height: 60,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: COLORS.secondary,
+        shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 5,
@@ -945,7 +1105,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: 'white',
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 25,
         borderTopRightRadius: 25,
         height: '80%',
@@ -960,19 +1120,20 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
     },
     closeButton: {
         fontSize: 16,
-        color: COLORS.primary,
+        color: COLORS.accent,
         fontWeight: '600',
     },
     searchInput: {
-        backgroundColor: '#F0F0F0',
+        backgroundColor: COLORS.surface,
         height: 50,
         borderRadius: 10,
         paddingHorizontal: 15,
         fontSize: 16,
+        color: COLORS.text,
         marginBottom: 15,
     },
     listItem: {
@@ -980,11 +1141,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#EEE',
+        borderBottomColor: COLORS.border,
     },
     listItemText: {
         fontSize: 16,
-        color: '#333',
+        color: COLORS.text,
         fontWeight: '500',
     },
     prepOverlay: {
@@ -993,7 +1154,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: '#fefefe',
+        backgroundColor: COLORS.bg,
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2000,
@@ -1001,7 +1162,7 @@ const styles = StyleSheet.create({
     prepText: {
         marginTop: 14,
         fontSize: 16,
-        color: COLORS.primary,
+        color: COLORS.accent,
         fontWeight: '600',
     }
 });

@@ -26,16 +26,25 @@ import { emitter } from '../../helpers/eventBus.js';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import { Linking } from 'react-native';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import { NotificationListSkeleton, AlertListSkeleton } from '../../helpers/skeletons/NotificationSkeleton.jsx';
 
 const COLORS = {
     primary: '#800000',
-    secondary: '#081539',
-    blue: '#007AFF', 
-    background: '#F5F5F5',
-    white: '#FFFFFF',
-    text: '#333333',
-    border: '#E0E0E0',
-    placeholder: '#999999'
+    accent: '#E0706C',
+    blue: '#007AFF',
+    bg: '#1B1F26',
+    surface: '#262B33',
+    sheet: '#2D333C',
+    border: '#2F353E',
+    borderStrong: '#3A414B',
+    onAccent: '#FFFFFF',
+    text: '#E6E8EB',
+    textMuted: '#9AA0A8',
+    placeholder: '#646B74',
+    unreadBg: '#27344A',
+    pressedBg: '#30363F',
+    iconChip: '#3A2526',
+    danger: '#EF5350',
 };
 
 const timeAgo = (dateString) => {
@@ -341,7 +350,7 @@ export default function NotificationScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="white" />
+            <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
             
             <View style={styles.headerTabs}>
 
@@ -377,7 +386,7 @@ export default function NotificationScreen() {
                     </View>
 
                     {loading ? (
-                        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 50 }} />
+                        <AlertListSkeleton />
                     ) : alerts.length === 0 ? (
                         <View style={styles.emptyStateContainer}>
                             <Text style={styles.emptyStateText}>
@@ -399,7 +408,7 @@ export default function NotificationScreen() {
             ) : (
                 <View style={styles.tabContent}>
                     {notificationsLoading ? (
-                        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 50 }} />
+                        <NotificationListSkeleton />
                     ) : notifications.length === 0 ? (
                         <View style={styles.emptyStateContainer}>
                             <Text style={styles.emptyStateText}>
@@ -420,7 +429,7 @@ export default function NotificationScreen() {
                                 <Text style={styles.sectionTitle}>{title}</Text>
                             )}
                             ListFooterComponent={() => 
-                                isFetchingMoreNotes ? <ActivityIndicator size="small" color={COLORS.primary} style={{marginVertical: 20}} /> : null
+                                isFetchingMoreNotes ? <ActivityIndicator size="small" color={COLORS.accent} style={{marginVertical: 20}} /> : null
                             }
                             renderItem={({ item }) => {
                                 let iconSource = item.sender_image ? { uri: item.sender_image } : assets.default_profile;
@@ -442,7 +451,7 @@ export default function NotificationScreen() {
                                                 source={iconSource} 
                                                 style={[
                                                     styles.notifImage, 
-                                                    item.type === 'SAVED_SEARCH_MATCH' && { tintColor: COLORS.primary, width: '60%', height: '60%' }
+                                                    item.type === 'SAVED_SEARCH_MATCH' && { tintColor: COLORS.accent, width: '60%', height: '60%' }
                                                 ]} 
                                                 resizeMode={item.type === 'SAVED_SEARCH_MATCH' ? 'contain' : 'cover'}
                                             />
@@ -499,12 +508,12 @@ export default function NotificationScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.bg,
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
     headerTabs: {
         flexDirection: 'row',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.bg,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
     },
@@ -517,15 +526,15 @@ const styles = StyleSheet.create({
         borderBottomColor: 'transparent',
     },
     activeTabButton: {
-        borderBottomColor: COLORS.primary,
+        borderBottomColor: COLORS.accent,
     },
     tabText: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#888',
+        color: COLORS.textMuted,
     },
     activeTabText: {
-        color: COLORS.primary,
+        color: COLORS.accent,
         fontWeight: 'bold',
     },
     tabContent: {
@@ -533,23 +542,23 @@ const styles = StyleSheet.create({
     },
     addButtonContainer: {
         padding: 20,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.bg,
     },
     addAlertButton: {
-        backgroundColor: COLORS.secondary, 
+        backgroundColor: COLORS.primary, 
         width: '100%',
         height: 55,
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: COLORS.secondary, 
+        shadowColor: COLORS.primary, 
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 5,
         elevation: 6,
     },
     addAlertButtonText: {
-        color: 'white',
+        color: COLORS.onAccent,
         fontSize: 16,
         fontWeight: 'bold',
         letterSpacing: 0.5,
@@ -563,7 +572,7 @@ const styles = StyleSheet.create({
     },
     emptyStateText: {
         fontSize: 16,
-        color: '#777',
+        color: COLORS.textMuted,
         textAlign: 'center',
         lineHeight: 24,
         fontWeight: '500',
@@ -574,11 +583,13 @@ const styles = StyleSheet.create({
     },
     alertCard: {
         flexDirection: 'row',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         borderRadius: 16,
         padding: 15,
         marginBottom: 15,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.border,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
@@ -589,18 +600,18 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 12,
-        backgroundColor: '#f8e6e6',
+        backgroundColor: COLORS.iconChip,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 15,
         borderWidth: 1,
-        borderColor: '#EFEFEF',
+        borderColor: COLORS.border,
         overflow: 'hidden',
     },
     brandBellIcon: {
         width: 24,
         height: 24,
-        tintColor: COLORS.primary,
+        tintColor: COLORS.accent,
         opacity: 0.9,
     },
     alertContent: {
@@ -610,12 +621,12 @@ const styles = StyleSheet.create({
     alertBrandName: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
         marginBottom: 4,
     },
     alertSummaryText: {
         fontSize: 13,
-        color: '#666',
+        color: COLORS.textMuted,
         lineHeight: 18,
     },
     dotsButton: {
@@ -624,7 +635,7 @@ const styles = StyleSheet.create({
     },
     dotsText: {
         fontSize: 22,
-        color: '#888',
+        color: COLORS.textMuted,
         fontWeight: 'bold',
         marginTop: -8, 
     },
@@ -637,7 +648,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
     },
     bottomSheet: {
-        backgroundColor: 'white',
+        backgroundColor: COLORS.sheet,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingTop: 10,
@@ -652,7 +663,7 @@ const styles = StyleSheet.create({
     handleBar: {
         width: 40,
         height: 5,
-        backgroundColor: '#DDDDDD',
+        backgroundColor: COLORS.borderStrong,
         borderRadius: 3,
         marginBottom: 20,
     },
@@ -661,35 +672,37 @@ const styles = StyleSheet.create({
         paddingVertical: 18,
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
+        borderBottomColor: COLORS.border,
     },
     deleteText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#D32F2F', 
+        color: COLORS.danger, 
     },
     cancelText: {
         fontSize: 16,
-        color: '#555',
+        color: COLORS.textMuted,
         fontWeight: '600',
     },
 
     sectionTitle: {
         fontSize: 17,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
         marginTop: 15,
         marginBottom: 10,
-        backgroundColor: COLORS.background, 
+        backgroundColor: COLORS.bg, 
         paddingVertical: 5
     },
     notificationCard: {
         flexDirection: 'row',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         borderRadius: 16,
         padding: 15,
         marginBottom: 12,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.border,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -697,11 +710,11 @@ const styles = StyleSheet.create({
         elevation: 1,
     },
     unreadNotificationCard: {
-        backgroundColor: '#E8F0FE', 
+        backgroundColor: COLORS.unreadBg, 
     },
     pressedNotificationCard: {
         opacity: 0.7,
-        backgroundColor: '#EAEAEA', 
+        backgroundColor: COLORS.pressedBg, 
     },
     notifImageContainer: {
         width: 46,
@@ -709,9 +722,9 @@ const styles = StyleSheet.create({
         borderRadius: 23,
         marginRight: 14,
         borderWidth: 1,
-        borderColor: '#EFEFEF',
+        borderColor: COLORS.border,
         overflow: 'hidden',
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         justifyContent: 'center',
         alignItems: 'center',  
     },
@@ -727,16 +740,16 @@ const styles = StyleSheet.create({
     notifTitle: {
         fontSize: 14.5,
         fontWeight: 'bold',
-        color: COLORS.secondary,
+        color: COLORS.text,
         marginBottom: 4,
     },
     notifBody: {
         fontSize: 13,
-        color: '#444',
+        color: COLORS.textMuted,
         lineHeight: 18,
     },
     notifTime: {
-        color: '#999',
+        color: COLORS.placeholder,
         fontSize: 12,
     },
     unreadDot: {
