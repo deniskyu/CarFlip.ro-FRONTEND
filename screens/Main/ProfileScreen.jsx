@@ -46,7 +46,7 @@ const COLORS = {
     placeholder: '#646B74',
 };
 
-const DEFAULT_AVATAR = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+const DEFAULT_AVATAR = "https://media.car-flip.com/splash_logo.jpg";
 
 const HEADER_SHIMMER_BASE = 'rgba(255, 255, 255, 0.18)';
 const HEADER_SHIMMER_HIGHLIGHT = 'rgba(255, 255, 255, 0.42)';

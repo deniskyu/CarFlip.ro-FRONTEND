@@ -112,7 +112,7 @@ const FeedSeparator = ({ itemHeight }) => (
         <View style={styles.separatorContent}>
             <Image source={assets.verified_icon} style={styles.separatorCheckIcon} resizeMode="contain" />
             <Text style={styles.separatorTitle}>Ești la zi!</Text>
-            <Text style={styles.separatorSubtitle}>Ai văzut toate anunțurile noi din ultimele 30 de zile.</Text>
+            <Text style={styles.separatorSubtitle}>Ai văzut toate anunțurile noi din ultimele 90 de zile.</Text>
             <Text style={styles.separatorSmall}>Mai jos sunt anunțurile anterioare.</Text>
         </View>
         <View style={styles.separatorLine} />

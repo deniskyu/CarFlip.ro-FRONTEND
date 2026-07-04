@@ -7,7 +7,7 @@ import { assets } from '../assets.js';
 export default function ForceUpdateScreen() {
     const storeUrl = Platform.OS === 'ios'
         ? 'https://apps.apple.com'
-        : 'market://';
+        : 'market://?id=com.mobilefrontendframe';
 
     const storeName = Platform.OS === 'ios' ? 'App Store' : 'Google Play';
 

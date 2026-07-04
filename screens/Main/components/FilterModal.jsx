@@ -381,7 +381,7 @@ export default function FilterModal({ visible, onClose, navigation }) {
                                 <View style={[styles.checkbox, onlyUnseen && styles.checkboxChecked]}>
                                     {onlyUnseen && <Text style={{color: 'white', fontWeight:'bold'}}>✓</Text>}
                                 </View>
-                                <Text style={styles.checkboxLabel}>Doar anunțuri ne-văzute (ultimele 30 zile)</Text>
+                                <Text style={styles.checkboxLabel}>Doar anunțuri ne-văzute (ultimele 90 zile)</Text>
                             </Pressable>
                             
                             <Text style={styles.label}>Marca & Model</Text>
