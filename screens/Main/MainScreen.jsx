@@ -21,7 +21,7 @@ import SearchBar from "./components/SearchBar.jsx";
 import FilterModal from "./components/FilterModal.jsx";
 import CountyModal from "./components/CountyModal.jsx";
 import PostItem from "./components/PostItem.jsx";
-import { emitter } from "../../helpers/eventBus.js";
+import { emitter, emitSticky } from "../../helpers/eventBus.js";
 import FastImage from '@d11/react-native-fast-image';
 import { useCustomScroll } from "../../helpers/useCustomScroll.js"; 
 import { showMessage } from "react-native-flash-message";
@@ -35,7 +35,7 @@ const MAX_ITEMS = 50;
 
 const MAP_ICON_SIZE = Math.round(30 * UI_SCALE);
 
-export default function MainScreen({ navigation }) {
+function MainScreenInner({ navigation }) {
     const route = useRoute(); 
 
     const [itemHeight, setItemHeight] = useState(Layout.ITEM_HEIGHT);
@@ -138,7 +138,7 @@ export default function MainScreen({ navigation }) {
                     seenQueue.current.add(item.item._id);
                 }
             });
-            emitter.emit('visible_index_changed_main', newIndex);
+            emitSticky('visible_index_changed_main', newIndex);
         }
     }).current;
         
@@ -292,7 +292,7 @@ const fetchFeed = async (isRefresh = false, currentCursor = null, currentMode = 
 
                 setSales(prev => prev.slice(keepFrom));
                 activeIndexRef.current = newIdx;
-                emitter.emit('visible_index_changed_main', newIdx);
+                emitSticky('visible_index_changed_main', newIdx);
 
                 setTimeout(() => {
                     if (flatListRef.current) {
@@ -385,21 +385,6 @@ const fetchFeed = async (isRefresh = false, currentCursor = null, currentMode = 
         emitter.on('feed_ui_hidden_main', onFeedUiHidden);
         return () => emitter.off('feed_ui_hidden_main', onFeedUiHidden);
     }, []);
-
-    useEffect(() => {
-        const onForceRefresh = () => {
-            if (flatListRef.current) {
-                flatListRef.current.scrollToOffset({ offset: 0, animated: true });
-            }
-            handleRefresh();
-        };
-
-        emitter.on('force_home_refresh', onForceRefresh);
-    
-        return () => {
-            emitter.off('force_home_refresh', onForceRefresh);
-        };
-    }, []); 
 
     const handleRefresh = () => {
         setRefreshing(true);
@@ -558,6 +543,21 @@ const fetchFeed = async (isRefresh = false, currentCursor = null, currentMode = 
             />
         </View>
     );
+}
+
+export default function MainScreen(props) {
+    const [epoch, setEpoch] = useState(0);
+
+    useEffect(() => {
+        const onForceRefresh = () => {
+            emitSticky('visible_index_changed_main', 0);
+            setEpoch(e => e + 1);
+        };
+        emitter.on('force_home_refresh', onForceRefresh);
+        return () => emitter.off('force_home_refresh', onForceRefresh);
+    }, []);
+
+    return <MainScreenInner {...props} key={epoch} />;
 }
 
 const styles = StyleSheet.create({

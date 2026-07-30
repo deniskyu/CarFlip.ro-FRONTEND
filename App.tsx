@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { StatusBar } from 'react-native';
 import FlashMessage from "react-native-flash-message";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,16 +10,14 @@ import InAppNotification from './screens/Main/components/InAppNotification.jsx';
 import { authEvents } from './helpers/authEvents.js';
 import { notificationRef } from './helpers/notificationHelper.js';
 
-
-import { Text, TextInput, Platform } from 'react-native';
+import { Text, TextInput } from 'react-native';
 
 // Patch pentru React 19 / RN 0.83
 (Text as any).render = ((originalRender) => {
-    return function(props: any, ref: any) {
-        return originalRender({ allowFontScaling: false, maxFontSizeMultiplier: 1, ...props }, ref);
-    };
+  return function(props: any, ref: any) {
+    return originalRender({ allowFontScaling: false, maxFontSizeMultiplier: 1, ...props }, ref);
+  };
 })((Text as any).render);
-
 
 
 export default function App(){
@@ -36,14 +33,14 @@ export default function App(){
   }, []);
 
   return(
-      <GestureHandlerRootView style={{ flex: 1 }}>
-          <SafeAreaProvider> 
-              <ContextProvider key={appKey}>
-                  <IndexNavigation />
-                  <FlashMessage position="top" />
-                  <InAppNotification ref={notificationRef} />
-              </ContextProvider>
-          </SafeAreaProvider>
-      </GestureHandlerRootView>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ContextProvider key={appKey}>
+          <IndexNavigation />
+          <FlashMessage position="top" />
+          <InAppNotification ref={notificationRef} />
+        </ContextProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 };

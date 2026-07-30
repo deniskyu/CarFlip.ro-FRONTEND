@@ -248,6 +248,7 @@ export default function PreviewSaleScreen({ navigation }) {
                 phone_number: draftSale.phone_number,
                 description: draftSale.description || '',
                 allow_comments: String(draftSale.allow_comments),
+                allow_social_promo: String(draftSale.allow_social_promo),
             };
 
 

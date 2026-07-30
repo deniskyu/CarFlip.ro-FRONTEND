@@ -27,7 +27,7 @@ import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
 import CommentsSheet from './CommentsSheet.jsx';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import ReportModal from './ReportModal.jsx';
-import { emitter } from '../../../helpers/eventBus.js';
+import { emitter, getSticky } from '../../../helpers/eventBus.js';
 import { Context } from '../../../context/Context.js';
 
 const { width, height } = Dimensions.get('window');
@@ -375,7 +375,9 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
     const [reportVisible, setReportVisible] = useState(false);
     const [toastVisible, setToastVisible] = useState(false);
 
-    const [isVisible, setIsVisible] = useState(false);
+    const [isVisible, setIsVisible] = useState(
+        () => getSticky(`visible_index_changed_${screenId}`, null) === index
+    );
 
     const [descriptionVisible, setDescriptionVisible] = useState(false);
 
@@ -385,6 +387,8 @@ const PostItem = React.memo(({ item, index, onBackToFeed, initialOpenComments = 
 
     useEffect(() => {
         const eventName = `visible_index_changed_${screenId}`;
+        const sticky = getSticky(eventName, null);
+        if (sticky !== null) setIsVisible(sticky === index);
         const handler = (visibleIndex) => setIsVisible(visibleIndex === index);
         emitter.on(eventName, handler);
         return () => emitter.off(eventName, handler);

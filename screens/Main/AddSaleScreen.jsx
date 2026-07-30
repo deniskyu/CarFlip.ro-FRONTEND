@@ -258,6 +258,7 @@ export default function AddSaleScreen({ navigation }) {
     const [title, setTitle] = useState('');
 
     const [disableComments, setDisableComments] = useState(false);
+    const [allowSocialPromo, setAllowSocialPromo] = useState(false);
 
     const [phoneNumber, setPhoneNumber] = useState(''); 
     const [description, setDescription] = useState('');
@@ -558,6 +559,7 @@ export default function AddSaleScreen({ navigation }) {
         setSteeringWheel('left');
         setNegotiable(false);
         setDisableComments(false);
+        setAllowSocialPromo(false);
         setPhoneNumber('');
         setDescription('');
         setTitle('');
@@ -660,6 +662,7 @@ export default function AddSaleScreen({ navigation }) {
             phone_number: phoneNumber,
             description: description,
             allow_comments: !disableComments,
+            allow_social_promo: allowSocialPromo,
         };
 
         setDraftSale(draftData);
@@ -696,7 +699,7 @@ export default function AddSaleScreen({ navigation }) {
                             O imagine este obligatorie, și va fi cea de copertă in profil. Procesarea anunțului va dura undeva la câteva minute.
                         </Text>
                         <Text style={[styles.sectionSubtitle, {marginBottom: 12, color: COLORS.accent}]}>
-                            După 3 luni, anunțul va fi dezactivat automat. Poți intra la secțiunea de profil pentru a reactiva încă 3 luni anunțul.
+                            După 6 luni, anunțul va fi dezactivat automat. Poți intra la secțiunea de profil pentru a reactiva încă 6 luni anunțul.
                         </Text>
 
                         <Pressable
@@ -1059,6 +1062,20 @@ export default function AddSaleScreen({ navigation }) {
                             </View>
                             <Text style={styles.checkboxLabel}>Oprește comentariile</Text>
                         </Pressable>
+
+                        <Pressable 
+                            style={styles.checkboxContainer} 
+                            onPress={() => setAllowSocialPromo(!allowSocialPromo)}
+                        >
+                            <View style={[styles.checkbox, allowSocialPromo && styles.checkboxActive]}>
+                                {allowSocialPromo && <Text style={styles.checkmark}>✓</Text>}
+                            </View>
+                            <Text style={styles.checkboxLabel}>Promovează anunțul pe paginile CarFlip GRATUIT</Text>
+                        </Pressable>
+
+                        <Text style={styles.checkboxSubLabel}>
+                            Fotografiile anunțului tău pot fi publicate public pe paginile oficiale CarFlip de TikTok și Facebook, în scop de promovare. Opțiunea este complet opțională, iar anunțul funcționează normal și fără ea.
+                        </Text>
 
                     </View>
 
@@ -1538,6 +1555,15 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: COLORS.text,
         fontWeight: '500',
+        flex: 1,
+    },
+    checkboxSubLabel: {
+        fontSize: 12,
+        color: COLORS.textMuted,
+        lineHeight: 18,
+        marginLeft: 36,
+        marginTop: 2,
+        marginBottom: 5,
     },
     prepOverlay: {
         position: 'absolute',

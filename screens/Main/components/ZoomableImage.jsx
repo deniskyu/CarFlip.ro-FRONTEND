@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Dimensions, View, ActivityIndicator, Platform, Image } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { 
@@ -40,20 +40,23 @@ export default function ZoomableMedia({
     const panStartY = useSharedValue(0);
     
     const [isLoading, setIsLoading] = useState(true);
-    const [userPaused, setUserPaused] = useState(false);
+        const [userPaused, setUserPaused] = useState(false);
+        const isLoadedRef = useRef(false);
 
-    const isFocused = useIsFocused();
-    const systemPaused = paused || !isFocused;
+        const isFocused = useIsFocused();
+        const systemPaused = paused || !isFocused;
 
-    useEffect(() => {
-        if (systemPaused) {
-            setUserPaused(false);
-        } else {
-            if (videoRef && videoRef.current) {
+        useEffect(() => {
+            isLoadedRef.current = false;
+        }, [uri]);
+
+        useEffect(() => {
+            if (systemPaused) {
+                setUserPaused(false);
+            } else if (isLoadedRef.current && videoRef && videoRef.current) {
                 videoRef.current.seek(0);
             }
-        }
-    }, [systemPaused, videoRef]); 
+        }, [systemPaused, videoRef]);
 
     const togglePause = () => {
         setUserPaused((prev) => !prev);
@@ -128,6 +131,7 @@ export default function ZoomableMedia({
     }));
 
     const handleVideoLoad = (data) => {
+        isLoadedRef.current = true;
         setIsLoading(false);
         if (onVideoLoad) onVideoLoad(data?.duration);
         if (onVideoNaturalSize) {

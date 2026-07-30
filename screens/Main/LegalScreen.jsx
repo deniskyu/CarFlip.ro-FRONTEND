@@ -15,7 +15,7 @@ const COLORS = {
     placeholder: '#646B74',
 };
 
-const LAST_UPDATED = '22 iunie 2026';
+const LAST_UPDATED = '30 iulie 2026';
 
 export default function LegalScreen() {
     const navigation = useNavigation();
@@ -80,7 +80,10 @@ export default function LegalScreen() {
 
                 <Text style={styles.subtitle}>1.5 Publicarea anunțurilor</Text>
                 <Text style={styles.paragraph}>
-                    Publicarea anunțurilor pe CarFlip este complet gratuită. Fiecare anunț este activ pentru o perioadă de 3 luni de la data publicării, după care expiră automat. Utilizatorul poate reactiva anunțul gratuit din secțiunea de profil. Ștergerea anunțului poate fi realizată oricând din aplicație. Anunțurile trec printr-un proces automat de procesare media (compresie imagini și video) înainte de publicare.
+                    Publicarea anunțurilor pe CarFlip este complet gratuită. Fiecare anunț este activ pentru o perioadă de 6 luni de la data publicării, după care expiră automat. Utilizatorul poate reactiva anunțul gratuit din secțiunea de profil. Ștergerea anunțului poate fi realizată oricând din aplicație. Anunțurile trec printr-un proces automat de procesare media (compresie imagini și video) înainte de publicare.
+                </Text>
+                <Text style={styles.paragraph}>
+                    La publicarea unui anunț, utilizatorul poate activa opțional promovarea acestuia pe paginile oficiale CarFlip de social media. Opțiunea este dezactivată implicit, iar anunțul funcționează identic indiferent dacă este activată sau nu. Detalii privind licența acordată sunt prevăzute la secțiunea 1.9, iar cele privind prelucrarea datelor la secțiunile 2.3, 2.5 și 2.6.
                 </Text>
 
                 <Text style={styles.subtitle}>1.6 Rolul platformei</Text>
@@ -112,6 +115,12 @@ export default function LegalScreen() {
                 <Text style={styles.subtitle}>1.9 Proprietate intelectuală</Text>
                 <Text style={styles.paragraph}>
                     Conținutul publicat de utilizatori (fotografii, descrieri, date despre vehicule) rămâne proprietatea acestora. Prin publicarea conținutului pe CarFlip, utilizatorul acordă platformei o licență neexclusivă, gratuită și revocabilă de a afișa, distribui și utiliza acest conținut în cadrul platformei, precum și în materiale promoționale asociate serviciului (capturi de ecran pentru App Store, prezentări).
+                </Text>
+                <Text style={styles.paragraph}>
+                    Suplimentar, dacă utilizatorul activează opțiunea de promovare la publicarea anunțului, licența se extinde pentru a permite republicarea fotografiilor din anunț pe paginile oficiale CarFlip de pe platforme de social media (în prezent TikTok și Facebook), exclusiv în scopul promovării serviciului. Această extindere este condiționată de consimțământul explicit al utilizatorului, exprimat prin activarea opțiunii, și poate fi retrasă conform secțiunii 2.7. Utilizatorul confirmă că deține drepturile asupra fotografiilor încărcate și că republicarea acestora nu încalcă drepturile unor terți.
+                </Text>
+                <Text style={styles.paragraph}>
+                    Anumite platforme terțe nu permit eliminarea programatică a conținutului deja publicat. Consecințele acestei limitări tehnice sunt descrise la secțiunea 2.5.
                 </Text>
                 <Text style={styles.paragraph}>
                     Brandul CarFlip, designul aplicației, codul sursă și toate elementele grafice asociate sunt proprietatea exclusivă a Echipei CarFlip și nu pot fi reproduse sau utilizate fără acordul scris prealabil.
@@ -161,6 +170,7 @@ export default function LegalScreen() {
                 <Text style={styles.bulletItem}>• Executarea contractului (Art. 6 alin. 1 lit. b): furnizarea serviciului, gestionarea contului, publicarea și afișarea anunțurilor, funcționalitatea de mesagerie și comentarii</Text>
                 <Text style={styles.bulletItem}>• Interesul legitim (Art. 6 alin. 1 lit. f): prevenirea fraudei și a utilizării abuzive, îmbunătățirea serviciului, funcționalitatea de feed personalizat (postări nevăzute vs. văzute)</Text>
                 <Text style={styles.bulletItem}>• Consimțământul (Art. 6 alin. 1 lit. a): trimiterea notificărilor push (care poate fi retras oricând din setările dispozitivului)</Text>
+                <Text style={styles.bulletItem}>• Consimțământul (Art. 6 alin. 1 lit. a): promovarea anunțului pe paginile oficiale CarFlip de social media. Această prelucrare are loc exclusiv dacă utilizatorul activează opțiunea corespunzătoare la publicarea anunțului. Opțiunea este dezactivată implicit, iar neactivarea ei nu afectează în niciun fel publicarea sau vizibilitatea anunțului în aplicație</Text>
                 <Text style={styles.bulletItem}>• Obligația legală (Art. 6 alin. 1 lit. c): răspunsul la solicitări ale autorităților competente, dacă este cazul</Text>
                 <Text style={styles.paragraph}>
                     Nu trimitem email-uri de marketing sau newsletter. Toate comunicările prin email sunt strict tranzacționale (coduri de verificare, resetare parolă, notificări privind contul).
@@ -183,12 +193,13 @@ export default function LegalScreen() {
                 </Text>
                 <Text style={styles.bulletItem}>• Contul și datele asociate (anunțuri, comentarii, aprecieri): pe durata existenței contului</Text>
                 <Text style={styles.bulletItem}>• Mesajele private: șterse automat după 30 de zile calendaristice de la trimitere (ștergere automată și ireversibilă)</Text>
-                <Text style={styles.bulletItem}>• Anunțurile expirate: dezactivate automat după 3 luni, datele rămân asociate contului până la ștergerea manuală sau ștergerea contului</Text>
+                <Text style={styles.bulletItem}>• Anunțurile expirate: dezactivate automat după 6 luni, datele rămân asociate contului până la ștergerea manuală sau ștergerea contului</Text>
                 <Text style={styles.bulletItem}>• După ștergerea contului: toate datele asociate (anunțuri, comentarii, mesaje, profil, fișiere media) sunt șterse automat și definitiv. Datele anonimizate pot fi păstrate temporar în backup-uri de securitate pentru maximum 30 de zile</Text>
+                <Text style={styles.bulletItem}>• Conținutul promovat pe social media: la ștergerea anunțului sau a contului, eliminăm automat postările corespunzătoare de pe paginile noastre, în măsura în care platforma respectivă permite acest lucru prin interfețele sale tehnice. Anumite platforme (în prezent TikTok) nu permit eliminarea programatică a postărilor deja publicate; în aceste cazuri eliminarea poate fi efectuată doar manual, la solicitarea utilizatorului trimisă la carflip.ro@outlook.com</Text>
 
                 <Text style={styles.subtitle}>2.6 Partajarea datelor cu terți</Text>
                 <Text style={styles.paragraph}>
-                    CarFlip nu vinde, nu închiriază și nu distribuie datele personale ale utilizatorilor către terți în scopuri comerciale. Datele sunt partajate exclusiv cu următorii furnizori de servicii (împuterniciți), strict în scopul funcționării platformei:
+                    CarFlip nu vinde și nu închiriază datele personale ale utilizatorilor. Datele sunt partajate exclusiv cu următorii furnizori de servicii (împuterniciți), în scopul funcționării platformei și, acolo unde este menționat explicit, în scopul promovării activate voluntar de utilizator:
                 </Text>
                 <Text style={styles.bulletItem}>• Mailgun (Sinch Email) — transmiterea email-urilor tranzacționale</Text>
                 <Text style={styles.bulletItem}>• Firebase Cloud Messaging (Google) — transmiterea notificărilor push</Text>
@@ -196,6 +207,11 @@ export default function LegalScreen() {
                 <Text style={styles.bulletItem}>• Apple Inc. — furnizarea serviciului de autentificare securizată Sign in with Apple</Text>
                 <Text style={styles.bulletItem}>• Cloudflare R2 (Cloudflare, Inc.) — stocarea fișierelor media (imagini, videoclipuri)</Text>
                 <Text style={styles.bulletItem}>• MongoDB Atlas (MongoDB, Inc.) — stocarea bazei de date</Text>
+                <Text style={styles.bulletItem}>• Zernio — intermediar tehnic pentru publicarea automată a conținutului pe paginile oficiale CarFlip de social media (exclusiv pentru anunțurile la care utilizatorul a activat opțiunea de promovare)</Text>
+                <Text style={styles.bulletItem}>• TikTok și Meta Platforms (Facebook) — găzduirea și afișarea publică a conținutului promovat pe paginile oficiale CarFlip (exclusiv pentru anunțurile la care utilizatorul a activat opțiunea de promovare)</Text>
+                <Text style={styles.paragraph}>
+                    Conținutul transmis către platformele de social media constă exclusiv în fotografiile anunțului și o descriere generată din datele tehnice ale vehiculului. Nu transmitem numele utilizatorului, adresa de email, numărul de telefon sau alte date de contact.
+                </Text>
                 <Text style={styles.paragraph}>
                     Toți furnizorii menționați respectă GDPR și/sau au implementate clauze contractuale standard pentru protecția datelor.
                 </Text>
@@ -210,7 +226,7 @@ export default function LegalScreen() {
                 <Text style={styles.bulletItem}>• Dreptul la restricționarea prelucrării (Art. 18): poți solicita restricționarea prelucrării datelor tale în anumite circumstanțe</Text>
                 <Text style={styles.bulletItem}>• Dreptul la portabilitatea datelor (Art. 20): poți solicita datele tale într-un format structurat, utilizat în mod curent și care poate fi citit automat (JSON)</Text>
                 <Text style={styles.bulletItem}>• Dreptul la opoziție (Art. 21): poți obiecta în orice moment la prelucrarea datelor bazată pe interesul nostru legitim</Text>
-                <Text style={styles.bulletItem}>• Dreptul de retragere a consimțământului (Art. 7): poți retrage consimțământul pentru notificările push oricând, din setările dispozitivului</Text>
+                <Text style={styles.bulletItem}>• Dreptul de retragere a consimțământului (Art. 7): poți retrage consimțământul pentru notificările push oricând, din setările dispozitivului. Consimțământul pentru promovarea pe social media poate fi retras prin ștergerea anunțului din aplicație sau printr-o solicitare trimisă la carflip.ro@outlook.com; retragerea nu afectează legalitatea prelucrării efectuate anterior</Text>
                 <Text style={styles.paragraph}>
                     Pentru exercitarea oricăruia dintre aceste drepturi, contactează-ne la carflip.ro@outlook.com. Vom răspunde în termen de maximum 30 de zile calendaristice.
                 </Text>
@@ -222,7 +238,7 @@ export default function LegalScreen() {
 
                 <Text style={styles.subtitle}>2.9 Transferuri internaționale de date</Text>
                 <Text style={styles.paragraph}>
-                    Datele personale sunt stocate și prelucrate preponderent în cadrul Spațiului Economic European (SEE). În cazul în care anumiți furnizori de servicii (Cloudflare, Google/Firebase, Apple) prelucrează date în afara SEE, aceștia asigură un nivel adecvat de protecție prin clauze contractuale standard aprobate de Comisia Europeană sau prin certificări recunoscute (EU-US Data Privacy Framework).
+                    Datele personale sunt stocate și prelucrate preponderent în cadrul Spațiului Economic European (SEE). În cazul în care anumiți furnizori de servicii (Cloudflare, Google/Firebase, Apple, Zernio, TikTok, Meta Platforms) prelucrează date în afara SEE, aceștia asigură un nivel adecvat de protecție prin clauze contractuale standard aprobate de Comisia Europeană sau prin certificări recunoscute (EU-US Data Privacy Framework).
                 </Text>
 
                 <View style={styles.sectionDivider} />
