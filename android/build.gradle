@@ -10,6 +10,9 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url "https://artifact.bytedance.com/repository/pangle"
+        }
     }
     dependencies {
         classpath("com.android.tools.build:gradle:8.7.3")
@@ -20,3 +23,4 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
