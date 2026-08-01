@@ -45,6 +45,8 @@ const cardScaled = {
     tagPadV: Math.round(3 * csc),
     priceFont: 16 * csc,
     locationFont: 11 * csc,
+    processingBannerFont: 13 * csc,
+    processingBannerSubFont: 11 * csc,
 };
 
 export default function ActivePostsTab({ headerComponent }) {
@@ -63,6 +65,7 @@ export default function ActivePostsTab({ headerComponent }) {
 
     const [nextCursor, setNextCursor] = useState(null);
     const [hasMore, setHasMore] = useState(true);
+    const [hasProcessing, setHasProcessing] = useState(false);
 
     useEffect(() => {
         fetchPosts();
@@ -181,6 +184,13 @@ export default function ActivePostsTab({ headerComponent }) {
                     });
                 }
 
+                // Backend-ul trimite hasProcessing DOAR la prima pagină (fără
+                // cursor). La paginare (scroll) câmpul lipsește — nu resetăm
+                // starea, ca banner-ul să nu clipească în timpul infinite-scroll.
+                if (typeof res.data.hasProcessing === 'boolean') {
+                    setHasProcessing(res.data.hasProcessing);
+                }
+
                 setNextCursor(newCursor);
                 setHasMore(moreAvailable);
             }
@@ -296,6 +306,36 @@ export default function ActivePostsTab({ headerComponent }) {
         );
     };
 
+const renderListHeader = () => (
+        <View>
+            {headerComponent}
+            {hasProcessing && (
+                <Pressable
+                    onPress={handleRefresh}
+                    disabled={refreshing}
+                    hitSlop={6}
+                    style={({ pressed }) => [
+                        styles.processingBanner,
+                        pressed && styles.processingBannerPressed,
+                    ]}
+                >
+                    <Text
+                        style={[styles.processingBannerText, { fontSize: cardScaled.processingBannerFont }]}
+                        numberOfLines={2}
+                    >
+                        Ai anunțuri în procesare
+                    </Text>
+                    <Text
+                        style={[styles.processingBannerSubText, { fontSize: cardScaled.processingBannerSubFont }]}
+                        numberOfLines={1}
+                    >
+                        Apasă pentru refresh
+                    </Text>
+                </Pressable>
+            )}
+        </View>
+    );
+
     return (
         <View style={styles.container}>
             <FlatList
@@ -303,7 +343,7 @@ export default function ActivePostsTab({ headerComponent }) {
                 data={posts}
                 keyExtractor={(item) => item._id.toString()}
                 renderItem={renderItem}
-                ListHeaderComponent={headerComponent}
+                ListHeaderComponent={renderListHeader}
                 ListEmptyComponent={ListEmpty}
                 ListFooterComponent={ListFooter}
                 showsVerticalScrollIndicator={false}
@@ -456,6 +496,34 @@ const styles = StyleSheet.create({
         color: COLORS.textMuted,
         fontSize: 14,
         fontStyle: 'italic',
+    },
+    processingBanner: {
+        backgroundColor: COLORS.primary,
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginHorizontal: 10,
+        marginTop: 10,
+        marginBottom: 4,
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        borderRadius: 10,
+    },
+    processingBannerPressed: {
+        opacity: 0.7,
+    },
+    processingBannerText: {
+        color: '#FFFFFF',
+        fontWeight: '700',
+        textAlign: 'center',
+        flexShrink: 1,
+    },
+    processingBannerSubText: {
+        color: 'rgba(255,255,255,0.65)',
+        fontWeight: '500',
+        textAlign: 'center',
+        marginTop: 2,
+        flexShrink: 1,
     },
     optionsModalOverlay: {
         flex: 1,

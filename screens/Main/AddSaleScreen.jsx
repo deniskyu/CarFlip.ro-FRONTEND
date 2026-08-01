@@ -213,6 +213,7 @@ const POLLUTION_STANDARDS = [
     { id: 'euro4', name: 'Euro 4' },
     { id: 'euro5', name: 'Euro 5' },
     { id: 'euro6', name: 'Euro 6' },
+    { id: 'hybrid', name: 'Hibrid' },
     { id: 'electric', name: 'Electric' }
 ];
 
