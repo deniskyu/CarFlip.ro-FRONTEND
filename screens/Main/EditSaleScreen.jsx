@@ -31,7 +31,7 @@ const COLORS = {
     placeholder: '#646B74',
 };
 
-import { LOCATIONS } from './staticData.js';
+import { LOCATIONS, normalizeText } from './staticData.js';
 import { normalizeMediaUri } from '../../helpers/normalizeMediaUri.js';
 
 // ─── Custom Alert Component ───────────────────────────────────────────────────
@@ -347,7 +347,7 @@ export default function EditSaleScreen({ route, navigation }) {
 
     const openModal = (type) => {
         if (type === 'city' && !selectedCounty) {
-            showAlert("Atenție", "Alege întâi Județul.");
+            showAlert("Atenție", "Alege întâi Județul/Raionul.");
             return;
         }
         setCurrentSelectionType(type);
@@ -375,8 +375,9 @@ export default function EditSaleScreen({ route, navigation }) {
         else if (currentSelectionType === 'capacity') data = ENGINE_CAPACITIES;
 
         if (!searchQuery) return data;
+        const query = normalizeText(searchQuery);
         return data.filter(item => 
-            item.name.toLowerCase().includes(searchQuery.toLowerCase())
+            normalizeText(item.name).includes(query)
         );
     };
 
@@ -642,10 +643,10 @@ export default function EditSaleScreen({ route, navigation }) {
                             </Pressable>
                         </View>
 
-                        <Text style={styles.label}>Județ</Text>
+                        <Text style={styles.label}>Județ / Raion</Text>
                         <Pressable style={styles.inputSelector} onPress={() => openModal('county')}>
                             <Text style={[styles.inputText, !selectedCounty && styles.placeholderText]}>
-                                {selectedCounty ? selectedCounty.name : "Selectează județul..."}
+                                {selectedCounty ? selectedCounty.name : "Selectează județul/raionul..."}
                             </Text>
                             <Text style={styles.chevron}>▼</Text>
                         </Pressable>
@@ -766,7 +767,7 @@ export default function EditSaleScreen({ route, navigation }) {
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>
-                                {currentSelectionType === 'county' ? 'Alege Județul' : currentSelectionType === 'city' ? 'Alege Orașul' : 'Alege Capacitatea'}
+                                {currentSelectionType === 'county' ? 'Alege Județul/Raionul' : currentSelectionType === 'city' ? 'Alege Orașul' : 'Alege Capacitatea'}
                             </Text>
                             <Pressable onPress={() => setModalVisible(false)}>
                                 <Text style={styles.closeButton}>Închide</Text>

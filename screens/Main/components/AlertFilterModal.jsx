@@ -8,7 +8,7 @@ import axios from 'axios';
 import { Context } from '../../../context/Context.js';
 import { 
     LOCATIONS, BODY_TYPES, FUEL_TYPES, TRANSMISSIONS, 
-    POLLUTION_STANDARDS, REGISTRATION_STATUS 
+    POLLUTION_STANDARDS, REGISTRATION_STATUS, normalizeText 
 } from '../staticData.js'; 
 import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
 import { showMessage } from 'react-native-flash-message';
@@ -217,10 +217,11 @@ export default function AlertFilterModal({ visible, onClose, alertData, onSaveSu
             case 'steering': data = STEERING_OPTIONS; break;
         }
         if (!searchQuery) return data;
-        
+
+        const query = normalizeText(searchQuery);
         return data.filter(item => {
             const name = item.name || item.judet || item || ""; 
-            return name.toString().toLowerCase().includes(searchQuery.toLowerCase());
+            return normalizeText(name.toString()).includes(query);
         });
     };
 
@@ -388,9 +389,9 @@ export default function AlertFilterModal({ visible, onClose, alertData, onSaveSu
 
                         <Text style={styles.label}>Locație</Text>
                         <Pressable style={styles.selectorFull} onPress={() => openSelection('county')}>
-                            <Text style={styles.labelSmall}>Județ:</Text>
+                            <Text style={styles.labelSmall}>Județ/Raion:</Text>
                             <Text style={[styles.selText, !selectedCounty && styles.placeholder]}>
-                                {getText(selectedCounty, "Orice județ")}
+                                {getText(selectedCounty, "Orice județ/raion")}
                             </Text>
                             <Text style={styles.chevron}>▼</Text>
                         </Pressable>

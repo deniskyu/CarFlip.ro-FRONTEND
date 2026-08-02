@@ -168,6 +168,150 @@ export const LOCATIONS = [
     {
       "judet": "Vrancea",
       "orase": ["Focșani", "Adjud", "Mărășești", "Panciu", "Odobești"]
+    },
+    {
+      "judet": "Chișinău (MD)",
+      "orase": ["Chișinău", "Codru", "Durlești", "Sîngera", "Vadul lui Vodă", "Vatra"]
+    },
+    {
+      "judet": "Bălți (MD)",
+      "orase": ["Bălți"]
+    },
+    {
+      "judet": "Anenii Noi (MD)",
+      "orase": ["Anenii Noi"]
+    },
+    {
+      "judet": "Basarabeasca (MD)",
+      "orase": ["Basarabeasca"]
+    },
+    {
+      "judet": "Briceni (MD)",
+      "orase": ["Briceni", "Lipcani"]
+    },
+    {
+      "judet": "Cahul (MD)",
+      "orase": ["Cahul"]
+    },
+    {
+      "judet": "Cantemir (MD)",
+      "orase": ["Cantemir"]
+    },
+    {
+      "judet": "Călărași (MD)",
+      "orase": ["Călărași"]
+    },
+    {
+      "judet": "Căușeni (MD)",
+      "orase": ["Căușeni", "Căinari"]
+    },
+    {
+      "judet": "Cimișlia (MD)",
+      "orase": ["Cimișlia"]
+    },
+    {
+      "judet": "Criuleni (MD)",
+      "orase": ["Criuleni"]
+    },
+    {
+      "judet": "Dondușeni (MD)",
+      "orase": ["Dondușeni"]
+    },
+    {
+      "judet": "Drochia (MD)",
+      "orase": ["Drochia"]
+    },
+    {
+      "judet": "Dubăsari (MD)",
+      "orase": ["Cocieri"]
+    },
+    {
+      "judet": "Edineț (MD)",
+      "orase": ["Edineț", "Cupcini"]
+    },
+    {
+      "judet": "Fălești (MD)",
+      "orase": ["Fălești"]
+    },
+    {
+      "judet": "Florești (MD)",
+      "orase": ["Florești", "Ghindești", "Mărculești"]
+    },
+    {
+      "judet": "Glodeni (MD)",
+      "orase": ["Glodeni"]
+    },
+    {
+      "judet": "Hîncești (MD)",
+      "orase": ["Hîncești"]
+    },
+    {
+      "judet": "Ialoveni (MD)",
+      "orase": ["Ialoveni"]
+    },
+    {
+      "judet": "Leova (MD)",
+      "orase": ["Leova", "Iargara"]
+    },
+    {
+      "judet": "Nisporeni (MD)",
+      "orase": ["Nisporeni"]
+    },
+    {
+      "judet": "Ocnița (MD)",
+      "orase": ["Ocnița", "Otaci", "Frunză"]
+    },
+    {
+      "judet": "Orhei (MD)",
+      "orase": ["Orhei"]
+    },
+    {
+      "judet": "Rezina (MD)",
+      "orase": ["Rezina"]
+    },
+    {
+      "judet": "Rîșcani (MD)",
+      "orase": ["Rîșcani", "Costești"]
+    },
+    {
+      "judet": "Sîngerei (MD)",
+      "orase": ["Sîngerei", "Biruința"]
+    },
+    {
+      "judet": "Soroca (MD)",
+      "orase": ["Soroca"]
+    },
+    {
+      "judet": "Strășeni (MD)",
+      "orase": ["Strășeni", "Bucovăț"]
+    },
+    {
+      "judet": "Șoldănești (MD)",
+      "orase": ["Șoldănești"]
+    },
+    {
+      "judet": "Ștefan Vodă (MD)",
+      "orase": ["Ștefan Vodă"]
+    },
+    {
+      "judet": "Taraclia (MD)",
+      "orase": ["Taraclia", "Tvardița"]
+    },
+    {
+      "judet": "Telenești (MD)",
+      "orase": ["Telenești"]
+    },
+    {
+      "judet": "Ungheni (MD)",
+      "orase": ["Ungheni", "Cornești"]
+    },
+    {
+      "judet": "Găgăuzia (MD)",
+      "orase": ["Comrat", "Ceadîr-Lunga", "Vulcănești"]
+    },
+    {
+      "judet": "Stânga Nistrului (MD)",
+      "orase": ["Tiraspol", "Bender", "Rîbnița", "Dubăsari", "Slobozia", "Camenca", "Grigoriopol", "Dnestrovsc"]
     }
   ];
   
@@ -239,3 +383,33 @@ export const LOCATIONS = [
     { id: 'lpg', name: 'Lpg' },
     { id: 'altceva', name: 'Altceva' },
 ];
+
+const DIACRITICS_MAP = {
+    'ă': 'a',
+    'â': 'a',
+    'î': 'i',
+    'ș': 's',
+    'ş': 's',
+    'ț': 't',
+    'ţ': 't',
+};
+
+const SPELLING_VARIANTS = [
+    ['hanc', 'hinc'],
+    ['rasc', 'risc'],
+    ['sanger', 'singer'],
+    ['ceadar', 'ceadir'],
+    ['rabnit', 'ribnit'],
+];
+
+export const normalizeText = (value) => {
+    let text = String(value === null || value === undefined ? '' : value)
+        .toLowerCase()
+        .replace(/[ăâîșşțţ]/g, (char) => DIACRITICS_MAP[char] || char);
+
+    for (let i = 0; i < SPELLING_VARIANTS.length; i++) {
+        text = text.split(SPELLING_VARIANTS[i][0]).join(SPELLING_VARIANTS[i][1]);
+    }
+
+    return text;
+};

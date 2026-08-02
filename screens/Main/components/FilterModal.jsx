@@ -8,7 +8,7 @@ import axios from 'axios';
 import { Context } from '../../../context/Context.js';
 import { 
     LOCATIONS, BODY_TYPES, FUEL_TYPES, TRANSMISSIONS, 
-    POLLUTION_STANDARDS, REGISTRATION_STATUS 
+    POLLUTION_STANDARDS, REGISTRATION_STATUS, normalizeText 
 } from '../staticData.js';
 import { assets } from '../../../assets.js';
 import axiosAuthGuard from '../../../helpers/axiosAuthGuard.js';
@@ -250,10 +250,11 @@ export default function FilterModal({ visible, onClose, navigation }) {
             case 'steering': data = STEERING_OPTIONS; break;
         }
         if (!searchQuery) return data;
-        
+
+        const query = normalizeText(searchQuery);
         return data.filter(item => {
             const name = item.name || item.judet || item || ""; 
-            return name.toString().toLowerCase().includes(searchQuery.toLowerCase());
+            return normalizeText(name.toString()).includes(query);
         });
     };
 
@@ -487,9 +488,9 @@ export default function FilterModal({ visible, onClose, navigation }) {
 
                             <Text style={styles.label}>Locație & Înmatriculare</Text>
                             <Pressable style={styles.selectorFull} onPress={() => openSelection('county')}>
-                                <Text style={styles.labelSmall}>Județ:</Text>
+                                <Text style={styles.labelSmall}>Județ/Raion:</Text>
                                 <Text style={[styles.selText, !selectedCounty && styles.placeholder]}>
-                                    {getText(selectedCounty, "Toată țara")}
+                                    {getText(selectedCounty, "Toate regiunile")}
                                 </Text>
                                 <Text style={styles.chevron}>▼</Text>
                             </Pressable>

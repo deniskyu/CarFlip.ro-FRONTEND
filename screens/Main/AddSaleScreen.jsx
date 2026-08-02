@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
 import { Context } from '../../context/Context.js';
-import { LOCATIONS, FUEL_TYPES } from './staticData.js';
+import { LOCATIONS, FUEL_TYPES, normalizeText } from './staticData.js';
 import { emitter } from '../../helpers/eventBus.js';
 import { normalizeMediaUri } from '../../helpers/normalizeMediaUri.js';
 
@@ -470,7 +470,7 @@ export default function AddSaleScreen({ navigation }) {
         }
         if (type === 'city') {
             if (!selectedCounty) {
-                showAlert("Atenție", "Alege întâi Județul.");
+                showAlert("Atenție", "Alege întâi Județul/Raionul.");
                 return;
             }
         }
@@ -592,8 +592,9 @@ export default function AddSaleScreen({ navigation }) {
         }
 
         if (!searchQuery) return data;
+        const query = normalizeText(searchQuery);
         return data.filter(item => 
-            item.name.toLowerCase().includes(searchQuery.toLowerCase())
+            normalizeText(item.name).includes(query)
         );
     };
 
@@ -615,7 +616,7 @@ export default function AddSaleScreen({ navigation }) {
             case 'transmission': return 'Cutie de Viteze';
             case 'pollution': return 'Norma de Poluare';
             case 'drivetrain': return 'Tracțiune';
-            case 'county': return 'Județ';
+            case 'county': return 'Județ / Raion';
             case 'city': return 'Oraș';
             default: return 'Selectează';
         }
@@ -906,10 +907,10 @@ export default function AddSaleScreen({ navigation }) {
                             />
                         </View>
 
-                        <Text style={styles.label}>Județ</Text>
+                        <Text style={styles.label}>Județ / Raion</Text>
                         <Pressable style={styles.inputSelector} onPress={() => openModal('county')}>
                             <Text style={[styles.inputText, !selectedCounty && styles.placeholderText]}>
-                                {selectedCounty ? selectedCounty.name : "Selectează județul..."}
+                                {selectedCounty ? selectedCounty.name : "Selectează județul/raionul..."}
                             </Text>
                             <Text style={styles.chevron}>▼</Text>
                         </Pressable>

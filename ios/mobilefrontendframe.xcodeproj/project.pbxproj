@@ -340,7 +340,7 @@
 				CODE_SIGN_ENTITLEMENTS = mobilefrontendframe/mobilefrontendframe.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 20;
 				DEVELOPMENT_TEAM = 4F3M46392M;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = mobilefrontendframe/Info.plist;
@@ -351,7 +351,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.5;
+				MARKETING_VERSION = 2.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -377,7 +377,7 @@
 				CODE_SIGN_ENTITLEMENTS = mobilefrontendframe/mobilefrontendframe.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 20;
 				DEVELOPMENT_TEAM = 4F3M46392M;
 				INFOPLIST_FILE = mobilefrontendframe/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CarFlip.ro;
@@ -387,7 +387,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.5;
+				MARKETING_VERSION = 2.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

@@ -50,11 +50,11 @@ export default function CountyModal({ visible, onClose, currentCounty = null, on
                 onCountyChanged(value);
                 onClose();
             } else {
-                showMessage({ type: 'danger', message: 'Eroare', description: 'Nu s-a putut salva județul.' });
+                showMessage({ type: 'danger', message: 'Eroare', description: 'Nu s-a putut salva județul/raionul.' });
                 setSavingValue(undefined);
             }
         } catch (error) {
-            showMessage({ type: 'danger', message: 'Eroare', description: 'Nu s-a putut salva județul.' });
+            showMessage({ type: 'danger', message: 'Eroare', description: 'Nu s-a putut salva județul/raionul.' });
             setSavingValue(undefined);
         }
     };
@@ -96,9 +96,9 @@ export default function CountyModal({ visible, onClose, currentCounty = null, on
                 <Pressable style={styles.card} onPress={() => {}}>
                     <View style={styles.header}>
                         <View style={styles.headerText}>
-                            <Text style={styles.title}>Din ce județ dorești să vezi anunțurile?</Text>
+                            <Text style={styles.title}>Din ce județ/raion dorești să vezi anunțurile?</Text>
                             <Text style={styles.description}>
-                                Anunțurile din județul ales vor fi afișate primele în feedul tău. Poți reveni oricând la toată țara.
+                                Anunțurile din județul/raionul ales vor fi afișate primele în feedul tău. Poți reveni oricând la toate regiunile.
                             </Text>
                         </View>
                         <Pressable
@@ -115,7 +115,7 @@ export default function CountyModal({ visible, onClose, currentCounty = null, on
                         contentContainerStyle={styles.listContent}
                         showsVerticalScrollIndicator={true}
                     >
-                        {renderRow('Toată țara', null)}
+                        {renderRow('Toate regiunile', null)}
                         {COUNTY_NAMES.map((name) => renderRow(name, name))}
                     </ScrollView>
                 </Pressable>
