@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { View } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { Context } from "../context/Context.js";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MainNavigation from './MainNavigation/MainNavigation.jsx';
@@ -30,6 +30,14 @@ const linking = {
             }
         }
     }
+};
+
+const navTheme = {
+    ...DarkTheme,
+    colors: {
+        ...DarkTheme.colors,
+        background: '#1B1F26',
+    },
 };
 
 export default function IndexNavigation() {
@@ -69,10 +77,11 @@ export default function IndexNavigation() {
     }
 
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <View style={{ flex: 1 }}>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#1B1F26' }}>
+            <View style={{ flex: 1, backgroundColor: '#1B1F26' }}>
                 <NavigationContainer
                     ref={navigationRef}
+                    theme={navTheme}
                     linking={isLogged ? linking : undefined}
                     onReady={() => {
                         console.log("🏁 [Navigation] Container is READY!");

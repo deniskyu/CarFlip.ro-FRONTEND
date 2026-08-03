@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -21,6 +21,27 @@ import { emitter } from '../../helpers/eventBus.js';
 import { Context } from '../../context/Context.js';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Shimmer from '../../helpers/skeletons/Shimmer.jsx';
+import { assets } from '../../assets.js';
+
+import {
+    applyConversationUpdate,
+    clearConversationUnread,
+    sortConversationsDesc,
+    clampUnread,
+    idOf,
+} from '../../helpers/chatLogic.js';
+
+import {
+    s,
+    vs,
+    f,
+    textBlock,
+    metaText,
+    CONTENT_MAX_WIDTH,
+    AVATAR_LIST,
+    LIST_ROW_HEIGHT,
+    HIT_SLOP,
+} from '../../helpers/chatMetrics.js';
 
 const COLORS = {
     primary: '#800000',
@@ -42,6 +63,9 @@ const COLORS = {
 const SK_BASE = '#32383F';
 const SK_HIGH = '#3C424B';
 
+const SEARCH_DEBOUNCE = 400;
+const REFETCH_THROTTLE = 4000;
+
 const SKELETON_ROW_WIDTHS = [
     { name: '52%', msg: '80%' },
     { name: '40%', msg: '66%' },
@@ -53,7 +77,8 @@ const SKELETON_ROW_WIDTHS = [
 
 function ConversationListSkeleton() {
     const { height } = useWindowDimensions();
-    const count = Math.max(8, Math.ceil(height / 76) + 1);
+    const rowHeight = LIST_ROW_HEIGHT > 0 ? LIST_ROW_HEIGHT : 76;
+    const count = Math.min(20, Math.max(6, Math.ceil(height / rowHeight) + 1));
 
     return (
         <View style={styles.skeletonList} pointerEvents="none">
@@ -63,16 +88,16 @@ function ConversationListSkeleton() {
                     <View key={i}>
                         <View style={styles.convItem}>
                             <View style={styles.avatarContainer}>
-                                <Shimmer width={52} height={52} borderRadius={26} baseColor={SK_BASE} highlightColor={SK_HIGH} />
+                                <Shimmer width={AVATAR_LIST} height={AVATAR_LIST} borderRadius={AVATAR_LIST / 2} baseColor={SK_BASE} highlightColor={SK_HIGH} />
                             </View>
 
                             <View style={styles.convContent}>
                                 <View style={styles.convTop}>
-                                    <Shimmer width={w.name} height={14} borderRadius={6} baseColor={SK_BASE} highlightColor={SK_HIGH} />
-                                    <Shimmer width={38} height={11} borderRadius={5} baseColor={SK_BASE} highlightColor={SK_HIGH} />
+                                    <Shimmer width={w.name} height={vs(14)} borderRadius={6} baseColor={SK_BASE} highlightColor={SK_HIGH} />
+                                    <Shimmer width={s(38)} height={vs(11)} borderRadius={5} baseColor={SK_BASE} highlightColor={SK_HIGH} />
                                 </View>
                                 <View style={styles.convBottom}>
-                                    <Shimmer width={w.msg} height={12} borderRadius={5} baseColor={SK_BASE} highlightColor={SK_HIGH} />
+                                    <Shimmer width={w.msg} height={vs(12)} borderRadius={5} baseColor={SK_BASE} highlightColor={SK_HIGH} />
                                 </View>
                             </View>
                         </View>
@@ -85,7 +110,12 @@ function ConversationListSkeleton() {
 }
 
 export default function ChatListScreen({ navigation }) {
-    const { fetchUnreadChatCount, activeChatConversationRef } = useContext(Context);
+    const {
+        fetchUnreadChatCount,
+        activeChatConversationRef,
+        setUnreadChatCount,
+        userId,
+    } = useContext(Context);
 
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -95,74 +125,125 @@ export default function ChatListScreen({ navigation }) {
     const [searchResults, setSearchResults] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-    const searchTimeout = useRef(null);
 
     const [menuVisible, setMenuVisible] = useState(false);
     const [selectedConv, setSelectedConv] = useState(null);
+    const [openingConversation, setOpeningConversation] = useState(false);
 
-    const fetchConversations = useCallback(async (silent = false) => {
-        try {
-            if (!silent) setLoading(true);
-            const res = await axiosAuthGuard.get('/api/chat/conversations');
-            if (res.data.success) {
-                setConversations(res.data.data.filter(c => c.last_message !== null));
+    const mountedRef = useRef(true);
+    const searchTimeout = useRef(null);
+    const searchRequestIdRef = useRef(0);
+    const inFlightRef = useRef(false);
+    const lastFetchAtRef = useRef(0);
+    const currentUserIdRef = useRef(userId || null);
+    const openingRef = useRef(false);
+    const conversationsRef = useRef([]);
+
+    useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
+
+    useEffect(() => { currentUserIdRef.current = userId || null; }, [userId]);
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+            if (searchTimeout.current) {
+                clearTimeout(searchTimeout.current);
+                searchTimeout.current = null;
             }
+        };
+    }, []);
+
+    const fetchConversations = useCallback(async (silent) => {
+        if (inFlightRef.current) {
+            if (mountedRef.current) setRefreshing(false);
+            return;
+        }
+        inFlightRef.current = true;
+        if (!silent && mountedRef.current) setLoading(true);
+
+        try {
+            const res = await axiosAuthGuard.get('/api/chat/conversations');
+            if (!mountedRef.current) return;
+            if (res?.data?.success) {
+                const list = Array.isArray(res.data.data) ? res.data.data : [];
+                const cleaned = list
+                    .filter((c) => c && idOf(c) !== null && c.last_message !== null && c.last_message !== undefined)
+                    .map((c) => Object.assign({}, c, { unread_count: clampUnread(c.unread_count) }));
+                setConversations(sortConversationsDesc(cleaned));
+            }
+            lastFetchAtRef.current = Date.now();
         } catch (err) {
-            console.log('❌ Eroare fetch conversations:', err);
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            inFlightRef.current = false;
+            if (mountedRef.current) {
+                setLoading(false);
+                setRefreshing(false);
+            }
         }
     }, []);
 
     useFocusEffect(
         useCallback(() => {
-            fetchConversations();
-            fetchUnreadChatCount();
-        }, [])
+            fetchConversations(false);
+            if (typeof fetchUnreadChatCount === 'function') fetchUnreadChatCount();
+            return undefined;
+        }, [fetchConversations, fetchUnreadChatCount])
     );
-
-    /*const { activeChatTabRef } = useContext(Context);
-
-    useFocusEffect(useCallback(() => {
-        activeChatTabRef.current = true;
-        return () => { activeChatTabRef.current = false; };
-    }, []));*/
 
     useEffect(() => {
         const handleConversationUpdated = (data) => {
-            if (activeChatConversationRef.current === data.conversationId) return;
-            setConversations(prev => {
-                const idx = prev.findIndex(c => c._id === data.conversationId);
-                if (idx === -1) {
+            if (!mountedRef.current || !data) return;
+
+            const conversationId = idOf(data.conversationId);
+            const known = conversationId !== null
+                && conversationsRef.current.some((c) => idOf(c) === conversationId);
+
+            if (known) {
+                setConversations((prev) => applyConversationUpdate(prev, data, {
+                    currentUserId: currentUserIdRef.current,
+                    activeConversationId: activeChatConversationRef ? activeChatConversationRef.current : null,
+                }).list);
+            }
+
+            if (!known) {
+                const now = Date.now();
+                if (now - lastFetchAtRef.current > REFETCH_THROTTLE) {
+                    lastFetchAtRef.current = now;
                     fetchConversations(true);
-                    return prev;
                 }
-                const updated = [...prev];
-                updated[idx] = {
-                    ...updated[idx],
-                    last_message: data.last_message,
-                    last_message_type: data.last_message_type,
-                    last_message_at: data.last_message_at,
-                    unread_count: (updated[idx].unread_count || 0) + 1
-                };
-                return updated.sort((a, b) =>
-                    new Date(b.last_message_at) - new Date(a.last_message_at)
-                );
-            });
+            }
+        };
+
+        const handleUnreadTotal = (data) => {
+            if (!mountedRef.current || !data) return;
+            if (typeof data.total === 'number' && typeof setUnreadChatCount === 'function') {
+                setUnreadChatCount(clampUnread(data.total));
+            }
         };
 
         emitter.on('socket_conversation_updated', handleConversationUpdated);
+        emitter.on('socket_unread_count_updated', handleUnreadTotal);
         return () => {
             emitter.off('socket_conversation_updated', handleConversationUpdated);
+            emitter.off('socket_unread_count_updated', handleUnreadTotal);
         };
-    }, []);
+    }, [fetchConversations, activeChatConversationRef, setUnreadChatCount]);
 
-    const handleSearch = (text) => {
-        setSearchQuery(text);
+    const handleSearch = useCallback((value) => {
+        setSearchQuery(value);
 
-        if (!text.trim()) {
+        if (searchTimeout.current) {
+            clearTimeout(searchTimeout.current);
+            searchTimeout.current = null;
+        }
+
+        const trimmed = value.trim();
+
+        if (!trimmed) {
+            searchRequestIdRef.current += 1;
             setIsSearching(false);
+            setSearchLoading(false);
             setSearchResults([]);
             return;
         }
@@ -170,60 +251,128 @@ export default function ChatListScreen({ navigation }) {
         setIsSearching(true);
         setSearchLoading(true);
 
-        if (searchTimeout.current) clearTimeout(searchTimeout.current);
+        const requestId = searchRequestIdRef.current + 1;
+        searchRequestIdRef.current = requestId;
 
         searchTimeout.current = setTimeout(async () => {
+            searchTimeout.current = null;
             try {
-                const res = await axiosAuthGuard.get(`/api/users/search?query=${encodeURIComponent(text.trim())}`);
-                if (res.data.success) {
-                    setSearchResults(res.data.data);
+                const res = await axiosAuthGuard.get(`/api/users/search?query=${encodeURIComponent(trimmed)}`);
+                if (!mountedRef.current) return;
+                if (searchRequestIdRef.current !== requestId) return;
+                if (res?.data?.success) {
+                    const list = Array.isArray(res.data.data) ? res.data.data : [];
+                    setSearchResults(list.filter((u) => u && idOf(u) !== null));
+                } else {
+                    setSearchResults([]);
                 }
             } catch (err) {
-                console.log('❌ Eroare search:', err);
+                if (mountedRef.current && searchRequestIdRef.current === requestId) {
+                    setSearchResults([]);
+                }
             } finally {
-                setSearchLoading(false);
+                if (mountedRef.current && searchRequestIdRef.current === requestId) {
+                    setSearchLoading(false);
+                }
             }
-        }, 400);
-    };
+        }, SEARCH_DEBOUNCE);
+    }, []);
 
-    const clearSearch = () => {
+    const clearSearch = useCallback(() => {
+        if (searchTimeout.current) {
+            clearTimeout(searchTimeout.current);
+            searchTimeout.current = null;
+        }
+        searchRequestIdRef.current += 1;
         setSearchQuery('');
         setIsSearching(false);
+        setSearchLoading(false);
         setSearchResults([]);
-        if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    };
+    }, []);
 
-    const openConversation = async (targetUserId, targetUsername, targetIcon) => {
+    const goToProfile = useCallback((targetId) => {
+        const target = idOf(targetId);
+        if (!target) return;
+        if (currentUserIdRef.current && target === idOf(currentUserIdRef.current)) return;
+        try {
+            navigation.navigate('SearchProfileResult', { userId: target });
+        } catch (e) {
+            try {
+                navigation.navigate('HomeTab', {
+                    screen: 'SearchProfileResult',
+                    params: { userId: target },
+                });
+            } catch (e2) {}
+        }
+    }, [navigation]);
+
+    const openConversation = useCallback(async (targetUserId, targetUsername, targetIcon) => {
+        if (openingRef.current) return;
+        openingRef.current = true;
+        setOpeningConversation(true);
         try {
             const res = await axiosAuthGuard.post('/api/chat/conversations', {
                 targetUserId
             });
 
-            if (res.data.success) {
+            if (res?.data?.success && res.data.data?._id) {
                 clearSearch();
                 navigation.navigate('ChatScreen', {
-                    conversationId: res.data.data._id,
+                    conversationId: String(res.data.data._id),
                     participantName: targetUsername,
                     participantIcon: targetIcon,
-                    participantId: targetUserId
+                    participantId: targetUserId ? String(targetUserId) : null
                 });
+            } else {
+                Alert.alert('Eroare', res?.data?.message || 'Nu s-a putut deschide conversația.');
             }
         } catch (err) {
-            Alert.alert('Eroare', 'Nu s-a putut deschide conversația.');
+            const message = err?.response?.data?.message || 'Nu s-a putut deschide conversația.';
+            Alert.alert('Eroare', message);
+        } finally {
+            openingRef.current = false;
+            if (mountedRef.current) setOpeningConversation(false);
         }
-    };
+    }, [navigation, clearSearch]);
 
-    const openMenu = (conv) => {
+    const openExistingConversation = useCallback((item) => {
+        if (!item) return;
+        const conversationId = idOf(item);
+        if (!conversationId) return;
+
+        const cleared = clearConversationUnread(conversationsRef.current, conversationId);
+        if (cleared.cleared > 0) {
+            setConversations(cleared.list);
+            if (typeof setUnreadChatCount === 'function') {
+                setUnreadChatCount((current) => clampUnread((Number(current) || 0) - cleared.cleared));
+            }
+        }
+
+        navigation.navigate('ChatScreen', {
+            conversationId,
+            participantName: item.participant?.username,
+            participantIcon: item.participant?.icon,
+            participantId: item.participant?._id ? String(item.participant._id) : null
+        });
+    }, [navigation, setUnreadChatCount]);
+
+    const openMenu = useCallback((conv) => {
         setSelectedConv(conv);
         setMenuVisible(true);
-    };
+    }, []);
 
-    const handleReport = () => {
+    const handleReport = useCallback(() => {
         setMenuVisible(false);
-        if (!selectedConv) return;
+        const target = selectedConv;
+        if (!target) return;
+        const targetId = target.participant?._id ? String(target.participant._id) : null;
+        if (!targetId) {
+            Alert.alert('Eroare', 'Nu se poate identifica utilizatorul.');
+            return;
+        }
         Alert.alert(
             'Raportează utilizatorul',
-            `Ești sigur că vrei să raportezi pe ${selectedConv.participant?.username}?`,
+            `Ești sigur că vrei să raportezi pe ${target.participant?.username || 'acest utilizator'}?`,
             [
                 { text: 'Anulează', style: 'cancel' },
                 {
@@ -232,7 +381,7 @@ export default function ChatListScreen({ navigation }) {
                     onPress: async () => {
                         try {
                             await axiosAuthGuard.post('/api/report', {
-                                target_id: selectedConv.participant?._id,
+                                target_id: targetId,
                                 target_type: 'profile',
                                 reason: 'Comportament inadecvat în chat'
                             });
@@ -244,10 +393,12 @@ export default function ChatListScreen({ navigation }) {
                 }
             ]
         );
-    };
+    }, [selectedConv]);
 
-    const renderConversation = ({ item }) => {
-        const hasUnread = item.unread_count > 0;
+    const renderConversation = useCallback(({ item }) => {
+        const unread = clampUnread(item?.unread_count);
+        const hasUnread = unread > 0;
+        const participantId = item?.participant?._id ? String(item.participant._id) : null;
 
         return (
             <Pressable
@@ -255,27 +406,28 @@ export default function ChatListScreen({ navigation }) {
                     styles.convItem,
                     pressed && { backgroundColor: COLORS.pressedBg }
                 ]}
-                onPress={() => navigation.navigate('ChatScreen', {
-                    conversationId: item._id,
-                    participantName: item.participant?.username,
-                    participantIcon: item.participant?.icon,
-                    participantId: item.participant?._id
-                })}
+                onPress={() => openExistingConversation(item)}
+                onLongPress={() => openMenu(item)}
+                delayLongPress={500}
             >
-                <View style={styles.avatarContainer}>
+                <Pressable
+                    style={styles.avatarContainer}
+                    onPress={() => goToProfile(participantId)}
+                    hitSlop={HIT_SLOP}
+                >
                     <Image
-                        source={{ uri: item.participant?.icon }}
+                        source={item?.participant?.icon ? { uri: item.participant.icon } : assets.default_avatar}
                         style={styles.avatar}
                     />
-                </View>
+                </Pressable>
 
                 <View style={styles.convContent}>
                     <View style={styles.convTop}>
                         <Text style={[styles.convName, hasUnread && styles.convNameBold]} numberOfLines={1}>
-                            {item.participant?.username || 'Utilizator'}
+                            {item?.participant?.username || 'Utilizator'}
                         </Text>
-                        <Text style={[styles.convTime, hasUnread && styles.convTimeBold]}>
-                            {formatConversationTime(item.last_message_at)}
+                        <Text style={[styles.convTime, hasUnread && styles.convTimeBold]} numberOfLines={1} allowFontScaling={false}>
+                            {formatConversationTime(item?.last_message_at)}
                         </Text>
                     </View>
                     <View style={styles.convBottom}>
@@ -283,14 +435,14 @@ export default function ChatListScreen({ navigation }) {
                             style={[styles.convLastMessage, hasUnread && styles.convLastMessageBold]}
                             numberOfLines={1}
                         >
-                            {item.last_message_type === 'image'
+                            {item?.last_message_type === 'image'
                                 ? '📷 Imagine'
-                                : item.last_message || 'Niciun mesaj încă'}
+                                : item?.last_message || 'Niciun mesaj încă'}
                         </Text>
                         {hasUnread && (
                             <View style={styles.unreadBadge}>
-                                <Text style={styles.unreadBadgeText}>
-                                    {item.unread_count > 99 ? '99+' : item.unread_count}
+                                <Text style={styles.unreadBadgeText} allowFontScaling={false}>
+                                    {unread > 99 ? '99+' : unread}
                                 </Text>
                             </View>
                         )}
@@ -300,31 +452,32 @@ export default function ChatListScreen({ navigation }) {
                 <Pressable
                     style={styles.dotsButton}
                     onPress={() => openMenu(item)}
-                    hitSlop={10}
+                    hitSlop={HIT_SLOP}
                 >
-                    <Text style={styles.dotsText}>⋮</Text>
+                    <Text style={styles.dotsText} allowFontScaling={false}>⋮</Text>
                 </Pressable>
             </Pressable>
         );
-    };
+    }, [openExistingConversation, openMenu, goToProfile]);
 
-    const renderSearchResult = ({ item }) => (
+    const renderSearchResult = useCallback(({ item }) => (
         <Pressable
             style={({ pressed }) => [
                 styles.searchResultItem,
                 pressed && { backgroundColor: COLORS.pressedBg }
             ]}
-            onPress={() => openConversation(item._id, item.username, item.icon)}
+            onPress={() => openConversation(item?._id, item?.username, item?.icon)}
+            disabled={openingConversation}
         >
             <Image
-                source={{ uri: item.icon }}
+                source={item?.icon ? { uri: item.icon } : assets.default_avatar}
                 style={styles.searchAvatar}
             />
-            <Text style={styles.searchUsername}>{item.username}</Text>
+            <Text style={styles.searchUsername} numberOfLines={1}>{item?.username}</Text>
         </Pressable>
-    );
+    ), [openConversation, openingConversation]);
 
-    const renderEmpty = () => {
+    const renderEmpty = useCallback(() => {
         if (loading) return null;
         return (
             <View style={styles.emptyContainer}>
@@ -335,7 +488,19 @@ export default function ChatListScreen({ navigation }) {
                 </Text>
             </View>
         );
-    };
+    }, [loading]);
+
+    const keyExtractor = useCallback((item, index) => {
+        const id = idOf(item);
+        return id !== null ? id : `row_${index}`;
+    }, []);
+
+    const separator = useCallback(() => <View style={styles.separator} />, []);
+
+    const listContentStyle = useMemo(() => ([
+        styles.listContent,
+        conversations.length === 0 ? { flexGrow: 1 } : null,
+    ]), [conversations.length]);
 
     return (
         <>
@@ -344,13 +509,11 @@ export default function ChatListScreen({ navigation }) {
                 backgroundColor={COLORS.secondary}
             />
 
-            {/* Safe area pentru status bar / notch pe iOS */}
             <SafeAreaView
                 edges={['top']}
                 style={{ backgroundColor: COLORS.secondary }}
             />
 
-            {/* Restul aplicației */}
             <SafeAreaView
                 style={styles.container}
                 edges={['left', 'right', 'bottom']}
@@ -361,7 +524,7 @@ export default function ChatListScreen({ navigation }) {
 
                 <View style={styles.searchContainer}>
                     <View style={styles.searchBar}>
-                        <Text style={styles.searchIcon}>🔍</Text>
+                        <Text style={styles.searchIcon} allowFontScaling={false}>🔍</Text>
 
                         <TextInput
                             style={styles.searchInput}
@@ -372,14 +535,15 @@ export default function ChatListScreen({ navigation }) {
                             autoCapitalize="none"
                             autoCorrect={false}
                             returnKeyType="search"
+                            underlineColorAndroid="transparent"
                         />
 
                         {searchQuery.length > 0 && (
                             <Pressable
                                 onPress={clearSearch}
-                                hitSlop={10}
+                                hitSlop={HIT_SLOP}
                             >
-                                <Text style={styles.clearButton}>✕</Text>
+                                <Text style={styles.clearButton} allowFontScaling={false}>✕</Text>
                             </Pressable>
                         )}
                     </View>
@@ -390,7 +554,7 @@ export default function ChatListScreen({ navigation }) {
                         {searchLoading ? (
                             <ActivityIndicator
                                 color={COLORS.accent}
-                                style={{ marginTop: 20 }}
+                                style={{ marginTop: vs(20) }}
                             />
                         ) : searchResults.length === 0 ? (
                             <Text style={styles.noResultsText}>
@@ -399,13 +563,13 @@ export default function ChatListScreen({ navigation }) {
                         ) : (
                             <FlatList
                                 data={searchResults}
-                                keyExtractor={item => item._id}
+                                keyExtractor={keyExtractor}
                                 renderItem={renderSearchResult}
                                 keyboardShouldPersistTaps="handled"
                                 keyboardDismissMode="on-drag"
-                                ItemSeparatorComponent={() => (
-                                    <View style={styles.separator} />
-                                )}
+                                ItemSeparatorComponent={separator}
+                                contentContainerStyle={styles.listContent}
+                                removeClippedSubviews={false}
                             />
                         )}
                     </View>
@@ -418,23 +582,22 @@ export default function ChatListScreen({ navigation }) {
                         ) : (
                             <FlatList
                                 data={conversations}
-                                keyExtractor={item => item._id}
+                                keyExtractor={keyExtractor}
                                 renderItem={renderConversation}
                                 ListEmptyComponent={renderEmpty}
                                 onRefresh={() => {
                                     setRefreshing(true);
-                                    fetchConversations();
+                                    fetchConversations(true);
                                 }}
                                 refreshing={refreshing}
-                                ItemSeparatorComponent={() => (
-                                    <View style={styles.separator} />
-                                )}
+                                ItemSeparatorComponent={separator}
                                 keyboardShouldPersistTaps="handled"
-                                contentContainerStyle={
-                                    conversations.length === 0
-                                        ? { flex: 1 }
-                                        : undefined
-                                }
+                                contentContainerStyle={listContentStyle}
+                                removeClippedSubviews={false}
+                                initialNumToRender={12}
+                                maxToRenderPerBatch={10}
+                                windowSize={11}
+                                updateCellsBatchingPeriod={50}
                             />
                         )}
                     </>
@@ -444,23 +607,24 @@ export default function ChatListScreen({ navigation }) {
                     visible={menuVisible}
                     transparent
                     animationType="fade"
+                    statusBarTranslucent
                     onRequestClose={() => setMenuVisible(false)}
                 >
                     <Pressable
                         style={styles.modalOverlay}
                         onPress={() => setMenuVisible(false)}
                     >
-                        <View style={styles.menuContainer}>
+                        <Pressable style={styles.menuContainer} onPress={() => {}}>
                             <View style={styles.menuHeader}>
                                 <Image
-                                    source={{
-                                        uri: selectedConv?.participant?.icon
-                                    }}
+                                    source={selectedConv?.participant?.icon
+                                        ? { uri: selectedConv.participant.icon }
+                                        : assets.default_avatar}
                                     style={styles.menuAvatar}
                                 />
 
-                                <Text style={styles.menuUsername}>
-                                    {selectedConv?.participant?.username}
+                                <Text style={styles.menuUsername} numberOfLines={1}>
+                                    {selectedConv?.participant?.username || 'Utilizator'}
                                 </Text>
                             </View>
 
@@ -497,7 +661,7 @@ export default function ChatListScreen({ navigation }) {
                                     Anulează
                                 </Text>
                             </Pressable>
-                        </View>
+                        </Pressable>
                     </Pressable>
                 </Modal>
             </SafeAreaView>
@@ -513,45 +677,57 @@ const styles = StyleSheet.create({
     skeletonList: {
         flex: 1,
         overflow: 'hidden',
+        width: '100%',
+        maxWidth: CONTENT_MAX_WIDTH || undefined,
+        alignSelf: 'center',
+    },
+    listContent: {
+        width: '100%',
+        maxWidth: CONTENT_MAX_WIDTH || undefined,
+        alignSelf: 'center',
     },
     header: {
         backgroundColor: COLORS.secondary,
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        paddingTop: 16,
+        paddingHorizontal: s(20),
+        paddingVertical: vs(16),
+        paddingTop: vs(16),
     },
     headerTitle: {
-        fontSize: 22,
+        ...textBlock(22, 1.25),
         fontWeight: 'bold',
         color: COLORS.white,
     },
     searchContainer: {
         backgroundColor: COLORS.secondary,
-        paddingHorizontal: 16,
-        paddingBottom: 12,
+        paddingHorizontal: s(16),
+        paddingBottom: vs(12),
     },
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.12)',
-        borderRadius: 12,
-        paddingHorizontal: 12,
-        height: 44,
+        borderRadius: s(12),
+        paddingHorizontal: s(12),
+        minHeight: s(44),
+        width: '100%',
+        maxWidth: CONTENT_MAX_WIDTH || undefined,
+        alignSelf: 'center',
     },
     searchIcon: {
-        fontSize: 16,
-        marginRight: 8,
+        fontSize: f(16),
+        marginRight: s(8),
     },
     searchInput: {
         flex: 1,
-        fontSize: 15,
+        ...textBlock(15, 1.3),
         color: COLORS.white,
         paddingVertical: 0,
+        minHeight: s(40),
     },
     clearButton: {
-        fontSize: 14,
+        fontSize: f(14),
         color: 'rgba(255,255,255,0.7)',
-        paddingLeft: 8,
+        paddingLeft: s(8),
     },
     searchResultsContainer: {
         flex: 1,
@@ -560,26 +736,27 @@ const styles = StyleSheet.create({
     searchResultItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingHorizontal: s(16),
+        paddingVertical: vs(12),
     },
     searchAvatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: s(44),
+        height: s(44),
+        borderRadius: s(22),
         backgroundColor: COLORS.sheet,
-        marginRight: 12,
+        marginRight: s(12),
     },
     searchUsername: {
-        fontSize: 16,
+        ...textBlock(16, 1.3),
         color: COLORS.text,
         fontWeight: '500',
+        flex: 1,
     },
     noResultsText: {
         textAlign: 'center',
-        marginTop: 30,
+        marginTop: vs(30),
         color: COLORS.placeholder,
-        fontSize: 15,
+        ...textBlock(15, 1.35),
     },
     loadingContainer: {
         flex: 1,
@@ -590,42 +767,44 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: COLORS.surface,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingHorizontal: s(16),
+        paddingVertical: vs(12),
     },
     avatarContainer: {
-        marginRight: 12,
+        marginRight: s(12),
     },
     avatar: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
+        width: AVATAR_LIST,
+        height: AVATAR_LIST,
+        borderRadius: AVATAR_LIST / 2,
         backgroundColor: COLORS.sheet,
     },
     convContent: {
         flex: 1,
-        marginRight: 8,
+        minWidth: 0,
+        marginRight: s(8),
     },
     convTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 4,
+        marginBottom: vs(4),
     },
     convName: {
-        fontSize: 16,
+        ...textBlock(16, 1.28),
         color: COLORS.text,
         fontWeight: '400',
         flex: 1,
-        marginRight: 8,
+        marginRight: s(8),
     },
     convNameBold: {
         fontWeight: '700',
         color: COLORS.text,
     },
     convTime: {
-        fontSize: 12,
+        ...metaText(12, 1.25),
         color: COLORS.placeholder,
+        flexShrink: 0,
     },
     convTimeBold: {
         color: COLORS.accent,
@@ -637,10 +816,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     convLastMessage: {
-        fontSize: 14,
+        ...textBlock(14, 1.3),
         color: COLORS.placeholder,
         flex: 1,
-        marginRight: 8,
+        marginRight: s(8),
     },
     convLastMessageBold: {
         color: COLORS.text,
@@ -648,55 +827,56 @@ const styles = StyleSheet.create({
     },
     unreadBadge: {
         backgroundColor: COLORS.primary,
-        borderRadius: 10,
-        minWidth: 20,
-        height: 20,
+        borderRadius: s(10),
+        minWidth: s(20),
+        height: s(20),
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 5,
+        paddingHorizontal: s(5),
+        flexShrink: 0,
     },
     unreadBadgeText: {
         color: COLORS.white,
         fontSize: 11,
+        lineHeight: 14,
         fontWeight: 'bold',
     },
     dotsButton: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        paddingHorizontal: s(8),
+        paddingVertical: vs(4),
         justifyContent: 'center',
         alignItems: 'center',
     },
     dotsText: {
-        fontSize: 22,
+        fontSize: f(22),
         color: COLORS.placeholder,
-        lineHeight: 24,
+        lineHeight: f(24),
     },
     separator: {
         height: 1,
         backgroundColor: COLORS.border,
-        marginLeft: 80,
+        marginLeft: AVATAR_LIST + s(28),
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 40,
+        paddingHorizontal: s(40),
     },
     emptyIcon: {
-        fontSize: 60,
-        marginBottom: 16,
+        fontSize: f(60),
+        marginBottom: vs(16),
     },
     emptyTitle: {
-        fontSize: 20,
+        ...textBlock(20, 1.3),
         fontWeight: 'bold',
         color: COLORS.text,
-        marginBottom: 8,
+        marginBottom: vs(8),
     },
     emptySubtitle: {
-        fontSize: 14,
+        ...textBlock(14, 1.42),
         color: COLORS.placeholder,
         textAlign: 'center',
-        lineHeight: 20,
     },
     modalOverlay: {
         flex: 1,
@@ -705,60 +885,65 @@ const styles = StyleSheet.create({
     },
     menuContainer: {
         backgroundColor: COLORS.sheet,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-        paddingTop: 8,
+        borderTopLeftRadius: s(20),
+        borderTopRightRadius: s(20),
+        paddingBottom: Platform.OS === 'ios' ? vs(34) : vs(20),
+        paddingTop: vs(8),
+        width: '100%',
+        maxWidth: CONTENT_MAX_WIDTH || undefined,
+        alignSelf: 'center',
     },
     menuHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 14,
+        paddingHorizontal: s(20),
+        paddingVertical: vs(14),
     },
     menuAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: s(40),
+        height: s(40),
+        borderRadius: s(20),
         backgroundColor: COLORS.surface,
-        marginRight: 12,
+        marginRight: s(12),
     },
     menuUsername: {
-        fontSize: 16,
+        ...textBlock(16, 1.3),
         fontWeight: '600',
         color: COLORS.text,
+        flex: 1,
     },
     menuDivider: {
         height: 1,
         backgroundColor: COLORS.border,
-        marginHorizontal: 20,
-        marginBottom: 8,
+        marginHorizontal: s(20),
+        marginBottom: vs(8),
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
+        paddingHorizontal: s(20),
+        paddingVertical: vs(16),
     },
     menuItemIconReport: {
-        fontSize: 20,
-        marginRight: 14,
+        fontSize: f(20),
+        marginRight: s(14),
     },
     menuItemTextReport: {
-        fontSize: 16,
+        ...textBlock(16, 1.3),
         color: COLORS.accent,
         fontWeight: '500',
+        flex: 1,
     },
     menuItemCancel: {
-        marginHorizontal: 16,
-        marginTop: 8,
+        marginHorizontal: s(16),
+        marginTop: vs(8),
         backgroundColor: COLORS.surface,
-        borderRadius: 12,
-        paddingVertical: 14,
+        borderRadius: s(12),
+        paddingVertical: vs(14),
         alignItems: 'center',
     },
     menuItemCancelText: {
-        fontSize: 16,
+        ...textBlock(16, 1.3),
         color: COLORS.text,
         fontWeight: '600',
     },

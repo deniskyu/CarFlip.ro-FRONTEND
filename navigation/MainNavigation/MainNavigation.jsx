@@ -38,6 +38,14 @@ const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
 
+const TAB_BAR_BASE_STYLE = {
+    backgroundColor: '#13161A',
+    borderTopWidth: 0,
+    paddingBottom: 0,
+    marginBottom: 0,
+    ...(Platform.OS === 'ios' ? { height: 80, paddingTop: 10 } : { paddingBottom: 0, paddingTop: 2 }),
+};
+
 function HomeStackNavigation() {
     return (
         <Stack.Navigator 
@@ -99,11 +107,16 @@ function ChatStackNavigation() {
         <Stack.Navigator 
             screenOptions={{ 
                 headerShown: false,
-                animation: 'none'
+                animation: 'none',
+                contentStyle: { backgroundColor: '#1B1F26' }
             }}
         >
             <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
             <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ animation: 'none' }}/>
+            <Stack.Screen name="SearchProfileResult" component={SearchProfileResult} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="UserProfileFeed" component={UserProfileFeed} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="LikedPostsFeed" component={LikedPostsFeed} options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="SinglePostScreen" component={SinglePostScreen} options={{ animation: 'slide_from_right' }} />
         </Stack.Navigator>
     );
 }
@@ -178,16 +191,11 @@ export default function MainNavigation() {
     
     return (
         <Tab.Navigator 
+        sceneContainerStyle={{ backgroundColor: '#1B1F26' }}
             screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarShowLabel: false,
-                tabBarStyle: {
-                    backgroundColor: '#13161A',
-                    borderTopWidth: 0,
-                    paddingBottom: 0,
-                    marginBottom: 0,
-                    ...(Platform.OS === 'ios' ? { height: 80, paddingTop: 10 } : { paddingBottom: 0, paddingTop: 2 }),
-                },
+                tabBarStyle: TAB_BAR_BASE_STYLE,
                 tabBarIcon: ({ focused }) => {
                     let iconSource;
                     let iconSize = 24; 
@@ -224,7 +232,7 @@ export default function MainNavigation() {
                                             borderWidth: 1.5,
                                             borderColor: '#800000'
                                         }}>
-                                            <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>
+                                            <Text allowFontScaling={false} style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>
                                                 {unreadCount > 99 ? '99+' : unreadCount}
                                             </Text>
                                         </View>
@@ -242,7 +250,7 @@ export default function MainNavigation() {
                                     <Image source={iconSource} style={{ width: iconSize, height: iconSize, resizeMode: 'contain', tintColor: focused ? '#800000' : 'rgba(255, 255, 255, 0.5)' }} />
                                     {unreadChatCount > 0 && (
                                         <View style={{ position: 'absolute', top: -4, right: -6, backgroundColor: '#FF3B30', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4, borderWidth: 1.5, borderColor: '#800000' }}>
-                                            <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>
+                                            <Text allowFontScaling={false} style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>
                                                 {unreadChatCount > 99 ? '99+' : unreadChatCount}
                                             </Text>
                                         </View>
@@ -307,24 +315,18 @@ export default function MainNavigation() {
                     },
                 })}
             />
-            <Tab.Screen
-                name="ChatTab"
-                component={ChatStackNavigation}
-                options={({ route }) => {
-                    const routeName = getFocusedRouteNameFromRoute(route) ?? 'ChatListScreen';
-                    return {
-                        tabBarStyle: routeName === 'ChatScreen'
-                            ? { display: 'none' }
-                            : {
-                                backgroundColor: '#13161A',
-                                borderTopWidth: 0,
-                                paddingBottom: 0,
-                                marginBottom: 0,
-                                ...(Platform.OS === 'ios' ? { height: 80, paddingTop: 10 } : { paddingBottom: 0, paddingTop: 2 }),
-                            },
-                    };
-                }}
-            />
+<Tab.Screen
+    name="ChatTab"
+    component={ChatStackNavigation}
+    options={({ route }) => {
+        const routeName = getFocusedRouteNameFromRoute(route) ?? 'ChatListScreen';
+        return {
+            tabBarStyle: routeName === 'ChatListScreen'
+                ? TAB_BAR_BASE_STYLE
+                : { display: 'none' },
+        };
+    }}
+/>
             <Tab.Screen 
                 name="ProfileTab" 
                 component={ProfileStackNavigation} 

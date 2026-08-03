@@ -1,6 +1,7 @@
 import { 
     getMessaging, 
     getToken, 
+    deleteToken,
     requestPermission, 
     onMessage, 
     onNotificationOpenedApp, 
@@ -50,6 +51,17 @@ export async function getFcmToken() {
     } catch (error) {
         console.log('Error getting token:', error);
         return null;
+    }
+}
+
+export async function clearFcmToken() {
+    try {
+        await deleteToken(messaging);
+        console.log('🧹 [FCM] Token șters de pe dispozitiv.');
+        return true;
+    } catch (error) {
+        console.log('[FCM] Nu s-a putut șterge token-ul:', error?.message);
+        return false;
     }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from 'react';
 import {
     View,
     StyleSheet,
@@ -11,6 +11,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     StatusBar,
+    ScrollView,
 } from 'react-native';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
@@ -24,7 +25,35 @@ import { formatMessageTime, uploadChatImage } from '../../helpers/chatHelper.js'
 import { emitter } from '../../helpers/eventBus.js';
 import { Context } from '../../context/Context.js';
 import { assets } from '../../assets.js';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+
+import {
+    normalizeMessages,
+    mergeOlderMessages,
+    countNewMessages,
+    upsertMessage,
+    removeMessage,
+    markMessageDeleted,
+    markOwnMessagesRead,
+    shouldShowTime,
+    isOwnMessage,
+    oldestMessageId,
+    idOf,
+} from '../../helpers/chatLogic.js';
+
+import {
+    s,
+    vs,
+    f,
+    textBlock,
+    metaText,
+    IS_TABLET,
+    CONTENT_MAX_WIDTH,
+    BUBBLE_MAX_WIDTH,
+    CHAT_IMAGE_SIZE,
+    AVATAR_MESSAGE,
+    AVATAR_HEADER,
+    HIT_SLOP,
+} from '../../helpers/chatMetrics.js';
 
 import TypingIndicator from './components/TypingIndicator.jsx';
 import Shimmer from '../../helpers/skeletons/Shimmer.jsx';
@@ -67,6 +96,30 @@ const SKELETON_BUBBLES = [
     { own: true,  w: '56%', h: 40 },
 ];
 
+const SEND_ACK_TIMEOUT = 15000;
+const TYPING_IDLE_TIMEOUT = 2000;
+const TYPING_RECEIVE_TIMEOUT = 7000;
+
+const makeClientId = () => `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+const priceFormatter = (() => {
+    try {
+        return new Intl.NumberFormat('de-DE');
+    } catch (e) {
+        return { format: (value) => String(value) };
+    }
+})();
+
+const formatPrice = (value) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return '0';
+    try {
+        return priceFormatter.format(num);
+    } catch (e) {
+        return String(num);
+    }
+};
+
 function ChatThreadSkeleton() {
     return (
         <View style={styles.skelThread} pointerEvents="none">
@@ -79,13 +132,13 @@ function ChatThreadSkeleton() {
                     ]}
                 >
                     {!b.own && (
-                        <Shimmer width={28} height={28} borderRadius={14} style={{ marginRight: 6 }} baseColor={SK_BASE} highlightColor={SK_HIGH} />
+                        <Shimmer width={AVATAR_MESSAGE} height={AVATAR_MESSAGE} borderRadius={AVATAR_MESSAGE / 2} style={{ marginRight: s(6) }} baseColor={SK_BASE} highlightColor={SK_HIGH} />
                     )}
                     <View
                         style={[
                             styles.skelBubble,
                             b.own ? styles.skelBubbleOwn : styles.skelBubbleOther,
-                            { width: b.w, height: b.h },
+                            { width: b.w, height: vs(b.h) },
                         ]}
                     >
                         <Shimmer width="100%" height="100%" borderRadius={0} baseColor={SK_BASE} highlightColor={SK_HIGH} />
@@ -97,62 +150,38 @@ function ChatThreadSkeleton() {
 }
 
 export default function ChatScreen({ route, navigation }) {
-    const { conversationId, participantName, participantIcon, participantId } = route.params;
+    const params = (route && route.params) || {};
+    const conversationId = params.conversationId ? String(params.conversationId) : null;
+    const participantName = params.participantName;
+    const participantIcon = params.participantIcon;
+    const participantId = params.participantId;
 
-    const { socket, socketConnected, fetchUnreadChatCount, activeChatConversationRef, setUnreadChatCount } = useContext(Context);
+    const {
+        socket,
+        socketConnected,
+        fetchUnreadChatCount,
+        activeChatConversationRef,
+        setUnreadChatCount,
+        activeChatTabRef,
+        username,
+        userId,
+    } = useContext(Context);
 
     const [resolvedParticipantName, setResolvedParticipantName] = useState(participantName || '');
     const [resolvedParticipantIcon, setResolvedParticipantIcon] = useState(participantIcon || '');
-    const [resolvedParticipantId, setResolvedParticipantId] = useState(participantId || null);
+    const [resolvedParticipantId, setResolvedParticipantId] = useState(participantId ? String(participantId) : null);
     const [resolvingParticipant, setResolvingParticipant] = useState(false);
-
-    useEffect(() => {
-        if (participantId && participantName && participantIcon) return;
-
-        const resolveParticipant = async () => {
-            setResolvingParticipant(true);
-            try {
-                const res = await axiosAuthGuard.get('/api/chat/conversations');
-                if (res.data.success) {
-                    const conv = res.data.data.find(c => c._id === conversationId);
-                    if (conv?.participant) {
-                        setResolvedParticipantName(conv.participant.username || '');
-                        setResolvedParticipantIcon(conv.participant.icon || '');
-                        setResolvedParticipantId(conv.participant._id || null);
-                    }
-                }
-            } catch (err) {
-                console.log('❌ Eroare resolve participant:', err);
-            } finally {
-                setResolvingParticipant(false);
-            }
-        };
-
-        resolveParticipant();
-    }, [conversationId, participantId, participantName, participantIcon]);
-
-    const { activeChatTabRef } = useContext(Context);
-
-    useFocusEffect(useCallback(() => {
-        activeChatTabRef.current = true;
-        return () => { activeChatTabRef.current = false; };
-    }, []));
 
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [nextCursor, setNextCursor] = useState(null);
-    const isFetchingMoreRef = useRef(false);
 
     const [text, setText] = useState('');
-    const [sending, setSending] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
-    const isPickingRef = useRef(false);
 
     const [isTyping, setIsTyping] = useState(false);
-    const typingTimeoutRef = useRef(null);
-    const isTypingEmittedRef = useRef(false);
 
     const [imageViewerVisible, setImageViewerVisible] = useState(false);
     const [imageViewerUrls, setImageViewerUrls] = useState([]);
@@ -164,110 +193,268 @@ export default function ChatScreen({ route, navigation }) {
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [selectedMessageForDelete, setSelectedMessageForDelete] = useState(null);
 
+    const mountedRef = useRef(true);
     const flatListRef = useRef(null);
+    const isFetchingMoreRef = useRef(false);
+    const fetchedConversationRef = useRef(null);
+    const lastCursorRef = useRef(null);
+    const isNearBottomRef = useRef(true);
+    const isPickingRef = useRef(false);
+    const typingTimeoutRef = useRef(null);
+    const typingReceiveTimerRef = useRef(null);
+    const isTypingEmittedRef = useRef(false);
+    const pendingTimersRef = useRef({});
+    const currentUserIdRef = useRef(userId || null);
+    const usernameRef = useRef(username || null);
 
-    const tabBarHeight = useBottomTabBarHeight();
+    useEffect(() => { currentUserIdRef.current = userId || null; }, [userId]);
+    useEffect(() => { usernameRef.current = username || null; }, [username]);
 
-    const fetchMessages = useCallback(async (cursor = null) => {
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            if (typingReceiveTimerRef.current) clearTimeout(typingReceiveTimerRef.current);
+            const timers = pendingTimersRef.current || {};
+            Object.keys(timers).forEach((key) => clearTimeout(timers[key]));
+            pendingTimersRef.current = {};
+        };
+    }, []);
+
+    const safeSetMessages = useCallback((updater) => {
+        if (!mountedRef.current) return;
+        setMessages(updater);
+    }, []);
+
+    const scrollToBottom = useCallback((animated) => {
         try {
-            if (cursor) {
-                if (isFetchingMoreRef.current) return;
-                isFetchingMoreRef.current = true;
-                setLoadingMore(true);
-            } else {
-                setLoading(true);
+            if (flatListRef.current && typeof flatListRef.current.scrollToOffset === 'function') {
+                flatListRef.current.scrollToOffset({ offset: 0, animated: !!animated });
             }
+        } catch (e) {}
+    }, []);
 
+    useEffect(() => {
+        setResolvedParticipantName(participantName || '');
+        setResolvedParticipantIcon(participantIcon || '');
+        setResolvedParticipantId(participantId ? String(participantId) : null);
+    }, [conversationId, participantName, participantIcon, participantId]);
+
+    useEffect(() => {
+        if (!conversationId) return;
+        if (participantId && participantName && participantIcon) return;
+
+        let cancelled = false;
+
+        const resolveParticipant = async () => {
+            setResolvingParticipant(true);
+            try {
+                const res = await axiosAuthGuard.get(`/api/chat/conversations/${conversationId}`);
+                if (!cancelled && res?.data?.success && res.data.data?.participant) {
+                    const p = res.data.data.participant;
+                    setResolvedParticipantName(p.username || '');
+                    setResolvedParticipantIcon(p.icon || '');
+                    setResolvedParticipantId(p._id ? String(p._id) : null);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    try {
+                        const fallback = await axiosAuthGuard.get('/api/chat/conversations');
+                        if (!cancelled && fallback?.data?.success) {
+                            const conv = (fallback.data.data || []).find(c => idOf(c) === conversationId);
+                            if (conv?.participant) {
+                                setResolvedParticipantName(conv.participant.username || '');
+                                setResolvedParticipantIcon(conv.participant.icon || '');
+                                setResolvedParticipantId(conv.participant._id ? String(conv.participant._id) : null);
+                            }
+                        }
+                    } catch (e) {}
+                }
+            } finally {
+                if (!cancelled) setResolvingParticipant(false);
+            }
+        };
+
+        resolveParticipant();
+
+        return () => { cancelled = true; };
+    }, [conversationId, participantId, participantName, participantIcon]);
+
+    useFocusEffect(useCallback(() => {
+        if (activeChatTabRef) activeChatTabRef.current = true;
+        return () => {
+            if (activeChatTabRef) activeChatTabRef.current = false;
+        };
+    }, [activeChatTabRef]));
+
+    const fetchMessages = useCallback(async (cursor) => {
+        if (!conversationId) return;
+        if (cursor) {
+            if (isFetchingMoreRef.current) return;
+            if (lastCursorRef.current !== null && lastCursorRef.current === cursor) return;
+            isFetchingMoreRef.current = true;
+            if (mountedRef.current) setLoadingMore(true);
+        } else if (mountedRef.current) {
+            setLoading(true);
+        }
+
+        try {
             const url = cursor
-                ? `/api/chat/messages/${conversationId}?cursor=${cursor}`
+                ? `/api/chat/messages/${conversationId}?cursor=${encodeURIComponent(cursor)}`
                 : `/api/chat/messages/${conversationId}`;
 
             const res = await axiosAuthGuard.get(url);
 
-            if (res.data.success) {
-                if (cursor) {
-                    setMessages(prev => [...prev, ...res.data.data]);
+            if (!mountedRef.current) return;
+
+            if (res?.data?.success) {
+                const incoming = Array.isArray(res.data.data) ? res.data.data : [];
+                let fresh = incoming.length;
+
+                setMessages((prev) => {
+                    if (cursor) {
+                        fresh = countNewMessages(prev, incoming);
+                        return mergeOlderMessages(prev, incoming);
+                    }
+                    return normalizeMessages(incoming);
+                });
+
+                if (cursor) lastCursorRef.current = cursor;
+
+                const serverCursor = res.data.nextCursor ? String(res.data.nextCursor) : null;
+                const exhausted = incoming.length === 0
+                    || (cursor && fresh === 0)
+                    || serverCursor === null
+                    || (cursor && serverCursor === cursor);
+
+                if (exhausted) {
+                    setHasMore(false);
+                    setNextCursor(null);
                 } else {
-                    setMessages(res.data.data);
+                    setHasMore(!!res.data.hasMore);
+                    setNextCursor(serverCursor);
                 }
-                setHasMore(res.data.hasMore);
-                setNextCursor(res.data.nextCursor);
             }
         } catch (err) {
-            console.log('❌ Eroare fetch messages:', err);
+            if (mountedRef.current && cursor) {
+                setHasMore(false);
+            }
         } finally {
-            setLoading(false);
-            setLoadingMore(false);
+            if (mountedRef.current) {
+                setLoading(false);
+                setLoadingMore(false);
+            }
             isFetchingMoreRef.current = false;
         }
     }, [conversationId]);
 
     useFocusEffect(
         useCallback(() => {
-            activeChatConversationRef.current = conversationId;
+            if (!conversationId) return undefined;
 
-            fetchMessages();
+            if (activeChatConversationRef) activeChatConversationRef.current = conversationId;
 
-            if (socketConnected) {
-                socket.current.emit('join_conversation', conversationId);
-                socket.current.emit('mark_read', { conversationId });
+            if (fetchedConversationRef.current !== conversationId) {
+                fetchedConversationRef.current = conversationId;
+                lastCursorRef.current = null;
+                isFetchingMoreRef.current = false;
+                isNearBottomRef.current = true;
+                setMessages([]);
+                setHasMore(false);
+                setNextCursor(null);
+                setIsTyping(false);
+                setText('');
+                fetchMessages(null);
             }
-
-            setTimeout(() => fetchUnreadChatCount(), 500);
 
             return () => {
-                activeChatConversationRef.current = null;
-
+                if (activeChatConversationRef) activeChatConversationRef.current = null;
+                if (typingTimeoutRef.current) {
+                    clearTimeout(typingTimeoutRef.current);
+                    typingTimeoutRef.current = null;
+                }
                 if (isTypingEmittedRef.current && socket?.current?.connected) {
                     socket.current.emit('typing_stop', { conversationId });
-                    isTypingEmittedRef.current = false;
                 }
+                isTypingEmittedRef.current = false;
             };
-        }, [conversationId, socketConnected])
+        }, [conversationId, fetchMessages, activeChatConversationRef, socket])
     );
 
-    useEffect(() => {
-        const handleNewMessage = (message) => {
-            if (message.conversation_id !== conversationId) return;
-
-            setMessages(prev => {
-                if (prev.some(m => m._id === message._id)) return prev;
-                return [...prev, message];
-            });
-
-            if (socket?.current?.connected) {
-                socket.current.emit('mark_read', { conversationId });
+    const markConversationRead = useCallback(() => {
+        if (!conversationId) return;
+        if (!socket?.current?.connected) {
+            axiosAuthGuard.put(`/api/chat/conversations/${conversationId}/read`)
+                .then(() => { if (typeof fetchUnreadChatCount === 'function') fetchUnreadChatCount(); })
+                .catch(() => {});
+            return;
+        }
+        socket.current.emit('mark_read', { conversationId }, (response) => {
+            if (!mountedRef.current) return;
+            if (response && typeof response.unreadTotal === 'number' && typeof setUnreadChatCount === 'function') {
+                setUnreadChatCount(Math.max(0, response.unreadTotal));
+            } else if (typeof fetchUnreadChatCount === 'function') {
+                fetchUnreadChatCount();
             }
+        });
+    }, [conversationId, socket, setUnreadChatCount, fetchUnreadChatCount]);
+
+    useEffect(() => {
+        if (!conversationId) return;
+        if (!socketConnected) return;
+        if (!socket?.current?.connected) return;
+        socket.current.emit('join_conversation', conversationId);
+        markConversationRead();
+    }, [socketConnected, conversationId, socket, markConversationRead]);
+
+    useEffect(() => {
+        if (!conversationId) return undefined;
+
+        const handleNewMessage = (message) => {
+            if (!message) return;
+            if (idOf(message.conversation_id) !== conversationId) return;
+
+            const own = isOwnMessage(message, currentUserIdRef.current, usernameRef.current);
+
+            safeSetMessages((prev) => upsertMessage(prev, message));
+
+            if (own || isNearBottomRef.current) {
+                requestAnimationFrame(() => scrollToBottom(true));
+            }
+
+            if (!own) markConversationRead();
         };
 
         const handleTypingStart = (data) => {
-            if (data.conversationId === conversationId && data.userId !== socket?.current?.userId) {
-                setIsTyping(true);
-            }
+            if (!data || idOf(data.conversationId) !== conversationId) return;
+            if (data.userId && currentUserIdRef.current && idOf(data.userId) === idOf(currentUserIdRef.current)) return;
+            if (!mountedRef.current) return;
+            setIsTyping(true);
+            if (typingReceiveTimerRef.current) clearTimeout(typingReceiveTimerRef.current);
+            typingReceiveTimerRef.current = setTimeout(() => {
+                if (mountedRef.current) setIsTyping(false);
+            }, TYPING_RECEIVE_TIMEOUT);
         };
 
         const handleTypingStop = (data) => {
-            if (data.conversationId === conversationId) {
-                setIsTyping(false);
+            if (!data || idOf(data.conversationId) !== conversationId) return;
+            if (typingReceiveTimerRef.current) {
+                clearTimeout(typingReceiveTimerRef.current);
+                typingReceiveTimerRef.current = null;
             }
+            if (mountedRef.current) setIsTyping(false);
         };
 
         const handleMessagesRead = (data) => {
-            if (data.conversationId !== conversationId) return;
-            setMessages(prev =>
-                prev.map(m => ({ ...m, is_read: true }))
-            );
+            if (!data || idOf(data.conversationId) !== conversationId) return;
+            if (data.readBy && currentUserIdRef.current && idOf(data.readBy) === idOf(currentUserIdRef.current)) return;
+            safeSetMessages((prev) => markOwnMessagesRead(prev, currentUserIdRef.current, usernameRef.current));
         };
 
         const handleMessageDeleted = (data) => {
-            if (data.conversationId !== conversationId) return;
-            setMessages(prev =>
-                prev.map(m =>
-                    m._id === data.messageId
-                        ? { ...m, type: 'text', text: 'Acest mesaj a fost șters', image_url: null, image_public_id: null, sale_preview: null, is_deleted: true }
-                        : m
-                )
-            );
+            if (!data || idOf(data.conversationId) !== conversationId) return;
+            safeSetMessages((prev) => markMessageDeleted(prev, data.messageId));
         };
 
         emitter.on('socket_new_message', handleNewMessage);
@@ -283,68 +470,123 @@ export default function ChatScreen({ route, navigation }) {
             emitter.off('socket_messages_read', handleMessagesRead);
             emitter.off('socket_message_deleted', handleMessageDeleted);
         };
-    }, [conversationId]);
+    }, [conversationId, safeSetMessages, scrollToBottom, markConversationRead]);
 
-    useEffect(() => {
-        if (!socket?.current) return;
-        const handler = (data) => {
-            emitter.emit('socket_message_deleted', data);
-        };
-        socket.current.on('message_deleted', handler);
-        return () => {
-            socket.current?.off('message_deleted', handler);
-        };
-    }, [socketConnected]);
-
-    const handleTextChange = (value) => {
+    const handleTextChange = useCallback((value) => {
         setText(value);
 
-        if (!socketConnected) return;
+        if (!conversationId) return;
+        if (!socket?.current?.connected) return;
 
-        if (!isTypingEmittedRef.current && value.trim().length > 0) {
+        const trimmed = value.trim();
+
+        if (trimmed.length === 0) {
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = null;
+            }
+            if (isTypingEmittedRef.current) {
+                socket.current.emit('typing_stop', { conversationId });
+                isTypingEmittedRef.current = false;
+            }
+            return;
+        }
+
+        if (!isTypingEmittedRef.current) {
             socket.current.emit('typing_start', { conversationId });
             isTypingEmittedRef.current = true;
         }
 
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-
-        if (value.trim().length === 0) {
-            socket.current.emit('typing_stop', { conversationId });
+        typingTimeoutRef.current = setTimeout(() => {
+            typingTimeoutRef.current = null;
+            if (socket?.current?.connected && isTypingEmittedRef.current) {
+                socket.current.emit('typing_stop', { conversationId });
+            }
             isTypingEmittedRef.current = false;
+        }, TYPING_IDLE_TIMEOUT);
+    }, [conversationId, socket]);
+
+    const failPendingMessage = useCallback((clientId, restoreText, message) => {
+        const timers = pendingTimersRef.current || {};
+        if (timers[clientId]) {
+            clearTimeout(timers[clientId]);
+            delete timers[clientId];
+        }
+        safeSetMessages((prev) => removeMessage(prev, clientId));
+        if (restoreText) {
+            setText((current) => (current && current.length > 0 ? current : restoreText));
+        }
+        Alert.alert('Eroare', message || 'Mesajul nu a putut fi trimis.');
+    }, [safeSetMessages]);
+
+    const handleSendText = useCallback(() => {
+        const trimmed = text.trim();
+        if (!trimmed || !conversationId) return;
+
+        if (!socket?.current?.connected) {
+            Alert.alert('Fără conexiune', 'Reconectare în curs. Încearcă din nou în câteva secunde.');
             return;
         }
 
-        typingTimeoutRef.current = setTimeout(() => {
-            if (socket?.current?.connected) {
-                socket.current.emit('typing_stop', { conversationId });
-                isTypingEmittedRef.current = false;
-            }
-        }, 2000);
-    };
+        const clientId = makeClientId();
+        const optimistic = {
+            _id: clientId,
+            client_id: clientId,
+            conversation_id: conversationId,
+            sender_id: {
+                _id: currentUserIdRef.current || null,
+                username: usernameRef.current || null,
+            },
+            type: 'text',
+            text: trimmed,
+            image_url: null,
+            sale_preview: null,
+            is_read: false,
+            is_deleted: false,
+            createdAt: new Date().toISOString(),
+            pending: true,
+        };
 
-    const handleSendText = () => {
-        if (!text.trim() || sending || !socketConnected) return;
-
-        const trimmed = text.trim();
         setText('');
-        setSending(true);
+        safeSetMessages((prev) => upsertMessage(prev, optimistic));
+        requestAnimationFrame(() => scrollToBottom(true));
 
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-        socket.current.emit('typing_stop', { conversationId });
-        isTypingEmittedRef.current = false;
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = null;
+        }
+        if (isTypingEmittedRef.current) {
+            socket.current.emit('typing_stop', { conversationId });
+            isTypingEmittedRef.current = false;
+        }
 
-        socket.current.emit('send_message', { conversationId, text: trimmed }, (response) => {
-            setSending(false);
-            if (!response?.success) {
-                setText(trimmed);
-                Alert.alert('Eroare', response?.message || 'Mesajul nu a putut fi trimis.');
+        pendingTimersRef.current[clientId] = setTimeout(() => {
+            failPendingMessage(clientId, trimmed, 'Mesajul nu a putut fi trimis. Verifică conexiunea.');
+        }, SEND_ACK_TIMEOUT);
+
+        socket.current.emit('send_message', { conversationId, text: trimmed, clientId }, (response) => {
+            const timers = pendingTimersRef.current || {};
+            if (timers[clientId]) {
+                clearTimeout(timers[clientId]);
+                delete timers[clientId];
+            }
+            if (!mountedRef.current) return;
+
+            if (response && response.success && response.message) {
+                const confirmed = Object.assign({}, response.message, { client_id: clientId });
+                safeSetMessages((prev) => upsertMessage(prev, confirmed));
+            } else {
+                failPendingMessage(clientId, trimmed, response?.message);
             }
         });
-    };
+    }, [text, conversationId, socket, safeSetMessages, scrollToBottom, failPendingMessage]);
 
-    const handlePickImage = async () => {
-        if (isPickingRef.current || uploadingImage) return;
+    const handlePickImage = useCallback(async () => {
+        if (isPickingRef.current || uploadingImage || !conversationId) return;
         isPickingRef.current = true;
+
+        let clientId = null;
 
         try {
             const result = await launchImageLibrary({
@@ -353,16 +595,45 @@ export default function ChatScreen({ route, navigation }) {
                 quality: 1,
             });
 
-            if (result.didCancel || result.errorCode || !result.assets?.length) return;
+            if (result?.didCancel || result?.errorCode || !result?.assets?.length) return;
 
             const originalUri = result.assets[0].uri;
-            setUploadingImage(true);
+            if (!originalUri) return;
 
-            const compressedUri = await CompressorImage.compress(originalUri, {
-                quality: 0.8,
-                maxWidth: 1200,
-                maxHeight: 1200,
-            });
+            if (mountedRef.current) setUploadingImage(true);
+
+            let compressedUri = originalUri;
+            try {
+                compressedUri = await CompressorImage.compress(originalUri, {
+                    quality: 0.8,
+                    maxWidth: 1200,
+                    maxHeight: 1200,
+                });
+            } catch (e) {
+                compressedUri = originalUri;
+            }
+
+            clientId = makeClientId();
+            const optimistic = {
+                _id: clientId,
+                client_id: clientId,
+                conversation_id: conversationId,
+                sender_id: {
+                    _id: currentUserIdRef.current || null,
+                    username: usernameRef.current || null,
+                },
+                type: 'image',
+                text: null,
+                image_url: compressedUri,
+                sale_preview: null,
+                is_read: false,
+                is_deleted: false,
+                createdAt: new Date().toISOString(),
+                pending: true,
+            };
+
+            safeSetMessages((prev) => upsertMessage(prev, optimistic));
+            requestAnimationFrame(() => scrollToBottom(true));
 
             const imageFile = {
                 uri: compressedUri,
@@ -375,64 +646,72 @@ export default function ChatScreen({ route, navigation }) {
             if (socket?.current?.connected) {
                 socket.current.emit('image_message_sent', {
                     conversationId,
-                    messageId: savedMessage._id,
+                    messageId: savedMessage?._id,
                 });
             }
 
-            setMessages(prev => {
-                if (prev.some(m => m._id === savedMessage._id)) return prev;
-                return [...prev, savedMessage];
-            });
+            if (savedMessage && savedMessage._id) {
+                const confirmed = Object.assign({}, savedMessage, { client_id: clientId });
+                safeSetMessages((prev) => upsertMessage(prev, confirmed));
+            } else {
+                safeSetMessages((prev) => removeMessage(prev, clientId));
+            }
 
         } catch (err) {
-            console.log('❌ Eroare upload imagine:', err);
+            if (clientId) safeSetMessages((prev) => removeMessage(prev, clientId));
             Alert.alert('Eroare', 'Nu s-a putut trimite imaginea.');
         } finally {
-            setUploadingImage(false);
+            if (mountedRef.current) setUploadingImage(false);
             isPickingRef.current = false;
         }
-    };
+    }, [uploadingImage, conversationId, socket, safeSetMessages, scrollToBottom]);
 
-    const openImageViewer = (imageUrl) => {
+    const openImageViewer = useCallback((imageUrl) => {
+        if (!imageUrl) return;
         setImageViewerUrls([{ url: imageUrl }]);
         setImageViewerVisible(true);
-    };
+    }, []);
 
-    const handleLongPressMessage = (item, isOwn) => {
-        if (!isOwn || item.is_deleted) return;
+    const goToProfile = useCallback((targetId) => {
+        const target = idOf(targetId) || resolvedParticipantId;
+        if (!target) return;
+        if (currentUserIdRef.current && idOf(target) === idOf(currentUserIdRef.current)) return;
+        try {
+            navigation.navigate('SearchProfileResult', { userId: target });
+        } catch (e) {
+            try {
+                navigation.navigate('HomeTab', {
+                    screen: 'SearchProfileResult',
+                    params: { userId: target },
+                });
+            } catch (e2) {}
+        }
+    }, [navigation, resolvedParticipantId]);
+
+    const handleLongPressMessage = useCallback((item, isOwn) => {
+        if (!isOwn || !item || item.is_deleted || item.pending) return;
         setSelectedMessageForDelete(item);
         setDeleteModalVisible(true);
-    };
+    }, []);
 
-    const handleDeleteMessage = async () => {
-        if (!selectedMessageForDelete) return;
+    const handleDeleteMessage = useCallback(async () => {
+        const target = selectedMessageForDelete;
         setDeleteModalVisible(false);
-        setMessages(prev =>
-            prev.map(m =>
-                m._id === selectedMessageForDelete._id
-                    ? { ...m, type: 'text', text: 'Acest mesaj a fost șters', image_url: null, image_public_id: null, sale_preview: null, is_deleted: true }
-                    : m
-            )
-        );
+        setSelectedMessageForDelete(null);
+        if (!target) return;
+
+        const snapshot = target;
+        safeSetMessages((prev) => markMessageDeleted(prev, snapshot._id));
 
         try {
-            await axiosAuthGuard.delete(`/api/chat/messages/${selectedMessageForDelete._id}`);
+            await axiosAuthGuard.delete(`/api/chat/messages/${snapshot._id}`);
         } catch (err) {
-            console.log('❌ Eroare delete mesaj:', err);
-            setMessages(prev =>
-                prev.map(m =>
-                    m._id === selectedMessageForDelete._id
-                        ? selectedMessageForDelete
-                        : m
-                )
-            );
+            safeSetMessages((prev) => upsertMessage(prev, snapshot));
             Alert.alert('Eroare', 'Mesajul nu a putut fi șters.');
-        } finally {
-            setSelectedMessageForDelete(null);
         }
-    };
+    }, [selectedMessageForDelete, safeSetMessages]);
 
-    const handleReport = async () => {
+    const handleReport = useCallback(async () => {
         if (!selectedReason) {
             Alert.alert('Selectează un motiv', 'Te rugăm să selectezi un motiv pentru raport.');
             return;
@@ -450,27 +729,79 @@ export default function ChatScreen({ route, navigation }) {
                 target_type: 'profile',
                 reason: selectedReason,
             });
+            if (!mountedRef.current) return;
             setReportModalVisible(false);
             setSelectedReason(null);
             Alert.alert('Mulțumim', 'Raportul a fost trimis cu succes.');
         } catch (err) {
             Alert.alert('Eroare', 'Nu s-a putut trimite raportul.');
         } finally {
-            setReportSending(false);
+            if (mountedRef.current) setReportSending(false);
         }
-    };
+    }, [selectedReason, resolvedParticipantId]);
 
-    const handleLoadMore = () => {
+    const handleLoadMore = useCallback(() => {
         if (!hasMore || loadingMore || isFetchingMoreRef.current) return;
-        fetchMessages(nextCursor);
-    };
+        const cursor = nextCursor || oldestMessageId(messages);
+        if (!cursor) {
+            setHasMore(false);
+            return;
+        }
+        fetchMessages(cursor);
+    }, [hasMore, loadingMore, nextCursor, messages, fetchMessages]);
+
+    const handleScroll = useCallback((event) => {
+        const offsetY = event?.nativeEvent?.contentOffset?.y;
+        isNearBottomRef.current = typeof offsetY === 'number' ? offsetY < s(140) : true;
+    }, []);
+
+    const handleBack = useCallback(() => {
+        try {
+            if (navigation.canGoBack()) {
+                navigation.goBack();
+                return;
+            }
+        } catch (e) {}
+        navigation.navigate('ChatListScreen');
+    }, [navigation]);
 
     const renderMessage = useCallback(({ item, index }) => {
-        const isOwn = item.sender_id?._id !== resolvedParticipantId &&
-            item.sender_id?._id !== undefined;
+        if (!item) return null;
 
-        const showTime = index === messages.length - 1 ||
-            Math.abs(new Date(item.createdAt) - new Date(messages[index + 1]?.createdAt)) > 5 * 60 * 1000;
+        const isOwn = isOwnMessage(item, currentUserIdRef.current, usernameRef.current);
+        const showTime = shouldShowTime(messages, index);
+        const senderId = item.sender_id && typeof item.sender_id === 'object'
+            ? item.sender_id._id
+            : item.sender_id;
+
+        const avatar = (
+            <Pressable
+                onPress={() => goToProfile(senderId || resolvedParticipantId)}
+                hitSlop={HIT_SLOP}
+                style={styles.messageAvatarButton}
+            >
+                <Image
+                    source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar}
+                    style={styles.messageAvatar}
+                />
+            </Pressable>
+        );
+
+        const meta = showTime ? (
+            <View style={[
+                styles.messageMetaRow,
+                isOwn ? { alignItems: 'flex-end', justifyContent: 'flex-end' } : { alignItems: 'flex-start', justifyContent: 'flex-start' }
+            ]}>
+                <Text style={styles.messageTime} allowFontScaling={false}>
+                    {formatMessageTime(item.createdAt)}
+                </Text>
+                {isOwn && !item.is_deleted && (
+                    <Text style={styles.messageReadStatus} allowFontScaling={false}>
+                        {item.pending ? ' ⏳' : (item.is_read ? ' ✓✓' : ' ✓')}
+                    </Text>
+                )}
+            </View>
+        ) : null;
 
         if (item.is_deleted) {
             return (
@@ -478,30 +809,17 @@ export default function ChatScreen({ route, navigation }) {
                     styles.messageWrapper,
                     isOwn ? styles.messageWrapperOwn : styles.messageWrapperOther
                 ]}>
-                    {!isOwn && (
-                        <Image
-                            source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar}
-                            style={styles.messageAvatar}
-                        />
-                    )}
+                    {!isOwn && avatar}
                     <View style={styles.messageBubbleContainer}>
                         <View style={[
                             styles.messageBubble,
                             styles.deletedBubble,
-                            isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther
+                            isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
+                            isOwn ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }
                         ]}>
                             <Text style={styles.deletedText}>Acest mesaj a fost șters</Text>
                         </View>
-                        {showTime && (
-                            <View style={[
-                                styles.messageMetaRow,
-                                isOwn ? { alignItems: 'flex-end' } : { alignItems: 'flex-start' }
-                            ]}>
-                                <Text style={styles.messageTime}>
-                                    {formatMessageTime(item.createdAt)}
-                                </Text>
-                            </View>
-                        )}
+                        {meta}
                     </View>
                 </View>
             );
@@ -513,15 +831,11 @@ export default function ChatScreen({ route, navigation }) {
                     styles.messageWrapper,
                     isOwn ? styles.messageWrapperOwn : styles.messageWrapperOther
                 ]}>
-                    {!isOwn && (
-                        <Image
-                            source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar}
-                            style={styles.messageAvatar}
-                        />
-                    )}
+                    {!isOwn && avatar}
                     <View style={styles.messageBubbleContainer}>
                         <Pressable
                             onPress={() => {
+                                if (!item.sale_preview?.sale_id) return;
                                 navigation.navigate('HomeTab', {
                                     screen: 'MainScreen',
                                     params: { saleId: item.sale_preview.sale_id }
@@ -531,24 +845,25 @@ export default function ChatScreen({ route, navigation }) {
                             delayLongPress={500}
                             style={[
                                 styles.saleLinkCard,
-                                isOwn ? styles.saleLinkCardOwn : styles.saleLinkCardOther
+                                isOwn ? styles.saleLinkCardOwn : styles.saleLinkCardOther,
+                                isOwn ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }
                             ]}
                         >
                             <View style={styles.saleLinkThumb}>
                                 <Text style={styles.saleLinkThumbFallback}>🚗</Text>
-                                {item.sale_preview.image_url && (
+                                {item.sale_preview.image_url ? (
                                     <Image
                                         source={{ uri: item.sale_preview.image_url }}
                                         style={styles.saleLinkThumbImage}
                                     />
-                                )}
+                                ) : null}
                             </View>
                             <View style={styles.saleLinkInfo}>
-                                <Text style={[styles.saleLinkTitle, isOwn && { color: '#FFFFFF' }]} numberOfLines={1}>
+                                <Text style={[styles.saleLinkTitle, isOwn && { color: '#FFFFFF' }]} numberOfLines={2}>
                                     {item.sale_preview.title || 'Anunț'}
                                 </Text>
-                                <Text style={[styles.saleLinkPrice, isOwn && { color: '#FFD4D4' }]}>
-                                    {new Intl.NumberFormat('de-DE').format(item.sale_preview.price || 0)} €
+                                <Text style={[styles.saleLinkPrice, isOwn && { color: '#FFD4D4' }]} numberOfLines={1}>
+                                    {formatPrice(item.sale_preview.price)} €
                                 </Text>
                             </View>
                         </Pressable>
@@ -556,7 +871,7 @@ export default function ChatScreen({ route, navigation }) {
                             <View style={[
                                 styles.messageBubble,
                                 isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
-                                { marginTop: 4, alignSelf: isOwn ? 'flex-end' : 'flex-start' }
+                                { marginTop: vs(4), alignSelf: isOwn ? 'flex-end' : 'flex-start' }
                             ]}>
                                 <Text style={[
                                     styles.messageText,
@@ -566,21 +881,7 @@ export default function ChatScreen({ route, navigation }) {
                                 </Text>
                             </View>
                         ) : null}
-                        {showTime && (
-                            <View style={[
-                                styles.messageMetaRow,
-                                isOwn ? { alignItems: 'flex-end' } : { alignItems: 'flex-start' }
-                            ]}>
-                                <Text style={styles.messageTime}>
-                                    {formatMessageTime(item.createdAt)}
-                                </Text>
-                                {isOwn && (
-                                    <Text style={styles.messageReadStatus}>
-                                        {item.is_read ? ' ✓✓' : ' ✓'}
-                                    </Text>
-                                )}
-                            </View>
-                        )}
+                        {meta}
                     </View>
                 </View>
             );
@@ -591,12 +892,7 @@ export default function ChatScreen({ route, navigation }) {
                 styles.messageWrapper,
                 isOwn ? styles.messageWrapperOwn : styles.messageWrapperOther
             ]}>
-                {!isOwn && (
-                    <Image
-                        source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar}
-                        style={styles.messageAvatar}
-                    />
-                )}
+                {!isOwn && avatar}
 
                 <View style={styles.messageBubbleContainer}>
                     {item.type === 'image' ? (
@@ -604,24 +900,33 @@ export default function ChatScreen({ route, navigation }) {
                             onPress={() => openImageViewer(item.image_url)}
                             onLongPress={() => handleLongPressMessage(item, isOwn)}
                             delayLongPress={500}
+                            style={isOwn ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }}
                         >
                             <Image
                                 source={{ uri: item.image_url }}
                                 style={[
                                     styles.messageImage,
-                                    isOwn ? styles.messageImageOwn : styles.messageImageOther
+                                    isOwn ? styles.messageImageOwn : styles.messageImageOther,
+                                    item.pending && { opacity: 0.55 }
                                 ]}
                                 resizeMode="cover"
                             />
+                            {item.pending ? (
+                                <View style={styles.imagePendingOverlay}>
+                                    <ActivityIndicator size="small" color={COLORS.white} />
+                                </View>
+                            ) : null}
                         </Pressable>
                     ) : (
                         <Pressable
                             onLongPress={() => handleLongPressMessage(item, isOwn)}
                             delayLongPress={500}
+                            style={isOwn ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }}
                         >
                             <View style={[
                                 styles.messageBubble,
-                                isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther
+                                isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
+                                item.pending && { opacity: 0.75 }
                             ]}>
                                 <Text style={[
                                     styles.messageText,
@@ -633,41 +938,53 @@ export default function ChatScreen({ route, navigation }) {
                         </Pressable>
                     )}
 
-                    {showTime && (
-                        <View style={[
-                            styles.messageMetaRow,
-                            isOwn ? { alignItems: 'flex-end' } : { alignItems: 'flex-start' }
-                        ]}>
-                            <Text style={styles.messageTime}>
-                                {formatMessageTime(item.createdAt)}
-                            </Text>
-                            {isOwn && (
-                                <Text style={styles.messageReadStatus}>
-                                    {item.is_read ? ' ✓✓' : ' ✓'}
-                                </Text>
-                            )}
-                        </View>
-                    )}
+                    {meta}
                 </View>
             </View>
         );
-    }, [messages, resolvedParticipantId, resolvedParticipantIcon]);
+    }, [messages, resolvedParticipantIcon, resolvedParticipantId, goToProfile, handleLongPressMessage, openImageViewer, navigation]);
 
-    const renderTypingIndicator = () => {
-        if (!isTyping) return null;
-        return <TypingIndicator avatarUri={resolvedParticipantIcon} />;
-    };
-    
+    const keyExtractor = useCallback((item, index) => {
+        const id = idOf(item);
+        return id !== null ? id : `row_${index}`;
+    }, []);
+
+    const extraData = useMemo(() => ({
+        userId,
+        username,
+        icon: resolvedParticipantIcon,
+        participant: resolvedParticipantId,
+    }), [userId, username, resolvedParticipantIcon, resolvedParticipantId]);
+
+    const canSend = text.trim().length > 0 && !!conversationId;
+
+    if (!conversationId) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} translucent={false} />
+                <View style={styles.header}>
+                    <Pressable onPress={handleBack} style={styles.backButton} hitSlop={HIT_SLOP}>
+                        <Image source={assets.back_arrow} style={styles.backIcon} />
+                    </Pressable>
+                    <Text style={styles.headerName} numberOfLines={1}>Conversație</Text>
+                </View>
+                <View style={styles.centerFill}>
+                    <Text style={styles.emptyThreadText}>Conversația nu a putut fi deschisă.</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     if (resolvingParticipant && !resolvedParticipantId) {
         return (
             <SafeAreaView style={styles.container}>
                 <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} translucent={false} />
                 <View style={styles.header}>
-                    <Pressable onPress={() => navigation.popToTop()} style={styles.backButton} hitSlop={10}>
+                    <Pressable onPress={handleBack} style={styles.backButton} hitSlop={HIT_SLOP}>
                         <Image source={assets.back_arrow} style={styles.backIcon} />
                     </Pressable>
                     <View style={[styles.headerAvatar, { backgroundColor: COLORS.surface }]} />
-                    <View style={{ flex: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, marginRight: 40 }} />
+                    <View style={{ flex: 1, height: vs(16), backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: s(8), marginRight: s(40) }} />
                 </View>
                 <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
                     <ChatThreadSkeleton />
@@ -681,20 +998,14 @@ export default function ChatScreen({ route, navigation }) {
             <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} translucent={false} />
 
             <View style={styles.header}>
-                <Pressable onPress={() => navigation.navigate('ChatListScreen')} style={styles.backButton} hitSlop={10}>
+                <Pressable onPress={handleBack} style={styles.backButton} hitSlop={HIT_SLOP}>
                     <Image source={assets.back_arrow} style={styles.backIcon} />
                 </Pressable>
 
-                <Pressable 
-                    style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
-                    onPress={() => {
-                        navigation.navigate('HomeTab', {
-                            screen: 'SearchProfileResult',
-                            params: {
-                                userId: resolvedParticipantId
-                            }
-                        });
-                    }}
+                <Pressable
+                    style={styles.headerIdentity}
+                    onPress={() => goToProfile(resolvedParticipantId)}
+                    hitSlop={{ top: 6, bottom: 6, left: 0, right: 0 }}
                 >
                     <Image source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar} style={styles.headerAvatar} />
                     <Text style={styles.headerName} numberOfLines={1}>
@@ -705,9 +1016,9 @@ export default function ChatScreen({ route, navigation }) {
                 <Pressable
                     style={styles.reportButton}
                     onPress={() => setReportModalVisible(true)}
-                    hitSlop={10}
+                    hitSlop={HIT_SLOP}
                 >
-                    <Text style={styles.reportDots}>⋮</Text>
+                    <Text style={styles.reportDots} allowFontScaling={false}>⋮</Text>
                 </Pressable>
             </View>
 
@@ -718,66 +1029,81 @@ export default function ChatScreen({ route, navigation }) {
             >
                 {loading ? (
                     <ChatThreadSkeleton />
+                ) : messages.length === 0 ? (
+                    <View style={styles.centerFill}>
+                        <Text style={styles.emptyThreadIcon}>💬</Text>
+                        <Text style={styles.emptyThreadText}>Trimite primul mesaj</Text>
+                    </View>
                 ) : (
                     <FlatList
                         ref={flatListRef}
-                        data={[...messages].reverse()}
-                        keyExtractor={item => item._id}
-                        renderItem={({ item, index }) =>
-                            renderMessage({ item, index: messages.length - 1 - index })
-                        }
+                        data={messages}
+                        keyExtractor={keyExtractor}
+                        renderItem={renderMessage}
+                        extraData={extraData}
                         inverted
                         contentContainerStyle={styles.messagesList}
+                        style={styles.messagesFlex}
                         onEndReached={handleLoadMore}
-                        onEndReachedThreshold={0.3}
+                        onEndReachedThreshold={0.4}
+                        onScroll={handleScroll}
+                        scrollEventThrottle={64}
                         ListFooterComponent={loadingMore
-                            ? <ActivityIndicator color={COLORS.accent} style={{ marginVertical: 10 }} />
+                            ? <ActivityIndicator color={COLORS.accent} style={{ marginVertical: vs(10) }} />
                             : null
                         }
-                        ListHeaderComponent={renderTypingIndicator}
+                        ListHeaderComponent={isTyping ? <TypingIndicator avatarUri={resolvedParticipantIcon} /> : null}
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
+                        removeClippedSubviews={false}
+                        initialNumToRender={20}
+                        maxToRenderPerBatch={12}
+                        windowSize={11}
+                        updateCellsBatchingPeriod={50}
                     />
                 )}
 
-                <View style={styles.inputBar}>
-                    <Pressable
-                        style={[styles.galleryButton, uploadingImage && { opacity: 0.5 }]}
-                        onPress={handlePickImage}
-                        disabled={uploadingImage}
-                    >
-                        {uploadingImage
-                            ? <ActivityIndicator size="small" color={COLORS.accent} />
-                            : <Image source={assets.gallery_icon} style={styles.galleryIcon} />
-                        }
-                    </Pressable>
+                <View style={styles.inputBarOuter}>
+                    <View style={styles.inputBar}>
+                        <Pressable
+                            style={[styles.galleryButton, uploadingImage && { opacity: 0.5 }]}
+                            onPress={handlePickImage}
+                            disabled={uploadingImage}
+                            hitSlop={HIT_SLOP}
+                        >
+                            {uploadingImage
+                                ? <ActivityIndicator size="small" color={COLORS.accent} />
+                                : <Image source={assets.gallery_icon} style={styles.galleryIcon} />
+                            }
+                        </Pressable>
 
-                    <TextInput
-                        style={styles.textInput}
-                        placeholder="Scrie un mesaj..."
-                        placeholderTextColor={COLORS.placeholder}
-                        value={text}
-                        onChangeText={handleTextChange}
-                        multiline
-                        maxLength={1000}
-                        returnKeyType="send"
-                        blurOnSubmit={true}
-                        onSubmitEditing={handleSendText}
-                    />
+                        <TextInput
+                            style={styles.textInput}
+                            placeholder="Scrie un mesaj..."
+                            placeholderTextColor={COLORS.placeholder}
+                            value={text}
+                            onChangeText={handleTextChange}
+                            multiline
+                            maxLength={1000}
+                            returnKeyType="send"
+                            blurOnSubmit={true}
+                            onSubmitEditing={handleSendText}
+                            underlineColorAndroid="transparent"
+                            textAlignVertical="center"
+                        />
 
-                    <Pressable
-                        style={[
-                            styles.sendButton,
-                            (!text.trim() || sending || !socketConnected) && styles.sendButtonDisabled
-                        ]}
-                        onPress={handleSendText}
-                        disabled={!text.trim() || sending || !socketConnected}
-                    >
-                        {sending
-                            ? <ActivityIndicator size="small" color={COLORS.white} />
-                            : <Image source={assets.send_icon} style={styles.sendIcon} />
-                        }
-                    </Pressable>
+                        <Pressable
+                            style={[
+                                styles.sendButton,
+                                !canSend && styles.sendButtonDisabled
+                            ]}
+                            onPress={handleSendText}
+                            disabled={!canSend}
+                            hitSlop={HIT_SLOP}
+                        >
+                            <Image source={assets.send_icon} style={styles.sendIcon} />
+                        </Pressable>
+                    </View>
                 </View>
             </KeyboardAvoidingView>
 
@@ -785,6 +1111,7 @@ export default function ChatScreen({ route, navigation }) {
                 visible={imageViewerVisible}
                 transparent
                 animationType="fade"
+                statusBarTranslucent
                 onRequestClose={() => setImageViewerVisible(false)}
             >
                 <View style={{ flex: 1, backgroundColor: '#000' }}>
@@ -798,8 +1125,9 @@ export default function ChatScreen({ route, navigation }) {
                     <Pressable
                         style={styles.imageViewerClose}
                         onPress={() => setImageViewerVisible(false)}
+                        hitSlop={HIT_SLOP}
                     >
-                        <Text style={styles.imageViewerCloseText}>✕</Text>
+                        <Text style={styles.imageViewerCloseText} allowFontScaling={false}>✕</Text>
                     </Pressable>
                 </View>
             </Modal>
@@ -808,6 +1136,7 @@ export default function ChatScreen({ route, navigation }) {
                 visible={deleteModalVisible}
                 transparent
                 animationType="fade"
+                statusBarTranslucent
                 onRequestClose={() => {
                     setDeleteModalVisible(false);
                     setSelectedMessageForDelete(null);
@@ -853,6 +1182,7 @@ export default function ChatScreen({ route, navigation }) {
                 visible={reportModalVisible}
                 transparent
                 animationType="slide"
+                statusBarTranslucent
                 onRequestClose={() => {
                     setReportModalVisible(false);
                     setSelectedReason(null);
@@ -868,43 +1198,51 @@ export default function ChatScreen({ route, navigation }) {
                     <Pressable style={styles.reportModal} onPress={() => {}}>
                         <View style={styles.reportHandle} />
 
-                        <View style={styles.reportHeader}>
-                            <Image source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar} style={styles.reportAvatar} />
-                            <View>
-                                <Text style={styles.reportTitle}>Raportează utilizatorul</Text>
-                                <Text style={styles.reportSubtitle}>@{resolvedParticipantName}</Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.reportDivider} />
-
-                        <Text style={styles.reportReasonLabel}>Selectează motivul:</Text>
-
-                        {REPORT_REASONS.map((reason) => (
-                            <Pressable
-                                key={reason}
-                                style={[
-                                    styles.reportReasonItem,
-                                    selectedReason === reason && styles.reportReasonSelected
-                                ]}
-                                onPress={() => setSelectedReason(reason)}
-                            >
-                                <View style={[
-                                    styles.reportRadio,
-                                    selectedReason === reason && styles.reportRadioSelected
-                                ]}>
-                                    {selectedReason === reason && (
-                                        <View style={styles.reportRadioInner} />
-                                    )}
+                        <ScrollView
+                            style={styles.reportScroll}
+                            contentContainerStyle={styles.reportScrollContent}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                            bounces={false}
+                        >
+                            <View style={styles.reportHeader}>
+                                <Image source={resolvedParticipantIcon ? { uri: resolvedParticipantIcon } : assets.default_avatar} style={styles.reportAvatar} />
+                                <View style={styles.reportHeaderText}>
+                                    <Text style={styles.reportTitle} numberOfLines={1}>Raportează utilizatorul</Text>
+                                    <Text style={styles.reportSubtitle} numberOfLines={1}>@{resolvedParticipantName}</Text>
                                 </View>
-                                <Text style={[
-                                    styles.reportReasonText,
-                                    selectedReason === reason && { color: COLORS.accent, fontWeight: '600' }
-                                ]}>
-                                    {reason}
-                                </Text>
-                            </Pressable>
-                        ))}
+                            </View>
+
+                            <View style={styles.reportDivider} />
+
+                            <Text style={styles.reportReasonLabel}>Selectează motivul:</Text>
+
+                            {REPORT_REASONS.map((reason) => (
+                                <Pressable
+                                    key={reason}
+                                    style={[
+                                        styles.reportReasonItem,
+                                        selectedReason === reason && styles.reportReasonSelected
+                                    ]}
+                                    onPress={() => setSelectedReason(reason)}
+                                >
+                                    <View style={[
+                                        styles.reportRadio,
+                                        selectedReason === reason && styles.reportRadioSelected
+                                    ]}>
+                                        {selectedReason === reason && (
+                                            <View style={styles.reportRadioInner} />
+                                        )}
+                                    </View>
+                                    <Text style={[
+                                        styles.reportReasonText,
+                                        selectedReason === reason && { color: COLORS.accent, fontWeight: '600' }
+                                    ]}>
+                                        {reason}
+                                    </Text>
+                                </Pressable>
+                            ))}
+                        </ScrollView>
 
                         <View style={styles.reportActions}>
                             <Pressable
@@ -943,76 +1281,108 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.secondary,
     },
+    centerFill: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: COLORS.bg,
+        paddingHorizontal: s(32),
+    },
+    emptyThreadIcon: {
+        fontSize: f(44),
+        marginBottom: vs(10),
+    },
+    emptyThreadText: {
+        ...textBlock(15, 1.4),
+        color: COLORS.placeholder,
+        textAlign: 'center',
+    },
     header: {
         backgroundColor: COLORS.secondary,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 12,
-        paddingTop: 12,
+        paddingHorizontal: s(12),
+        paddingVertical: vs(12),
+        paddingTop: vs(12),
+    },
+    headerIdentity: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        minWidth: 0,
     },
     backButton: {
-        padding: 4,
-        marginRight: 14,
+        padding: s(4),
+        marginRight: s(14),
     },
     backIcon: {
-        width: 22,
-        height: 22,
+        width: s(22),
+        height: s(22),
         tintColor: COLORS.white,
         resizeMode: 'contain',
     },
     headerAvatar: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
-        marginRight: 10,
+        width: AVATAR_HEADER,
+        height: AVATAR_HEADER,
+        borderRadius: AVATAR_HEADER / 2,
+        marginRight: s(10),
         backgroundColor: COLORS.surface,
         borderWidth: 1.5,
         borderColor: 'rgba(255,255,255,0.3)',
     },
     headerName: {
         flex: 1,
-        fontSize: 17,
+        ...textBlock(17, 1.3),
         fontWeight: '700',
         color: COLORS.white,
     },
     reportButton: {
-        padding: 8,
+        padding: s(8),
     },
     reportDots: {
-        fontSize: 24,
+        fontSize: f(24),
+        lineHeight: f(26),
         color: COLORS.white,
-        lineHeight: 26,
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    messagesFlex: {
+        flex: 1,
+        width: '100%',
+    },
     messagesList: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingHorizontal: s(12),
+        paddingVertical: vs(8),
+        width: '100%',
+        maxWidth: CONTENT_MAX_WIDTH || undefined,
+        alignSelf: 'center',
     },
     skelThread: {
         flex: 1,
         justifyContent: 'flex-end',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingHorizontal: s(12),
+        paddingVertical: vs(8),
+        width: '100%',
+        maxWidth: CONTENT_MAX_WIDTH || undefined,
+        alignSelf: 'center',
     },
     skelBubble: {
-        borderRadius: 18,
+        borderRadius: s(18),
         overflow: 'hidden',
     },
     skelBubbleOwn: {
-        borderBottomRightRadius: 4,
+        borderBottomRightRadius: s(4),
     },
     skelBubbleOther: {
-        borderBottomLeftRadius: 4,
+        borderBottomLeftRadius: s(4),
     },
     messageWrapper: {
         flexDirection: 'row',
         alignItems: 'flex-end',
-        marginVertical: 3,
+        marginVertical: vs(3),
     },
     messageWrapperOwn: {
         justifyContent: 'flex-end',
@@ -1020,28 +1390,31 @@ const styles = StyleSheet.create({
     messageWrapperOther: {
         justifyContent: 'flex-start',
     },
+    messageAvatarButton: {
+        marginRight: s(6),
+    },
     messageAvatar: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        marginRight: 6,
+        width: AVATAR_MESSAGE,
+        height: AVATAR_MESSAGE,
+        borderRadius: AVATAR_MESSAGE / 2,
         backgroundColor: COLORS.surface,
     },
     messageBubbleContainer: {
-        maxWidth: '75%',
+        maxWidth: BUBBLE_MAX_WIDTH,
+        flexShrink: 1,
     },
     messageBubble: {
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 18,
+        paddingHorizontal: s(14),
+        paddingVertical: vs(10),
+        borderRadius: s(18),
     },
     messageBubbleOwn: {
         backgroundColor: COLORS.primary,
-        borderBottomRightRadius: 4,
+        borderBottomRightRadius: s(4),
     },
     messageBubbleOther: {
         backgroundColor: COLORS.surface,
-        borderBottomLeftRadius: 4,
+        borderBottomLeftRadius: s(4),
         borderWidth: 1,
         borderColor: COLORS.border,
     },
@@ -1052,13 +1425,12 @@ const styles = StyleSheet.create({
         borderStyle: 'dashed',
     },
     deletedText: {
-        fontSize: 14,
+        ...textBlock(14, 1.35),
         color: COLORS.placeholder,
         fontStyle: 'italic',
     },
     messageText: {
-        fontSize: 15,
-        lineHeight: 21,
+        ...textBlock(15, 1.42),
     },
     messageTextOwn: {
         color: COLORS.white,
@@ -1067,111 +1439,128 @@ const styles = StyleSheet.create({
         color: COLORS.text,
     },
     messageImage: {
-        width: 200,
-        height: 200,
-        borderRadius: 14,
+        width: CHAT_IMAGE_SIZE,
+        height: CHAT_IMAGE_SIZE,
+        borderRadius: s(14),
+        backgroundColor: COLORS.surface,
+    },
+    imagePendingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     messageImageOwn: {
-        borderBottomRightRadius: 4,
+        borderBottomRightRadius: s(4),
     },
     messageImageOther: {
-        borderBottomLeftRadius: 4,
+        borderBottomLeftRadius: s(4),
     },
     messageMetaRow: {
         flexDirection: 'row',
-        marginTop: 3,
-        paddingHorizontal: 2,
+        marginTop: vs(3),
+        paddingHorizontal: s(2),
     },
     messageTime: {
-        fontSize: 11,
+        ...metaText(11, 1.25),
         color: COLORS.placeholder,
     },
     messageReadStatus: {
-        fontSize: 11,
+        ...metaText(11, 1.25),
         color: COLORS.placeholder,
     },
     typingContainer: {
         flexDirection: 'row',
         alignItems: 'flex-end',
-        marginVertical: 4,
-        paddingHorizontal: 12,
+        marginVertical: vs(4),
+        paddingHorizontal: s(12),
     },
     typingBubble: {
         backgroundColor: COLORS.surface,
-        borderRadius: 18,
-        borderBottomLeftRadius: 4,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
+        borderRadius: s(18),
+        borderBottomLeftRadius: s(4),
+        paddingHorizontal: s(14),
+        paddingVertical: vs(10),
         borderWidth: 1,
         borderColor: COLORS.border,
     },
     typingText: {
-        fontSize: 16,
+        fontSize: f(16),
         color: COLORS.placeholder,
         letterSpacing: 2,
+    },
+    inputBarOuter: {
+        backgroundColor: COLORS.surface,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
     },
     inputBar: {
         flexDirection: 'row',
         alignItems: 'flex-end',
         backgroundColor: COLORS.surface,
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border,
-        paddingBottom: 8,
+        paddingHorizontal: s(10),
+        paddingVertical: vs(8),
+        paddingBottom: vs(8),
+        width: '100%',
+        maxWidth: CONTENT_MAX_WIDTH || undefined,
+        alignSelf: 'center',
     },
     galleryButton: {
-        width: 38,
-        height: 38,
+        width: s(38),
+        height: s(38),
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 6,
-        marginBottom: 2,
+        marginRight: s(6),
+        marginBottom: vs(2),
     },
     galleryIcon: {
-        width: 24,
-        height: 24,
+        width: s(24),
+        height: s(24),
         resizeMode: 'contain',
     },
     textInput: {
         flex: 1,
         backgroundColor: COLORS.sheet,
-        borderRadius: 20,
-        paddingHorizontal: 14,
-        paddingTop: 10,
-        paddingBottom: 10,
-        fontSize: 15,
+        borderRadius: s(20),
+        paddingHorizontal: s(14),
+        paddingTop: vs(10),
+        paddingBottom: vs(10),
+        ...textBlock(15, 1.35),
         color: COLORS.text,
-        maxHeight: 120,
+        minHeight: s(40),
+        maxHeight: IS_TABLET ? s(160) : s(120),
         borderWidth: 1,
         borderColor: COLORS.border,
     },
     sendButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: s(40),
+        height: s(40),
+        borderRadius: s(20),
         backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        marginLeft: 8,
-        marginBottom: 2,
+        marginLeft: s(8),
+        marginBottom: vs(2),
     },
     sendButtonDisabled: {
         backgroundColor: COLORS.borderStrong,
     },
     sendIcon: {
-        width: 18,
-        height: 18,
+        width: s(18),
+        height: s(18),
         tintColor: COLORS.white,
         resizeMode: 'contain',
     },
     imageViewerClose: {
         position: 'absolute',
-        top: Platform.OS === 'ios' ? 54 : 30,
-        right: 20,
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        top: Platform.OS === 'ios' ? s(54) : s(30),
+        right: s(20),
+        width: s(36),
+        height: s(36),
+        borderRadius: s(18),
         backgroundColor: '#CC0000',
         justifyContent: 'center',
         alignItems: 'center',
@@ -1179,7 +1568,7 @@ const styles = StyleSheet.create({
     },
     imageViewerCloseText: {
         color: COLORS.white,
-        fontSize: 16,
+        fontSize: f(16),
         fontWeight: 'bold',
     },
     modalOverlay: {
@@ -1189,111 +1578,129 @@ const styles = StyleSheet.create({
     },
     deleteSheet: {
         backgroundColor: COLORS.sheet,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        paddingBottom: Platform.OS === 'ios' ? 36 : 20,
-        paddingTop: 10,
+        borderTopLeftRadius: s(20),
+        borderTopRightRadius: s(20),
+        paddingBottom: Platform.OS === 'ios' ? vs(36) : vs(20),
+        paddingTop: vs(10),
         alignItems: 'center',
+        width: '100%',
+        maxWidth: CONTENT_MAX_WIDTH || undefined,
+        alignSelf: 'center',
     },
     deleteSheetHandle: {
-        width: 40,
+        width: s(40),
         height: 4,
         backgroundColor: COLORS.borderStrong,
         borderRadius: 2,
-        marginBottom: 16,
+        marginBottom: vs(16),
     },
     deleteSheetOption: {
         width: '100%',
-        paddingVertical: 18,
+        paddingVertical: vs(18),
         alignItems: 'center',
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
     },
     deleteSheetOptionText: {
-        fontSize: 16,
+        ...textBlock(16, 1.35),
         fontWeight: 'bold',
         color: COLORS.danger,
     },
     deleteSheetCancel: {
         width: '100%',
-        paddingVertical: 18,
+        paddingVertical: vs(18),
         alignItems: 'center',
         backgroundColor: COLORS.surface,
-        marginTop: 8,
+        marginTop: vs(8),
     },
     deleteSheetCancelText: {
-        fontSize: 16,
+        ...textBlock(16, 1.35),
         color: COLORS.text,
         fontWeight: '600',
     },
     reportModal: {
         backgroundColor: COLORS.sheet,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        paddingHorizontal: 20,
-        paddingBottom: Platform.OS === 'ios' ? 36 : 24,
-        paddingTop: 12,
+        borderTopLeftRadius: s(20),
+        borderTopRightRadius: s(20),
+        paddingHorizontal: s(20),
+        paddingBottom: Platform.OS === 'ios' ? vs(36) : vs(24),
+        paddingTop: vs(12),
+        maxHeight: '88%',
+        width: '100%',
+        maxWidth: CONTENT_MAX_WIDTH || undefined,
+        alignSelf: 'center',
+    },
+    reportScroll: {
+        flexGrow: 0,
+        flexShrink: 1,
+    },
+    reportScrollContent: {
+        paddingBottom: vs(4),
     },
     reportHandle: {
-        width: 40,
+        width: s(40),
         height: 4,
         backgroundColor: COLORS.borderStrong,
         borderRadius: 2,
         alignSelf: 'center',
-        marginBottom: 16,
+        marginBottom: vs(16),
     },
     reportHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 14,
+        marginBottom: vs(14),
+    },
+    reportHeaderText: {
+        flex: 1,
+        minWidth: 0,
     },
     reportAvatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        marginRight: 12,
+        width: s(44),
+        height: s(44),
+        borderRadius: s(22),
+        marginRight: s(12),
         backgroundColor: COLORS.surface,
     },
     reportTitle: {
-        fontSize: 17,
+        ...textBlock(17, 1.3),
         fontWeight: '700',
         color: COLORS.text,
     },
     reportSubtitle: {
-        fontSize: 13,
+        ...textBlock(13, 1.3),
         color: COLORS.placeholder,
-        marginTop: 2,
+        marginTop: vs(2),
     },
     reportDivider: {
         height: 1,
         backgroundColor: COLORS.border,
-        marginBottom: 14,
+        marginBottom: vs(14),
     },
     reportReasonLabel: {
-        fontSize: 14,
+        ...textBlock(14, 1.3),
         fontWeight: '600',
         color: COLORS.text,
-        marginBottom: 10,
+        marginBottom: vs(10),
     },
     reportReasonItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 11,
-        paddingHorizontal: 12,
-        borderRadius: 10,
-        marginBottom: 4,
+        paddingVertical: vs(11),
+        paddingHorizontal: s(12),
+        borderRadius: s(10),
+        marginBottom: vs(4),
         backgroundColor: COLORS.surface,
     },
     reportReasonSelected: {
         backgroundColor: COLORS.accentSurface,
     },
     reportRadio: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
+        width: s(20),
+        height: s(20),
+        borderRadius: s(10),
         borderWidth: 2,
         borderColor: COLORS.border,
-        marginRight: 12,
+        marginRight: s(12),
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -1301,93 +1708,98 @@ const styles = StyleSheet.create({
         borderColor: COLORS.primary,
     },
     reportRadioInner: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        width: s(10),
+        height: s(10),
+        borderRadius: s(5),
         backgroundColor: COLORS.primary,
     },
     reportReasonText: {
-        fontSize: 15,
+        ...textBlock(15, 1.35),
         color: COLORS.text,
+        flex: 1,
     },
     reportActions: {
         flexDirection: 'row',
-        marginTop: 16,
-        gap: 10,
+        marginTop: vs(16),
+        gap: s(10),
     },
     reportCancelBtn: {
         flex: 1,
-        paddingVertical: 13,
-        borderRadius: 12,
+        paddingVertical: vs(13),
+        borderRadius: s(12),
         backgroundColor: COLORS.surface,
         alignItems: 'center',
+        justifyContent: 'center',
     },
     reportCancelText: {
-        fontSize: 15,
+        ...textBlock(15, 1.3),
         fontWeight: '600',
         color: COLORS.text,
     },
     reportSubmitBtn: {
         flex: 2,
-        paddingVertical: 13,
-        borderRadius: 12,
+        paddingVertical: vs(13),
+        borderRadius: s(12),
         backgroundColor: COLORS.primary,
         alignItems: 'center',
+        justifyContent: 'center',
     },
     reportSubmitText: {
-        fontSize: 15,
+        ...textBlock(15, 1.3),
         fontWeight: '700',
         color: COLORS.white,
     },
     saleLinkCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 14,
-        padding: 10,
-        minWidth: 220,
+        borderRadius: s(14),
+        padding: s(10),
+        minWidth: s(220),
+        maxWidth: '100%',
     },
     saleLinkCardOwn: {
         backgroundColor: '#6B0000',
-        borderBottomRightRadius: 4,
+        borderBottomRightRadius: s(4),
     },
     saleLinkCardOther: {
         backgroundColor: COLORS.surface,
-        borderBottomLeftRadius: 4,
+        borderBottomLeftRadius: s(4),
         borderWidth: 1,
         borderColor: COLORS.border,
     },
     saleLinkThumb: {
-        width: 64,
-        height: 64,
-        borderRadius: 8,
+        width: s(64),
+        height: s(64),
+        borderRadius: s(8),
         backgroundColor: COLORS.sheet,
-        marginRight: 10,
+        marginRight: s(10),
         justifyContent: 'center',
         alignItems: 'center',
         overflow: 'hidden',
     },
     saleLinkInfo: {
         flex: 1,
+        minWidth: 0,
         justifyContent: 'center',
     },
     saleLinkTitle: {
-        fontSize: 13,
+        ...textBlock(13, 1.32),
         fontWeight: '700',
         color: COLORS.text,
-        marginBottom: 3,
+        marginBottom: vs(3),
     },
     saleLinkPrice: {
-        fontSize: 14,
+        ...textBlock(14, 1.3),
         fontWeight: '800',
         color: COLORS.accent,
     },
     saleLinkThumbFallback: {
-        fontSize: 28,
+        fontSize: f(28),
         position: 'absolute',
     },
     saleLinkThumbImage: {
         width: '100%',
         height: '100%',
-        borderRadius: 8,
+        borderRadius: s(8),
     },
 });
