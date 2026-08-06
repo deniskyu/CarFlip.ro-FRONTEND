@@ -12,6 +12,7 @@ import {
     Platform,
     StatusBar,
     ScrollView,
+    BackHandler,
 } from 'react-native';
 
 import {Text, TextInput} from '../../helpers/AppText.jsx';
@@ -38,6 +39,7 @@ import {
     isOwnMessage,
     oldestMessageId,
     idOf,
+    toTime,
 } from '../../helpers/chatLogic.js';
 
 import {
@@ -101,6 +103,12 @@ const TYPING_IDLE_TIMEOUT = 2000;
 const TYPING_RECEIVE_TIMEOUT = 7000;
 
 const makeClientId = () => `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+const nextCreatedAt = (list) => {
+    const arr = Array.isArray(list) ? list : [];
+    const newest = arr.length > 0 ? toTime(arr[0].createdAt) : 0;
+    return new Date(Math.max(Date.now(), newest + 1)).toISOString();
+};
 
 const priceFormatter = (() => {
     try {
@@ -206,7 +214,10 @@ export default function ChatScreen({ route, navigation }) {
     const pendingTimersRef = useRef({});
     const currentUserIdRef = useRef(userId || null);
     const usernameRef = useRef(username || null);
+    const messagesRef = useRef([]);
+    const pendingSendsRef = useRef(new Map());
 
+    useEffect(() => { messagesRef.current = messages; }, [messages]);
     useEffect(() => { currentUserIdRef.current = userId || null; }, [userId]);
     useEffect(() => { usernameRef.current = username || null; }, [username]);
 
@@ -219,7 +230,35 @@ export default function ChatScreen({ route, navigation }) {
             const timers = pendingTimersRef.current || {};
             Object.keys(timers).forEach((key) => clearTimeout(timers[key]));
             pendingTimersRef.current = {};
+            pendingSendsRef.current = new Map();
         };
+    }, []);
+
+    const registerPendingSend = useCallback((clientId, type, text) => {
+        try {
+            pendingSendsRef.current.set(clientId, { type, text: text || null, claimed: false });
+        } catch (e) {}
+    }, []);
+
+    const releasePendingSend = useCallback((clientId) => {
+        try {
+            pendingSendsRef.current.delete(clientId);
+        } catch (e) {}
+    }, []);
+
+    const claimPendingClientId = useCallback((message) => {
+        try {
+            const map = pendingSendsRef.current;
+            if (!map || map.size === 0 || !message) return null;
+            for (const [clientId, info] of map) {
+                if (!info || info.claimed) continue;
+                if (info.type !== message.type) continue;
+                if (message.type === 'text' && info.text !== message.text) continue;
+                info.claimed = true;
+                return clientId;
+            }
+        } catch (e) {}
+        return null;
     }, []);
 
     const safeSetMessages = useCallback((updater) => {
@@ -360,6 +399,7 @@ export default function ChatScreen({ route, navigation }) {
                 lastCursorRef.current = null;
                 isFetchingMoreRef.current = false;
                 isNearBottomRef.current = true;
+                pendingSendsRef.current = new Map();
                 setMessages([]);
                 setHasMore(false);
                 setNextCursor(null);
@@ -417,7 +457,13 @@ export default function ChatScreen({ route, navigation }) {
 
             const own = isOwnMessage(message, currentUserIdRef.current, usernameRef.current);
 
-            safeSetMessages((prev) => upsertMessage(prev, message));
+            let incoming = message;
+            if (own && (message.client_id === null || message.client_id === undefined)) {
+                const claimed = claimPendingClientId(message);
+                if (claimed) incoming = Object.assign({}, message, { client_id: claimed });
+            }
+
+            safeSetMessages((prev) => upsertMessage(prev, incoming));
 
             if (own || isNearBottomRef.current) {
                 requestAnimationFrame(() => scrollToBottom(true));
@@ -470,7 +516,7 @@ export default function ChatScreen({ route, navigation }) {
             emitter.off('socket_messages_read', handleMessagesRead);
             emitter.off('socket_message_deleted', handleMessageDeleted);
         };
-    }, [conversationId, safeSetMessages, scrollToBottom, markConversationRead]);
+    }, [conversationId, safeSetMessages, scrollToBottom, markConversationRead, claimPendingClientId]);
 
     const handleTextChange = useCallback((value) => {
         setText(value);
@@ -513,12 +559,13 @@ export default function ChatScreen({ route, navigation }) {
             clearTimeout(timers[clientId]);
             delete timers[clientId];
         }
+        releasePendingSend(clientId);
         safeSetMessages((prev) => removeMessage(prev, clientId));
         if (restoreText) {
             setText((current) => (current && current.length > 0 ? current : restoreText));
         }
         Alert.alert('Eroare', message || 'Mesajul nu a putut fi trimis.');
-    }, [safeSetMessages]);
+    }, [safeSetMessages, releasePendingSend]);
 
     const handleSendText = useCallback(() => {
         const trimmed = text.trim();
@@ -544,9 +591,11 @@ export default function ChatScreen({ route, navigation }) {
             sale_preview: null,
             is_read: false,
             is_deleted: false,
-            createdAt: new Date().toISOString(),
+            createdAt: nextCreatedAt(messagesRef.current),
             pending: true,
         };
+
+        registerPendingSend(clientId, 'text', trimmed);
 
         setText('');
         safeSetMessages((prev) => upsertMessage(prev, optimistic));
@@ -574,13 +623,14 @@ export default function ChatScreen({ route, navigation }) {
             if (!mountedRef.current) return;
 
             if (response && response.success && response.message) {
+                releasePendingSend(clientId);
                 const confirmed = Object.assign({}, response.message, { client_id: clientId });
                 safeSetMessages((prev) => upsertMessage(prev, confirmed));
             } else {
                 failPendingMessage(clientId, trimmed, response?.message);
             }
         });
-    }, [text, conversationId, socket, safeSetMessages, scrollToBottom, failPendingMessage]);
+    }, [text, conversationId, socket, safeSetMessages, scrollToBottom, failPendingMessage, registerPendingSend, releasePendingSend]);
 
     const handlePickImage = useCallback(async () => {
         if (isPickingRef.current || uploadingImage || !conversationId) return;
@@ -628,9 +678,11 @@ export default function ChatScreen({ route, navigation }) {
                 sale_preview: null,
                 is_read: false,
                 is_deleted: false,
-                createdAt: new Date().toISOString(),
+                createdAt: nextCreatedAt(messagesRef.current),
                 pending: true,
             };
+
+            registerPendingSend(clientId, 'image', null);
 
             safeSetMessages((prev) => upsertMessage(prev, optimistic));
             requestAnimationFrame(() => scrollToBottom(true));
@@ -650,6 +702,8 @@ export default function ChatScreen({ route, navigation }) {
                 });
             }
 
+            releasePendingSend(clientId);
+
             if (savedMessage && savedMessage._id) {
                 const confirmed = Object.assign({}, savedMessage, { client_id: clientId });
                 safeSetMessages((prev) => upsertMessage(prev, confirmed));
@@ -658,13 +712,16 @@ export default function ChatScreen({ route, navigation }) {
             }
 
         } catch (err) {
-            if (clientId) safeSetMessages((prev) => removeMessage(prev, clientId));
+            if (clientId) {
+                releasePendingSend(clientId);
+                safeSetMessages((prev) => removeMessage(prev, clientId));
+            }
             Alert.alert('Eroare', 'Nu s-a putut trimite imaginea.');
         } finally {
             if (mountedRef.current) setUploadingImage(false);
             isPickingRef.current = false;
         }
-    }, [uploadingImage, conversationId, socket, safeSetMessages, scrollToBottom]);
+    }, [uploadingImage, conversationId, socket, safeSetMessages, scrollToBottom, registerPendingSend, releasePendingSend]);
 
     const openImageViewer = useCallback((imageUrl) => {
         if (!imageUrl) return;
@@ -756,14 +813,60 @@ export default function ChatScreen({ route, navigation }) {
     }, []);
 
     const handleBack = useCallback(() => {
+        let hasStackHistory = false;
         try {
-            if (navigation.canGoBack()) {
+            const state = typeof navigation.getState === 'function' ? navigation.getState() : null;
+            hasStackHistory = !!state
+                && Array.isArray(state.routes)
+                && typeof state.index === 'number'
+                && state.index > 0;
+        } catch (e) {}
+
+        if (hasStackHistory) {
+            try {
                 navigation.goBack();
                 return;
-            }
+            } catch (e) {}
+        }
+
+        try {
+            navigation.reset({ index: 0, routes: [{ name: 'ChatListScreen' }] });
+            return;
         } catch (e) {}
-        navigation.navigate('ChatListScreen');
+
+        try {
+            navigation.navigate('ChatListScreen');
+        } catch (e) {}
     }, [navigation]);
+
+    useFocusEffect(useCallback(() => {
+        const onHardwareBack = () => {
+            if (imageViewerVisible) {
+                setImageViewerVisible(false);
+                return true;
+            }
+            if (deleteModalVisible) {
+                setDeleteModalVisible(false);
+                setSelectedMessageForDelete(null);
+                return true;
+            }
+            if (reportModalVisible) {
+                setReportModalVisible(false);
+                setSelectedReason(null);
+                return true;
+            }
+            handleBack();
+            return true;
+        };
+
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+        return () => {
+            if (subscription && typeof subscription.remove === 'function') subscription.remove();
+            else if (typeof BackHandler.removeEventListener === 'function') {
+                BackHandler.removeEventListener('hardwareBackPress', onHardwareBack);
+            }
+        };
+    }, [handleBack, imageViewerVisible, deleteModalVisible, reportModalVisible]));
 
     const renderMessage = useCallback(({ item, index }) => {
         if (!item) return null;
@@ -795,11 +898,17 @@ export default function ChatScreen({ route, navigation }) {
                 <Text style={styles.messageTime} allowFontScaling={false}>
                     {formatMessageTime(item.createdAt)}
                 </Text>
-                {isOwn && !item.is_deleted && (
+                {isOwn && !item.is_deleted && !item.pending && (
                     <Text style={styles.messageReadStatus} allowFontScaling={false}>
-                        {item.pending ? ' ⏳' : (item.is_read ? ' ✓✓' : ' ✓')}
+                        {item.is_read ? ' ✓✓' : ' ✓'}
                     </Text>
                 )}
+            </View>
+        ) : null;
+
+        const pendingSpinner = (isOwn && item.pending) ? (
+            <View style={styles.pendingSpinner}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
             </View>
         ) : null;
 
@@ -832,6 +941,7 @@ export default function ChatScreen({ route, navigation }) {
                     isOwn ? styles.messageWrapperOwn : styles.messageWrapperOther
                 ]}>
                     {!isOwn && avatar}
+                    {pendingSpinner}
                     <View style={styles.messageBubbleContainer}>
                         <Pressable
                             onPress={() => {
@@ -893,6 +1003,7 @@ export default function ChatScreen({ route, navigation }) {
                 isOwn ? styles.messageWrapperOwn : styles.messageWrapperOther
             ]}>
                 {!isOwn && avatar}
+                {pendingSpinner}
 
                 <View style={styles.messageBubbleContainer}>
                     {item.type === 'image' ? (
@@ -906,16 +1017,10 @@ export default function ChatScreen({ route, navigation }) {
                                 source={{ uri: item.image_url }}
                                 style={[
                                     styles.messageImage,
-                                    isOwn ? styles.messageImageOwn : styles.messageImageOther,
-                                    item.pending && { opacity: 0.55 }
+                                    isOwn ? styles.messageImageOwn : styles.messageImageOther
                                 ]}
                                 resizeMode="cover"
                             />
-                            {item.pending ? (
-                                <View style={styles.imagePendingOverlay}>
-                                    <ActivityIndicator size="small" color={COLORS.white} />
-                                </View>
-                            ) : null}
                         </Pressable>
                     ) : (
                         <Pressable
@@ -925,8 +1030,7 @@ export default function ChatScreen({ route, navigation }) {
                         >
                             <View style={[
                                 styles.messageBubble,
-                                isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
-                                item.pending && { opacity: 0.75 }
+                                isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther
                             ]}>
                                 <Text style={[
                                     styles.messageText,
@@ -945,6 +1049,10 @@ export default function ChatScreen({ route, navigation }) {
     }, [messages, resolvedParticipantIcon, resolvedParticipantId, goToProfile, handleLongPressMessage, openImageViewer, navigation]);
 
     const keyExtractor = useCallback((item, index) => {
+        const clientId = item && item.client_id !== null && item.client_id !== undefined
+            ? String(item.client_id)
+            : null;
+        if (clientId) return clientId;
         const id = idOf(item);
         return id !== null ? id : `row_${index}`;
     }, []);
@@ -1444,14 +1552,11 @@ const styles = StyleSheet.create({
         borderRadius: s(14),
         backgroundColor: COLORS.surface,
     },
-    imagePendingOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+    pendingSpinner: {
+        marginRight: s(6),
+        marginBottom: vs(6),
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-end',
     },
     messageImageOwn: {
         borderBottomRightRadius: s(4),
